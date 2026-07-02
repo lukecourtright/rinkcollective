@@ -20,11 +20,11 @@ pip install -r requirements.txt
 
 ## Deployment
 
-Deploy to Railway via `railway.toml`. Auto-deploys on push to `main`.
+Live at `https://barnandbiscuit-production.up.railway.app`. GitHub repo: `github.com/lukecourtright/barnandbiscuit`. Deploys to Railway via `railway.toml`, auto-deploying on push to `main`. The Postgres addon is linked to the web service.
 
-`DATABASE_URL` — Postgres connection string, auto-injected by the Railway Postgres addon once linked to the web service. Not required locally: if unset, the app falls back to a local `dev.db` SQLite file (gitignored).
+`DATABASE_URL` — Postgres connection string, auto-injected by the Railway Postgres addon. Not required locally: if unset, the app falls back to a local `dev.db` SQLite file (gitignored).
 
-`SECRET_KEY` — signs the session cookie used for login. Not required locally: falls back to an insecure dev default if unset. **⚠️ Must be set as a Railway env var before deploying auth to production** — otherwise sessions are signed with a key baked into source control.
+`SECRET_KEY` — signs the session cookie used for login, set as a Railway env var. Not required locally: falls back to an insecure dev default if unset.
 
 ## Brand Name
 
@@ -117,8 +117,6 @@ Source of truth for rink data — edit by hand to add/remove/update. Synced into
 - `website` — `https://` and `http://` prefixes are stripped automatically.
 - `hours_*` — use `"Varies"` when hours change seasonally/weekly (stored as-is and displayed). Leave blank to default to `"Call for hours"`.
 - `events`/`reviews`/`rating`/`reviewCount`/`checkins` — not in the CSV. Rating/counts get randomized illustrative placeholders; events/reviews start empty.
-
-**⚠️ Before next Railway deploy:** add the Postgres addon in the Railway dashboard and link it to the web service so `DATABASE_URL` is injected. Until then, production falls back to ephemeral SQLite and data resets on each deploy.
 
 **Schema** (mirrors the `Rink` SQLModel in `main.py` field-for-field — `hours`/`amenities`/`events`/`reviews` are stored as JSON columns, everything else as real columns):
 ```json
