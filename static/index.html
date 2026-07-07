@@ -218,6 +218,7 @@
     <button onclick="app.setTab('photos')" style="position:absolute;top:10px;left:10px;padding:4px 10px;background:rgba(10,14,26,0.55);border:1px solid rgba(255,255,255,0.15);border-radius:20px;color:#fff;font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;">
       <span id="drawer-photos-count"></span> photos
     </button>
+    <span id="drawer-photo-attribution" style="position:absolute;bottom:6px;right:10px;font-size:10px;color:rgba(255,255,255,0.65);text-shadow:0 1px 2px rgba(0,0,0,0.6);display:none;"></span>
     <button onclick="app.closeDrawer()" style="position:absolute;top:10px;right:10px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:rgba(10,14,26,0.55);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:#fff;cursor:pointer;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
     </button>
@@ -730,6 +731,13 @@ class RinkFinder {
     // Hero
     document.getElementById('drawer-hero-img').src = photos[heroIdx].url;
     document.getElementById('drawer-photos-count').textContent = photos.length;
+    const attributionEl = document.getElementById('drawer-photo-attribution');
+    if (photos[heroIdx].attribution) {
+      attributionEl.textContent = `Photo: ${photos[heroIdx].attribution}`;
+      attributionEl.style.display = 'block';
+    } else {
+      attributionEl.style.display = 'none';
+    }
     document.getElementById('drawer-name').textContent = rink.name;
     const accessPill = rink.isPublic
       ? `<span style="padding:2px 8px;background:rgba(52,224,160,0.1);border:1px solid rgba(52,224,160,0.3);border-radius:20px;font-size:10px;font-weight:600;color:#34E0A0;white-space:nowrap;">Public</span>`
@@ -880,7 +888,13 @@ class RinkFinder {
   renderPhotosTab(photos, heroIdx) {
     const grid = photos.map((p, i) => {
       const active = i === heroIdx;
-      return `<img src="${p.url}" onclick="app.setHero(${i})" style="width:100%;height:110px;object-fit:cover;border-radius:9px;cursor:pointer;border:${active ? '2px solid var(--color-primary)' : '2px solid transparent'};">`;
+      const caption = p.attribution
+        ? `<span style="position:absolute;left:5px;bottom:4px;font-size:9px;color:rgba(255,255,255,0.75);text-shadow:0 1px 2px rgba(0,0,0,0.7);">${this.esc(p.attribution)}</span>`
+        : '';
+      return `<div style="position:relative;">
+        <img src="${p.url}" onclick="app.setHero(${i})" style="width:100%;height:110px;object-fit:cover;border-radius:9px;cursor:pointer;border:${active ? '2px solid var(--color-primary)' : '2px solid transparent'};">
+        ${caption}
+      </div>`;
     }).join('');
     const addTile = `<div onclick="app.addPhoto()" style="height:110px;background:transparent;border:1px dashed var(--border);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--color-primary);cursor:pointer;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
@@ -918,6 +932,7 @@ class RinkFinder {
           <div style="display:flex;align-items:center;gap:4px;">
             <span style="font-size:11px;color:#FFD24D;">${this.stars(rv.rating)}</span>
             <span style="font-size:10px;color:var(--neutral-700);">· ${this.esc(rv.date)}</span>
+            ${rv.source === 'google' ? `<span style="font-size:9px;font-weight:600;color:var(--text-faint);background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:1px 6px;margin-left:2px;">via Google</span>` : ''}
           </div>
         </div>
         <p style="font-size:13px;color:var(--text-muted);line-height:1.55;margin:0;">${this.esc(rv.text)}</p>
@@ -1035,9 +1050,15 @@ class RinkFinder {
 
   getPhotos(rink) {
     const extra = this.state.myPhotos[rink.id] || [];
-    return [...Array(this.BASE_PHOTO_COUNT).keys(), ...extra].map(seedIdx => ({
+    const base = (rink.photos && rink.photos.length)
+      ? rink.photos.map((p, i) => ({ seedIdx: i, url: `/api/photos/${rink.id}/${i}`, attribution: p.attribution }))
+      : Array.from(Array(this.BASE_PHOTO_COUNT).keys()).map(seedIdx => ({
+          seedIdx, url: `https://picsum.photos/seed/rink-${rink.id}-${seedIdx}/480/320`,
+        }));
+    const extraPhotos = extra.map(seedIdx => ({
       seedIdx, url: `https://picsum.photos/seed/rink-${rink.id}-${seedIdx}/480/320`,
     }));
+    return [...base, ...extraPhotos];
   }
 
   setHero(idx) { this.setState({ heroIdx: idx }); }
@@ -1045,9 +1066,11 @@ class RinkFinder {
   addPhoto() {
     const id = this.state.selectedRinkId;
     if (!id) return;
+    const rink = this.rinks.find(r => r.id === id);
+    const baseCount = (rink && rink.photos && rink.photos.length) || this.BASE_PHOTO_COUNT;
     this.setState(s => {
       const cur = s.myPhotos[id] || [];
-      const newSeed = this.BASE_PHOTO_COUNT + cur.length;
+      const newSeed = baseCount + cur.length;
       return { myPhotos: { ...s.myPhotos, [id]: [...cur, newSeed] }, heroIdx: newSeed, photoToast: true };
     });
     setTimeout(() => this.setState({ photoToast: false }), 2200);

@@ -5,8 +5,9 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import bcrypt
+import httpx
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import JSON, Column
 from sqlmodel import Field, Session, SQLModel, create_engine, select
@@ -16,6 +17,8 @@ app = FastAPI()
 
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-in-prod")
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="lax")
+
+GOOGLE_PLACES_API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY")
 
 RINKS_FILE = pathlib.Path("rinks.json")
 
@@ -46,6 +49,8 @@ class Rink(SQLModel, table=True):
     amenities: list = Field(default_factory=list, sa_column=Column(JSON))
     events: list = Field(default_factory=list, sa_column=Column(JSON))
     reviews: list = Field(default_factory=list, sa_column=Column(JSON))
+    photos: list = Field(default_factory=list, sa_column=Column(JSON))
+    googlePlaceId: Optional[str] = None
 
 
 class PendingRink(SQLModel, table=True):
@@ -101,6 +106,27 @@ def get_rinks():
     with Session(engine) as session:
         rinks = session.exec(select(Rink)).all()
         return [rink.model_dump() for rink in rinks]
+
+
+@app.get("/api/photos/{rink_id}/{photo_idx}")
+async def rink_photo(rink_id: int, photo_idx: int):
+    if not GOOGLE_PLACES_API_KEY:
+        raise HTTPException(404, "Photo proxy not configured")
+    with Session(engine) as session:
+        rink = session.get(Rink, rink_id)
+    if rink is None or photo_idx < 0 or photo_idx >= len(rink.photos):
+        raise HTTPException(404, "Photo not found")
+    ref = rink.photos[photo_idx]["ref"]
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"https://places.googleapis.com/v1/{ref}/media",
+            params={"maxWidthPx": 640, "skipHttpRedirect": "true"},
+            headers={"X-Goog-Api-Key": GOOGLE_PLACES_API_KEY},
+        )
+    if resp.status_code != 200:
+        raise HTTPException(404, "Photo unavailable")
+    photo_uri = resp.json()["photoUri"]
+    return RedirectResponse(photo_uri, headers={"Cache-Control": "public, max-age=3600"})
 
 
 @app.post("/api/rinks/submit")

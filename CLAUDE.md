@@ -26,6 +26,8 @@ Live at `https://barnandbiscuit-production.up.railway.app`. GitHub repo: `github
 
 `SECRET_KEY` — signs the session cookie used for login, set as a Railway env var. Not required locally: falls back to an insecure dev default if unset.
 
+`GOOGLE_PLACES_API_KEY` — used by the `/api/photos/{rink_id}/{photo_idx}` proxy to fetch real rink photos from Google Places, and by `scripts/fetch_google_places_data.py` when running the one-time backfill (see Data section below). Not required locally or in prod: if unset, the photo proxy 404s and the frontend falls back to placeholder photos.
+
 ## Brand Name
 
 The brand name is TBD — "HockeyLifers" domain was taken, "Barn & Biscuit" is the current placeholder. To rename:
@@ -45,9 +47,10 @@ barnbiscuit/
 ├── rinks.json                 # Curated rink data — source of truth, synced into the DB on startup
 ├── rinks_import_template.csv  # CSV template for bulk-adding rinks (fill in, run import script)
 ├── scripts/
-│   ├── import_rinks_csv.py   # Merges a filled CSV batch (new rinks) into rinks.json
-│   ├── export_rinks_csv.py   # Dumps all of rinks.json to one CSV for manual review/editing
-│   └── merge_rinks_csv.py    # Applies a hand-edited export back into rinks.json (updates by id, appends blank-id rows)
+│   ├── import_rinks_csv.py         # Merges a filled CSV batch (new rinks) into rinks.json
+│   ├── export_rinks_csv.py         # Dumps all of rinks.json to one CSV for manual review/editing
+│   ├── merge_rinks_csv.py          # Applies a hand-edited export back into rinks.json (updates by id, appends blank-id rows)
+│   └── fetch_google_places_data.py # One-time backfill of real ratings/reviews/photos from Google Places
 ├── dev.db                     # Local SQLite fallback when DATABASE_URL is unset (gitignored)
 ├── requirements.txt
 ├── railway.toml
@@ -64,6 +67,7 @@ Data is stored in a database (Postgres in production via Railway addon, local SQ
 
 - `GET /` → serves `static/index.html`
 - `GET /api/rinks` → queries the `Rink` table, returns all rows as JSON (same shape as before)
+- `GET /api/photos/{rink_id}/{photo_idx}` → looks up `rink.photos[photo_idx].ref` (a Google Places photo resource name) and redirects to a freshly-fetched Google-hosted image URL, with a `Cache-Control` header so browsers don't re-hit this (and therefore Google) on every load. Requires `GOOGLE_PLACES_API_KEY`; 404s otherwise or if the rink/index doesn't exist, which the frontend treats as "no real photo" and falls back to placeholders
 - `POST /api/rinks/submit` → inserts community-submitted rinks into the `PendingRink` table (`id`, `submittedAt`, raw `data` JSON blob) — not public until moderated, no validation yet
 - `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` → email/password auth against the `User` table (`id`, `email`, `passwordHash` (bcrypt), `displayName`, `createdAt`). Login state is a signed, httponly session cookie (Starlette `SessionMiddleware`, see `SECRET_KEY` above) holding `user_id` — no tokens handled in JS.
 - `/static` → static file mount for CSS, logos, etc.
@@ -86,7 +90,7 @@ Vanilla JS SPA — no bundler, no framework.
 **All other DOM updates** (location label, toggle state, filter chip active class, distance label, count) are targeted property sets, not full re-renders.
 
 **Detail drawer structure** (`renderDrawer()`, `static/index.html`):
-- Fixed **photo hero** (168px, gradient scrim) with a "{N} photos" chip and close button, overlaid rink name/badges — photos are deterministic placeholder `picsum.photos` URLs seeded by rink id (`getPhotos()`), not real rink photos (see Not Yet Implemented)
+- Fixed **photo hero** (168px, gradient scrim) with a "{N} photos" chip and close button, overlaid rink name/badges — `getPhotos()` uses real photos from `rink.photos` (served via the `/api/photos` proxy, with a small attribution caption) when a rink has been matched to Google Places; otherwise it falls back to deterministic placeholder `picsum.photos` URLs seeded by rink id. Session-added photos (the "Add photo" flow) are always picsum placeholders layered on top of whichever base list is active
 - Below the hero, one scrollable container holds, in order: **thumb rail** (`renderThumbRail()` — click a thumb or the Photos tab to re-feature it as the hero via `heroIdx`), a **check-in + Directions row** (`renderCheckinRow()` — visible across all tabs, unlike the old Info-tab-only button), a **live check-in feed card** (`renderFeedCard()` — deterministic mock rows from `getMockFeed()`, plus a persistent "You" row once `myCheckins[rinkId]` is set), then a **sticky tab bar** (Info/Photos/Reviews/Schedule) and the tab body
 - `myCheckins`/`myReviews`/`myPhotos` are session-only client state overlaid on top of the persisted `rinks.json` data (same pattern as the pre-existing `checkinsById`) — nothing here is sent to the backend
 - The Reviews tab's composer reads its `<textarea>` via `document.getElementById('review-text').value` only at submit time (not mirrored into `state` on every keystroke) to avoid `innerHTML`-driven focus loss, since `renderDrawer()` is not diffed/keyed
@@ -125,6 +129,13 @@ Source of truth for rink data — edit by hand to add/remove/update. Synced into
 3. Run `python scripts/merge_rinks_csv.py rinks_full_export.csv` — updates existing rinks by `id` (only reports fields that actually changed) and appends blank-`id` rows as new rinks. Never deletes; round-trips with zero diff if nothing was edited.
 4. Push `rinks.json` to `main` as usual.
 
+**Google Places backfill workflow (one-time, not an ongoing sync):**
+1. Set `GOOGLE_PLACES_API_KEY` locally (requires a Google Cloud project with Places API (New) enabled and billing attached).
+2. Run `python scripts/fetch_google_places_data.py match --limit 10` (try a small batch first) — text-searches each unmatched rink by name+address and writes candidates to `rinks_google_match_review.csv`. No `rinks.json` writes yet.
+3. Spot-check that CSV by hand — blank out `matched_place_id` for any wrong or missing matches.
+4. Run `python scripts/fetch_google_places_data.py apply rinks_google_match_review.csv` — pulls real `rating`/`reviewCount`/`reviews`/`photos` from Place Details for every remaining match and merges into `rinks.json` by `id` (Google reviews get a `"source": "google"` marker and are prepended ahead of any hand-curated ones; `googlePlaceId` is stored so re-running `match` skips already-matched rinks).
+5. Drop the `--limit` flag to run the full batch once satisfied, then push `rinks.json` to `main` as usual. Photo images themselves aren't downloaded here — only each photo's Google resource name is recorded, fetched live later by the `/api/photos` proxy (see Backend section).
+
 **CSV field notes (learned from IL/WI batch):**
 - `type` — use `NHL`, `OLYMPIC`, `SYNTHETIC`, or `STANDARD`. `Indoor` also accepted (maps to `STANDARD`). Use `OLYMPIC` for rinks that explicitly have an Olympic-size (200×100 ft) sheet. Any other value (e.g. `Arena`, `Ice Rink`) silently falls back to `STANDARD` in the import script — prefer setting `STANDARD` explicitly in the CSV for multi-purpose/pro arenas rather than relying on the fallback.
 - `amenities` — comma-separated or semicolon-separated, both work (auto-detected).
@@ -133,7 +144,7 @@ Source of truth for rink data — edit by hand to add/remove/update. Synced into
 - `events`/`reviews`/`rating`/`reviewCount`/`checkins` — not in the CSV. Rating/counts get randomized illustrative placeholders; events/reviews start empty.
 - Watch for the same address appearing twice under different names (e.g. a rink under an old name and its current naming-rights name) — that's usually one rink double-listed, not two distinct facilities. Co-located but genuinely distinct facilities (e.g. a pro team's game arena and a separate public rec rink in the same complex) are fine to keep as separate entries.
 
-**Schema** (mirrors the `Rink` SQLModel in `main.py` field-for-field — `hours`/`amenities`/`events`/`reviews` are stored as JSON columns, everything else as real columns):
+**Schema** (mirrors the `Rink` SQLModel in `main.py` field-for-field — `hours`/`amenities`/`events`/`reviews`/`photos` are stored as JSON columns, everything else as real columns):
 ```json
 {
   "id": 1,
@@ -161,9 +172,12 @@ Source of truth for rink data — edit by hand to add/remove/update. Synced into
   },
   "amenities": ["Pro Shop", "Locker Rooms"],
   "events": [{ "title": "Public Skate", "date": "Sat 1–3 PM" }],
-  "reviews": [{ "author": "Name", "rating": 5, "text": "Great rink.", "date": "2d ago" }]
+  "reviews": [{ "author": "Name", "rating": 5, "text": "Great rink.", "date": "2d ago" }],
+  "photos": [{ "ref": "places/ChIJ.../photos/AUc7...", "attribution": "Jane D." }],
+  "googlePlaceId": "ChIJ..."
 }
 ```
+`reviews` entries pulled from Google get an additional `"source": "google"` key (absent = hand-curated). `photos`/`googlePlaceId` are populated by `scripts/fetch_google_places_data.py` — see the backfill workflow above — and are omitted entirely for rinks that haven't been matched yet.
 
 ### Brand System (`static/brand-tokens.css`, `static/logo/`)
 
@@ -176,10 +190,9 @@ Source of truth for rink data — edit by hand to add/remove/update. Synced into
 
 ## Not Yet Implemented
 
-- Google Places API integration (rink data currently curated by hand in `rinks.json`)
+- Ongoing Google Places sync — the backfill (`scripts/fetch_google_places_data.py`) is a one-time pull, not a scheduled refresh; rinks added after a backfill run (or newly opened Google listings) need a manual re-run to pick up real ratings/reviews/photos, and unmatched rinks keep placeholder content indefinitely until then
 - Admin UI for moderating community-submitted rinks (sit in the `PendingRink` table, unvalidated) — accounts now exist, so this can gate on an `isAdmin`-style check when built
-- Server-persisted check-ins, reviews, and photos (session-only in v1 — see `myCheckins`/`myReviews`/`myPhotos` above) — accounts now exist to attribute these to, but none of it is wired to the `User` table
+- Server-persisted *user-submitted* check-ins, reviews, and photos (session-only in v1 — see `myCheckins`/`myReviews`/`myPhotos` above) — accounts now exist to attribute these to, but none of it is wired to the `User` table. This is separate from the Google-sourced reviews/photos in `rinks.json`, which are real but were pulled once, not submitted by app users
 - Schema migrations (tables are created via `SQLModel.metadata.create_all()`, no Alembic yet)
-- Real rink photos — the drawer's photo hero/thumb rail/Photos tab currently use deterministic placeholder images (`picsum.photos` seeded by rink id), not actual photos of the rinks; no `photos` field exists on the `Rink` model yet
 - Community and News sections (nav links present but inactive)
 - "Submit an Event" button (UI only, no backend) — "Write a Review" now has a working session-local composer (see above), just not server-persisted
