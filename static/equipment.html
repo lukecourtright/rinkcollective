@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barn &amp; Biscuit — Equipment</title>
+<link rel="icon" href="/static/logo/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/brand-tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; }
+  body { font-family: var(--font-body); background: var(--bg); color: var(--text); }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  input::placeholder { color: var(--neutral-600); }
+  input[type=range] { -webkit-appearance: none; height: 4px; background: var(--surface-2); border-radius: 2px; outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; border-radius: 50%; background: #F3F5FB; border: 2px solid var(--color-primary); cursor: pointer; }
+
+  @keyframes slideInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes trayUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+  #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+  #nav { height: 56px; background: #0E1322; border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; flex-shrink: 0; z-index: 200; }
+  #content-area { flex: 1; display: flex; overflow: hidden; }
+
+  #sidebar { width: 250px; background: var(--bg); border-right: 1px solid var(--hair); flex-shrink: 0; padding: 16px 14px; overflow-y: auto; }
+  .section-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; color: var(--neutral-700); text-transform: uppercase; margin-bottom: 10px; }
+
+  .cat-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 8px; cursor: pointer; border-left: 2px solid transparent; }
+  .cat-row:hover { background: rgba(20,207,207,0.04); }
+  .cat-row.active { background: rgba(20,207,207,0.08); border-left-color: var(--color-primary); }
+  .cat-row.active .cat-name { color: var(--color-primary); font-weight: 600; }
+  .cat-name { color: var(--text-muted); font-weight: 500; font-size: 13px; }
+  .cat-count { font-family: var(--font-mono); font-size: 10px; color: var(--neutral-600); }
+
+  .brand-row { display: flex; align-items: center; gap: 9px; font-size: 13px; cursor: pointer; padding: 2px 0; color: var(--text-muted); }
+  .brand-box { width: 15px; height: 15px; border-radius: 4px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .brand-row.checked .brand-box { background: var(--color-primary); border-color: var(--color-primary); }
+  .brand-row.checked { color: var(--text); }
+  .brand-count { font-family: var(--font-mono); font-size: 10px; color: var(--neutral-600); margin-left: auto; }
+
+  .rating-pill { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); color: var(--neutral-500); cursor: pointer; background: transparent; font-family: inherit; }
+  .rating-pill.active { background: rgba(20,207,207,0.13); border-color: var(--color-primary); color: var(--color-primary); font-weight: 600; }
+
+  #catalog { flex: 1; overflow-y: auto; padding: 18px 24px; }
+  #catalog.tray-open { padding-bottom: 110px; }
+
+  .sort-seg { display: flex; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 3px; gap: 2px; }
+  .sort-btn { padding: 6px 12px; border-radius: 6px; border: none; background: none; font-family: inherit; font-size: 12px; font-weight: 500; color: var(--neutral-500); cursor: pointer; }
+  .sort-btn.active { background: var(--color-primary); color: var(--on-primary); font-weight: 700; }
+
+  .product-card { display: flex; gap: 16px; padding: 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; cursor: pointer; margin-bottom: 10px; }
+  .product-card:hover { border-color: #3E4A6B; }
+  .img-tile { width: 112px; height: 112px; background: #0E1322; border: 1px solid var(--border); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--color-primary); flex-shrink: 0; position: relative; }
+  .deal-badge { position: absolute; top: 6px; left: 6px; padding: 2px 7px; background: #FFC83D; color: #2A1F00; font-family: var(--font-mono); font-size: 10px; font-weight: 700; border-radius: 6px; white-space: nowrap; }
+
+  .spec-chip { padding: 3px 9px; background: #0E1322; border: 1px solid var(--border); border-radius: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  .stars { color: var(--color-accent); font-size: 12px; letter-spacing: 1px; }
+
+  .price-col { width: 216px; flex-shrink: 0; padding-left: 16px; border-left: 1px solid var(--hair); display: flex; flex-direction: column; }
+  .buy-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; background: var(--color-primary); color: var(--on-primary); border: none; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .retailer-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+  .compare-toggle { margin-top: 8px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--neutral-400); font-family: inherit; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+  .compare-toggle.active { border-color: var(--color-primary); background: rgba(20,207,207,0.12); color: var(--color-primary); font-weight: 600; }
+
+  #compare-tray { position: fixed; left: 250px; right: 0; bottom: 0; background: #0E1322; border-top: 1px solid var(--border); box-shadow: 0 -8px 32px rgba(0,0,0,0.5); padding: 12px 24px; z-index: 1000; display: flex; align-items: center; gap: 16px; animation: trayUp 0.22s ease; }
+  .tray-chip { display: flex; align-items: center; gap: 7px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 5px 8px; flex-shrink: 0; }
+  .tray-chip .icon-tile { width: 28px; height: 28px; border-radius: 6px; background: #0A0E1A; display: flex; align-items: center; justify-content: center; color: var(--color-primary); }
+
+  .modal-scrim { position: fixed; inset: 0; background: rgba(6,9,15,0.9); z-index: 1400; display: flex; align-items: center; justify-content: center; padding: 20px; animation: fadeIn 0.15s ease; }
+  .compare-card { background: var(--bg); border: 1px solid var(--border); border-radius: 18px; max-width: 1000px; width: 100%; max-height: 90vh; box-shadow: 0 24px 60px rgba(0,0,0,0.6); display: flex; flex-direction: column; overflow: hidden; }
+  .spec-table-wrap { background: #0E1322; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .spec-row { display: grid; align-items: center; }
+  .spec-row:nth-child(odd) { background: rgba(255,255,255,0.015); }
+  .best-cell { color: var(--color-accent); font-weight: 700; }
+  .best-flag { display: inline-block; margin-left: 6px; padding: 1px 5px; background: #FFC83D; color: #2A1F00; font-family: var(--font-mono); font-size: 9px; font-weight: 700; border-radius: 4px; }
+
+  #detail-drawer { position: fixed; right: 0; top: 0; bottom: 0; width: 440px; background: var(--bg); border-left: 1px solid var(--border); box-shadow: -8px 0 40px rgba(0,0,0,0.55); z-index: 1301; display: flex; flex-direction: column; animation: slideInRight 0.22s ease; }
+  #detail-scrim { position: fixed; inset: 0; background: rgba(6,9,15,0.6); z-index: 1300; }
+  .price-panel { background: var(--surface); border-radius: 14px; padding: 16px; }
+  .review-card { background: var(--surface); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+  .hist-bar-track { flex: 1; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
+  .hist-bar-fill { height: 100%; background: var(--color-accent); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- NAV -->
+  <nav id="nav">
+    <a href="/" style="display:flex;align-items:center;gap:9px;text-decoration:none;margin-right:28px;flex-shrink:0;">
+      <svg width="22" height="22" viewBox="0 0 56 56" fill="none">
+        <line x1="6" y1="47" x2="50" y2="47" stroke="#14CFCF" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M9 47 L9 25 L28 11 L47 25 L47 47" stroke="#14CFCF" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="18" y="36.5" width="20" height="9.5" rx="4.75" fill="#FFC83D"/>
+      </svg>
+      <span style="font-family:var(--font-display);font-weight:700;font-size:16px;color:var(--text);letter-spacing:-0.025em;white-space:nowrap;">Barn<span style="color:#FFC83D;font-weight:500;">&amp;</span>Biscuit</span>
+    </a>
+    <div style="display:flex;align-items:center;gap:2px;flex:1;">
+      <a href="#" style="padding:5px 11px;font-size:13px;font-weight:500;color:var(--text-faint);text-decoration:none;border-radius:6px;">Home</a>
+      <a href="/" style="padding:5px 11px;font-size:13px;font-weight:500;color:var(--text-faint);text-decoration:none;border-radius:6px;">Rink Finder</a>
+      <a href="/equipment" style="padding:5px 11px;font-size:13px;font-weight:600;color:var(--color-primary);text-decoration:none;border-radius:6px;background:rgba(20,207,207,0.08);">Equipment</a>
+      <!-- Community temporarily removed from nav in favor of Equipment (affiliate revenue priority) — restore this link when Community ships:
+      <a href="#" style="padding:5px 11px;font-size:13px;font-weight:500;color:var(--text-faint);text-decoration:none;border-radius:6px;">Community</a>
+      -->
+      <a href="#" style="padding:5px 11px;font-size:13px;font-weight:500;color:var(--text-faint);text-decoration:none;border-radius:6px;">News</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+      <div style="position:relative;">
+        <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5168" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input id="nav-search" type="text" placeholder="Search gear…" style="width:210px;padding:7px 12px 7px 32px;background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:12px;font-family:inherit;outline:none;">
+      </div>
+      <div style="width:30px;height:30px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--neutral-500);flex-shrink:0;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+    </div>
+  </nav>
+
+  <!-- CONTENT -->
+  <div id="content-area">
+    <aside id="sidebar"></aside>
+    <main id="catalog"></main>
+  </div>
+
+  <div id="tray-root"></div>
+  <div id="overlay-root"></div>
+  <div id="drawer-root"></div>
+</div>
+
+<script>
+const CATS = ["Skates","Sticks","Helmets","Gloves","Shoulder pads","Elbow pads","Shin guards","Pants","Bags","Goalie gear"];
+const CAT_ICON = { "Skates":"skate","Sticks":"stick","Helmets":"helmet","Gloves":"glove","Shoulder pads":"shield","Elbow pads":"shield","Shin guards":"guard","Pants":"pants","Bags":"bag","Goalie gear":"mask" };
+const ICON_SVG = {
+  stick: "<svg width='52' height='52' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 20 L15 6'/><path d='M15 6 L20 4 L21 8 L16 10 Z'/><path d='M4 20 L6 19'/></svg>",
+  skate: "<svg width='52' height='52' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 4v9l9 3 6 0 1 3H3'/><path d='M4 13h10'/><path d='M4 20h17'/></svg>",
+  helmet: "<svg width='50' height='50' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 14a8 8 0 0 1 16 0'/><path d='M4 14h16v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z'/><path d='M8 18v2M16 18v2'/></svg>",
+  glove: "<svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M7 11V6a1.5 1.5 0 0 1 3 0v4M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V6a1.5 1.5 0 0 1 3 0v6c0 4-2 8-5 8s-6-3-6-6v-2a1.5 1.5 0 0 1 3 0'/></svg>",
+  shield: "<svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z'/><path d='M9 12l2 2 4-4'/></svg>",
+  guard: "<svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='8' y='3' width='8' height='18' rx='4'/><path d='M8 9h8M8 15h8'/></svg>",
+  pants: "<svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M6 3h12l-1 8-2 10h-3l-2-9-2 9H5z'/></svg>",
+  bag: "<svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='8' width='18' height='11' rx='2'/><path d='M8 8V6a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18'/></svg>",
+  mask: "<svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M6 4h12a2 2 0 0 1 2 2v6a8 8 0 0 1-16 0V6a2 2 0 0 1 2-2z'/><path d='M9 8v6M15 8v6M6 11h12'/></svg>",
+};
+const BEST_NUMERIC_SPECS = { "Weight": "min" };
+
+class Equipment {
+  constructor() {
+    this.state = {
+      products: [],
+      category: CATS[0],
+      search: '',
+      brands: {},
+      maxPrice: null,
+      minRating: 0,
+      sort: 'price',
+      compare: [],
+      compareOpen: false,
+      detailId: null,
+    };
+    this.init();
+  }
+
+  async init() {
+    const res = await fetch('/api/equipment');
+    const products = await res.json();
+    this.setState({ products });
+
+    document.getElementById('nav-search').addEventListener('input', (e) => {
+      this.setState({ search: e.target.value });
+    });
+  }
+
+  setState(partial) {
+    Object.assign(this.state, partial);
+    this.render();
+  }
+
+  bestPrice(p) { return Math.min(...p.retailers.map(r => r.price)); }
+  bestRetailer(p) { return p.retailers.reduce((a, b) => (a.price <= b.price ? a : b)); }
+  stars(rating) { const n = Math.round(rating); return '★'.repeat(n) + '☆'.repeat(5 - n); }
+
+  categoryProducts(cat) { return this.state.products.filter(p => p.category === cat); }
+
+  brandFacets(cat) {
+    const counts = {};
+    this.categoryProducts(cat).forEach(p => { counts[p.brand] = (counts[p.brand] || 0) + 1; });
+    return Object.keys(counts).sort().map(name => ({ name, count: counts[name] }));
+  }
+
+  priceBounds(cat) {
+    const prices = this.categoryProducts(cat).map(p => this.bestPrice(p));
+    if (!prices.length) return [0, 0];
+    const min = Math.floor(Math.min(...prices) / 10) * 10;
+    const max = Math.ceil(Math.max(...prices) / 10) * 10;
+    return [min, max];
+  }
+
+  visibleProducts() {
+    const s = this.state;
+    const activeBrands = Object.keys(s.brands).filter(b => s.brands[b]);
+    const search = s.search.trim().toLowerCase();
+    let list = this.categoryProducts(s.category).filter(p => {
+      if (activeBrands.length && !activeBrands.includes(p.brand)) return false;
+      if (s.maxPrice != null && this.bestPrice(p) > s.maxPrice) return false;
+      if (p.rating < s.minRating) return false;
+      if (search && !(`${p.brand} ${p.name}`.toLowerCase().includes(search))) return false;
+      return true;
+    });
+    if (s.sort === 'price') list.sort((a, b) => this.bestPrice(a) - this.bestPrice(b));
+    else if (s.sort === 'rating') list.sort((a, b) => b.rating - a.rating);
+    else list.sort((a, b) => b.id - a.id);
+    return list;
+  }
+
+  selectCategory(cat) {
+    this.setState({ category: cat, brands: {}, maxPrice: null, minRating: 0, compare: [], compareOpen: false });
+  }
+
+  toggleBrand(name) {
+    const brands = { ...this.state.brands };
+    brands[name] = !brands[name];
+    this.setState({ brands });
+  }
+
+  toggleCompare(id, e) {
+    if (e) e.stopPropagation();
+    const compare = [...this.state.compare];
+    const idx = compare.indexOf(id);
+    if (idx >= 0) compare.splice(idx, 1);
+    else if (compare.length < 4) compare.push(id);
+    this.setState({ compare });
+  }
+
+  openDetail(id) { this.setState({ detailId: id }); }
+  closeDetail() { this.setState({ detailId: null }); }
+  openCompare() { if (this.state.compare.length >= 2) this.setState({ compareOpen: true }); }
+  closeCompare() { this.setState({ compareOpen: false }); }
+  noop(e) { e.preventDefault(); e.stopPropagation(); }
+
+  sparkline(history, w, h, color) {
+    if (!history || history.length < 2) return '';
+    const min = Math.min(...history), max = Math.max(...history);
+    const range = (max - min) || 1;
+    const pts = history.map((v, i) => {
+      const x = (i / (history.length - 1)) * w;
+      const y = h - ((v - min) / range) * h;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  }
+
+  render() {
+    this.renderSidebar();
+    this.renderCatalog();
+    this.renderTray();
+    this.renderCompareOverlay();
+    this.renderDrawer();
+  }
+
+  renderSidebar() {
+    const s = this.state;
+    const [minB, maxB] = this.priceBounds(s.category);
+    const facets = this.brandFacets(s.category);
+    const catRows = CATS.map(cat => {
+      const count = this.categoryProducts(cat).length;
+      return `
+        <div class="cat-row ${cat === s.category ? 'active' : ''}" onclick="app.selectCategory('${cat}')">
+          <span class="cat-name">${cat}</span>
+          <span class="cat-count">${count}</span>
+        </div>`;
+    }).join('');
+
+    const brandRows = facets.map(b => `
+      <label class="brand-row ${s.brands[b.name] ? 'checked' : ''}" onclick="app.toggleBrand('${b.name}')">
+        <span class="brand-box">${s.brands[b.name] ? '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#06181A" stroke-width="3.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}</span>
+        ${b.name}
+        <span class="brand-count">${b.count}</span>
+      </label>`).join('');
+
+    const priceVal = s.maxPrice == null ? maxB : s.maxPrice;
+    const priceLabel = s.maxPrice == null ? 'Any' : `$${s.maxPrice}`;
+
+    const ratingOptions = [[0,'Any'],[3,'3★+'],[4,'4★+'],[4.5,'4.5★+']];
+    const ratingPills = ratingOptions.map(([val, label]) => `
+      <button class="rating-pill ${s.minRating === val ? 'active' : ''}" onclick="app.setState({minRating:${val}})">${label}</button>`).join('');
+
+    document.getElementById('sidebar').innerHTML = `
+      <div class="section-label">Category</div>
+      <div style="display:flex;flex-direction:column;gap:1px;margin-bottom:22px;">${catRows}</div>
+
+      <div class="section-label">Brand</div>
+      <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:22px;">${brandRows || `<div style="font-size:12px;color:var(--neutral-600);">No brands</div>`}</div>
+
+      <div class="section-label">Max price</div>
+      <div style="margin-bottom:22px;">
+        <input type="range" min="${minB}" max="${maxB}" step="10" value="${priceVal}"
+          oninput="app.setState({maxPrice: Number(this.value) >= ${maxB} ? null : Number(this.value)})"
+          style="width:100%;">
+        <div style="text-align:right;font-family:var(--font-mono);font-size:11px;color:var(--color-primary);margin-top:4px;">${priceLabel}</div>
+      </div>
+
+      <div class="section-label">Min rating</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">${ratingPills}</div>
+    `;
+  }
+
+  renderCatalog() {
+    const s = this.state;
+    const all = this.categoryProducts(s.category);
+    const visible = this.visibleProducts();
+    const catalogEl = document.getElementById('catalog');
+    catalogEl.className = s.compare.length ? 'tray-open' : '';
+
+    const sortOptions = [['price','Best price'],['rating','Rating'],['new','Newest']];
+    const sortSeg = sortOptions.map(([val, label]) => `
+      <button class="sort-btn ${s.sort === val ? 'active' : ''}" onclick="app.setState({sort:'${val}'})">${label}</button>`).join('');
+
+    const cards = visible.map(p => this.renderCard(p)).join('');
+    const empty = `
+      <div style="text-align:center;padding:60px 20px;color:var(--neutral-500);">
+        <div style="font-size:32px;margin-bottom:10px;">🏒</div>
+        <div style="font-size:14px;font-weight:600;color:var(--text-muted);margin-bottom:4px;">No gear matches those filters</div>
+        <div style="font-size:12px;">Try widening your price range or clearing brands.</div>
+      </div>`;
+
+    catalogEl.innerHTML = `
+      <div style="font-size:12px;color:var(--neutral-600);margin-bottom:6px;">Equipment <span style="color:var(--text-muted);">›</span> ${s.category}</div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:16px;">
+        <div>
+          <div style="font-family:var(--font-display);font-size:24px;font-weight:700;">${s.category}</div>
+          <div style="font-family:var(--font-mono);font-size:12px;color:var(--neutral-500);">${visible.length} of ${all.length} · prices from 5 retailers</div>
+        </div>
+        <div class="sort-seg">${sortSeg}</div>
+      </div>
+      ${visible.length ? cards : empty}
+    `;
+  }
+
+  renderCard(p) {
+    const s = this.state;
+    const best = this.bestPrice(p);
+    const bestRet = this.bestRetailer(p);
+    const others = p.retailers.filter(r => r !== bestRet).slice(0, 2);
+    const inCompare = s.compare.includes(p.id);
+    const noteColor = p.priceIsGood ? 'var(--success)' : 'var(--neutral-500)';
+    const specs = p.specs.slice(0, 4);
+
+    return `
+      <div class="product-card" onclick="app.openDetail(${p.id})">
+        <div class="img-tile">
+          ${p.deal ? `<div class="deal-badge">${p.deal}</div>` : ''}
+          <span>${ICON_SVG[CAT_ICON[p.category]] || ''}</span>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;color:var(--neutral-600);">${p.brand}</div>
+          <div style="font-family:var(--font-display);font-size:16px;font-weight:700;margin-bottom:6px;">${p.name}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+            ${specs.map(sp => `<span class="spec-chip">${sp.label} ${sp.value}</span>`).join('')}
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+            <span class="stars">${this.stars(p.rating)}</span>
+            <span style="font-size:12px;font-weight:600;">${p.rating.toFixed(1)}</span>
+            <span style="font-size:12px;color:var(--neutral-600);">(${p.reviewCount} reviews)</span>
+          </div>
+          <div style="font-size:12px;font-style:italic;color:var(--neutral-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">"${p.featuredQuote}"</div>
+        </div>
+        <div class="price-col">
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--neutral-600);margin-bottom:2px;">BEST PRICE</div>
+          <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px;">
+            <span style="font-family:var(--font-display);font-size:26px;font-weight:700;">$${best}</span>
+            ${p.wasPrice ? `<span style="font-family:var(--font-mono);font-size:12px;color:var(--neutral-600);text-decoration:line-through;">$${p.wasPrice}</span>` : ''}
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:${noteColor};margin-bottom:6px;">
+            <span>${p.note}</span>
+          </div>
+          <div style="margin-bottom:8px;">${this.sparkline(p.priceHistory, 72, 22, p.priceIsGood ? '#34E0A0' : '#656C84')}</div>
+          <button class="buy-btn" onclick="app.noop(event)">Buy at ${bestRet.name} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></button>
+          ${others.map(r => `<div class="retailer-row"><span style="color:var(--neutral-500);">${r.name}</span><span style="font-family:var(--font-mono);color:var(--text-muted);">$${r.price}</span></div>`).join('')}
+          <button class="compare-toggle ${inCompare ? 'active' : ''}" onclick="app.toggleCompare(${p.id}, event)">${inCompare ? '✓ In compare' : '＋ Compare'}</button>
+        </div>
+      </div>
+    `;
+  }
+
+  renderTray() {
+    const s = this.state;
+    const root = document.getElementById('tray-root');
+    if (!s.compare.length) { root.innerHTML = ''; return; }
+    const items = s.compare.map(id => s.products.find(p => p.id === id)).filter(Boolean);
+    const chips = items.map(p => `
+      <div class="tray-chip">
+        <span class="icon-tile">${ICON_SVG[CAT_ICON[p.category]] || ''}</span>
+        <div style="min-width:0;">
+          <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">${p.name}</div>
+          <div style="font-family:var(--font-mono);font-size:10px;color:var(--neutral-500);">$${this.bestPrice(p)}</div>
+        </div>
+        <button onclick="app.toggleCompare(${p.id}, event)" style="background:none;border:none;color:var(--neutral-500);cursor:pointer;font-size:13px;">✕</button>
+      </div>`).join('');
+    const canCompare = s.compare.length >= 2;
+
+    root.innerHTML = `
+      <div id="compare-tray">
+        <div style="flex-shrink:0;">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:700;">Compare <span style="font-family:var(--font-mono);font-size:11px;color:var(--color-primary);">${s.compare.length}/4</span></div>
+        </div>
+        <div style="display:flex;gap:8px;overflow-x:auto;flex:1;">${chips}</div>
+        ${s.compare.length === 1 ? `<div style="font-size:12px;color:var(--neutral-600);white-space:nowrap;">Add one more to compare</div>` : ''}
+        <button onclick="app.setState({compare:[]})" style="background:none;border:none;color:var(--neutral-500);font-family:inherit;font-size:12px;cursor:pointer;flex-shrink:0;">Clear</button>
+        <button onclick="app.openCompare()" ${canCompare ? '' : 'disabled'} style="padding:9px 16px;border-radius:10px;border:none;font-family:inherit;font-size:13px;font-weight:700;cursor:${canCompare ? 'pointer' : 'not-allowed'};flex-shrink:0;background:${canCompare ? 'var(--color-primary)' : 'var(--surface-2)'};color:${canCompare ? 'var(--on-primary)' : 'var(--neutral-600)'};">
+          Compare ${s.compare.length} →
+        </button>
+      </div>
+    `;
+  }
+
+  renderCompareOverlay() {
+    const s = this.state;
+    const root = document.getElementById('overlay-root');
+    if (!s.compareOpen || s.compare.length < 2) { root.innerHTML = ''; return; }
+    const items = s.compare.map(id => s.products.find(p => p.id === id)).filter(Boolean);
+    const n = items.length;
+    const cols = `150px repeat(${n}, 1fr)`;
+
+    const headerCells = items.map(p => `
+      <div style="position:relative;text-align:center;">
+        <button onclick="app.toggleCompare(${p.id}, event)" style="position:absolute;top:-4px;right:-4px;background:none;border:none;color:var(--neutral-500);cursor:pointer;">✕</button>
+        <div class="icon-tile" style="width:64px;height:64px;margin:0 auto 8px;background:#0E1322;border-radius:10px;display:flex;align-items:center;justify-content:center;color:var(--color-primary);">${ICON_SVG[CAT_ICON[p.category]] || ''}</div>
+        <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;color:var(--neutral-600);">${p.brand}</div>
+        <div style="font-family:var(--font-display);font-size:13px;font-weight:600;margin-bottom:4px;">${p.name}</div>
+        <div class="stars">${this.stars(p.rating)}</div>
+      </div>`).join('');
+
+    const specLabels = items[0].specs.map(sp => sp.label);
+    const rowDefs = [
+      { label: 'Best price', get: p => this.bestPrice(p), fmt: v => `$${v}`, best: 'min' },
+      { label: 'Rating', get: p => p.rating, fmt: v => v.toFixed(1), best: 'max' },
+      ...specLabels.map(label => ({
+        label,
+        get: p => (p.specs.find(sp => sp.label === label) || {}).value,
+        fmt: v => v,
+        best: BEST_NUMERIC_SPECS[label] || null,
+      })),
+    ];
+
+    const rows = rowDefs.map(row => {
+      const values = items.map(p => row.get(p));
+      let bestVal = null;
+      if (row.best) {
+        const numeric = values.map(v => parseFloat(v));
+        bestVal = row.best === 'min' ? Math.min(...numeric) : Math.max(...numeric);
+      }
+      const cells = items.map((p, i) => {
+        const v = values[i];
+        const isBest = row.best && n > 1 && parseFloat(v) === bestVal;
+        return `<div style="text-align:center;padding:10px 8px;font-family:var(--font-mono);font-size:13px;${isBest ? 'color:var(--color-accent);font-weight:700;' : ''}">${row.fmt(v)}${isBest ? '<span class="best-flag">BEST</span>' : ''}</div>`;
+      }).join('');
+      return `<div class="spec-row" style="grid-template-columns:${cols};">
+        <div style="padding:10px 12px;font-size:12px;font-weight:600;color:var(--neutral-400);">${row.label}</div>
+        ${cells}
+      </div>`;
+    }).join('');
+
+    const buyRow = items.map(p => {
+      const best = this.bestPrice(p);
+      const ret = this.bestRetailer(p);
+      return `<button onclick="app.noop(event)" style="padding:8px;border-radius:9px;border:none;background:var(--color-primary);color:var(--on-primary);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">$${best} · ${ret.name}</button>`;
+    }).join('');
+
+    root.innerHTML = `
+      <div class="modal-scrim" onclick="if(event.target===this) app.closeCompare()">
+        <div class="compare-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--border);flex-shrink:0;">
+            <div>
+              <div style="font-family:var(--font-display);font-size:19px;font-weight:700;">Compare ${s.category}</div>
+              <div style="font-family:var(--font-mono);font-size:12px;color:var(--neutral-500);">Best value in each row highlighted</div>
+            </div>
+            <button onclick="app.closeCompare()" style="width:32px;height:32px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;">✕</button>
+          </div>
+          <div style="padding:20px 24px;overflow-y:auto;">
+            <div style="display:grid;grid-template-columns:${cols};gap:8px;margin-bottom:16px;">
+              <div></div>${headerCells}
+            </div>
+            <div class="spec-table-wrap">${rows}</div>
+            <div style="display:grid;grid-template-columns:${cols};gap:8px;margin-top:16px;">
+              <div></div>${buyRow}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  renderDrawer() {
+    const s = this.state;
+    const root = document.getElementById('drawer-root');
+    const p = s.products.find(x => x.id === s.detailId);
+    if (!p) { root.innerHTML = ''; return; }
+
+    const best = this.bestPrice(p);
+    const bestRet = this.bestRetailer(p);
+    const sortedRetailers = [...p.retailers].sort((a, b) => a.price - b.price);
+    const inCompare = s.compare.includes(p.id);
+    const noteColor = p.priceIsGood ? 'var(--success)' : 'var(--neutral-500)';
+
+    const retailerRows = sortedRetailers.map((r, i) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:#0E1322;border:1px solid var(--border);border-radius:9px;margin-bottom:6px;">
+        <span style="font-size:13px;color:var(--text-muted);">${r.name}</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-family:var(--font-mono);font-size:13px;color:${i === 0 ? 'var(--success)' : 'var(--text-muted)'};">$${r.price}</span>
+          <a href="#" onclick="app.noop(event)" style="font-size:12px;color:var(--color-primary);">View →</a>
+        </div>
+      </div>`).join('');
+
+    const specRows = p.specs.map(sp => `
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--hair);">
+        <span style="font-size:13px;color:var(--neutral-500);">${sp.label}</span>
+        <span style="font-family:var(--font-mono);font-size:13px;">${sp.value}</span>
+      </div>`).join('');
+
+    const histogram = [5,4,3,2,1].map(star => {
+      const count = (p.reviewList || []).filter(r => r.rating === star).length;
+      const total = (p.reviewList || []).length || 1;
+      const pct = Math.round((count / total) * 100);
+      return `<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--neutral-500);margin-bottom:4px;">
+        <span style="width:10px;">${star}</span>
+        <div class="hist-bar-track"><div class="hist-bar-fill" style="width:${pct}%;"></div></div>
+      </div>`;
+    }).join('');
+
+    const reviewCards = (p.reviewList || []).map(r => `
+      <div class="review-card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div style="width:26px;height:26px;border-radius:50%;background:rgba(20,207,207,0.15);color:var(--color-primary);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${r.author[0]}</div>
+          <div>
+            <div style="font-size:12px;font-weight:600;">${r.author}</div>
+            <div style="font-size:11px;color:var(--neutral-600);"><span class="stars">${this.stars(r.rating)}</span> · ${r.date}</div>
+          </div>
+        </div>
+        <div style="font-size:13px;color:var(--text-muted);line-height:1.55;">${r.text}</div>
+      </div>`).join('');
+
+    root.innerHTML = `
+      <div id="detail-scrim" onclick="app.closeDetail()"></div>
+      <div id="detail-drawer">
+        <div style="display:flex;align-items:flex-start;gap:12px;padding:20px;border-bottom:1px solid var(--border);flex-shrink:0;">
+          <div class="img-tile" style="width:76px;height:76px;flex-shrink:0;">
+            ${p.deal ? `<div class="deal-badge">${p.deal}</div>` : ''}
+            <span>${ICON_SVG[CAT_ICON[p.category]] || ''}</span>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:var(--font-mono);font-size:10px;text-transform:uppercase;color:var(--neutral-600);">${p.brand}</div>
+            <div style="font-family:var(--font-display);font-size:19px;font-weight:700;margin-bottom:4px;">${p.name}</div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="stars">${this.stars(p.rating)}</span>
+              <span style="font-size:12px;font-weight:600;">${p.rating.toFixed(1)}</span>
+              <span style="font-size:12px;color:var(--neutral-600);">(${p.reviewCount})</span>
+            </div>
+          </div>
+          <button onclick="app.closeDetail()" style="width:30px;height:30px;background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:16px;flex-shrink:0;">✕</button>
+        </div>
+        <div style="flex:1;overflow-y:auto;padding:20px;">
+          <div class="price-panel" style="margin-bottom:14px;">
+            <div style="font-family:var(--font-mono);font-size:10px;color:var(--neutral-600);margin-bottom:2px;">BEST PRICE</div>
+            <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px;">
+              <span style="font-family:var(--font-display);font-size:30px;font-weight:700;">$${best}</span>
+              ${p.wasPrice ? `<span style="font-family:var(--font-mono);font-size:13px;color:var(--neutral-600);text-decoration:line-through;">$${p.wasPrice}</span>` : ''}
+            </div>
+            <div style="font-size:12px;color:${noteColor};margin-bottom:8px;">${p.note}</div>
+            <div style="margin-bottom:12px;">${this.sparkline(p.priceHistory, 90, 30, p.priceIsGood ? '#34E0A0' : '#656C84')}</div>
+            <button class="buy-btn" style="width:100%;margin-bottom:10px;" onclick="app.noop(event)">Buy at ${bestRet.name} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></button>
+            ${retailerRows}
+            <div style="font-size:10px;color:var(--neutral-700);margin-top:8px;line-height:1.5;">Barn &amp; Biscuit earns a commission on purchases made through these links, at no extra cost to you. Prices updated daily.</div>
+          </div>
+          <button class="compare-toggle ${inCompare ? 'active' : ''}" style="width:100%;margin-bottom:16px;" onclick="app.toggleCompare(${p.id}, event)">${inCompare ? '✓ In compare' : '＋ Add to Compare'}</button>
+
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--neutral-700);margin-bottom:8px;">Specs</div>
+          <div style="margin-bottom:20px;">${specRows}</div>
+
+          <div style="font-family:var(--font-mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--neutral-700);margin-bottom:8px;">Reviews</div>
+          <div style="display:flex;gap:16px;align-items:center;background:var(--surface);border-radius:10px;padding:14px;margin-bottom:12px;">
+            <div style="text-align:center;flex-shrink:0;">
+              <div style="font-family:var(--font-display);font-size:32px;font-weight:700;">${p.rating.toFixed(1)}</div>
+              <div class="stars">${this.stars(p.rating)}</div>
+            </div>
+            <div style="flex:1;">${histogram}</div>
+          </div>
+          ${reviewCards}
+        </div>
+      </div>
+    `;
+  }
+}
+
+const app = new Equipment();
+</script>
+</body>
+</html>

@@ -1,0 +1,3067 @@
+[
+  {
+    "id": 101,
+    "category": "Sticks",
+    "brand": "Bauer",
+    "name": "Vapor Hyperlite 2",
+    "rating": 4.7,
+    "reviewCount": 212,
+    "imageUrl": null,
+    "deal": "−12%",
+    "note": "Lowest in 90 days",
+    "priceIsGood": true,
+    "wasPrice": 329,
+    "priceHistory": [
+      329.0,
+      322.33,
+      315.67,
+      309.0,
+      302.33,
+      295.67,
+      289.0
+    ],
+    "featuredQuote": "Lightning-quick release — the snap is unreal.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 289,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 299,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Ice Warehouse",
+        "price": 305,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Flex",
+        "value": "77"
+      },
+      {
+        "label": "Kick point",
+        "value": "Low"
+      },
+      {
+        "label": "Weight",
+        "value": "375g"
+      },
+      {
+        "label": "Blade pattern",
+        "value": "P92"
+      },
+      {
+        "label": "Hand",
+        "value": "Right"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Lightning-quick release — the snap is unreal.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Fit runs a touch small; size up if you're in between.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 102,
+    "category": "Sticks",
+    "brand": "CCM",
+    "name": "Ribcor Trigger 8 Pro",
+    "rating": 4.7,
+    "reviewCount": 205,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      299.0,
+      301.99,
+      297.5,
+      299.0,
+      304.98,
+      296.01,
+      299.0
+    ],
+    "featuredQuote": "Best low-kick feel on the market for wristers.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 299,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 309,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Ice Warehouse",
+        "price": 312,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Flex",
+        "value": "80"
+      },
+      {
+        "label": "Kick point",
+        "value": "Low"
+      },
+      {
+        "label": "Weight",
+        "value": "380g"
+      },
+      {
+        "label": "Blade pattern",
+        "value": "P29"
+      },
+      {
+        "label": "Hand",
+        "value": "Right"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Best low-kick feel on the market for wristers.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Great value for the price point — would absolutely buy again.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 103,
+    "category": "Sticks",
+    "brand": "CCM",
+    "name": "Jetspeed FT6 Pro",
+    "rating": 4.6,
+    "reviewCount": 168,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      319.0,
+      322.19,
+      317.4,
+      319.0,
+      325.38,
+      315.81,
+      319.0
+    ],
+    "featuredQuote": "Big one-timer power if you play the point.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 319,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Perani's",
+        "price": 324,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 329,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Flex",
+        "value": "85"
+      },
+      {
+        "label": "Kick point",
+        "value": "Mid"
+      },
+      {
+        "label": "Weight",
+        "value": "385g"
+      },
+      {
+        "label": "Blade pattern",
+        "value": "P28"
+      },
+      {
+        "label": "Hand",
+        "value": "Right"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Big one-timer power if you play the point.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Pro-level performance without the pro-level price tag.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 104,
+    "category": "Sticks",
+    "brand": "Warrior",
+    "name": "Alpha LX2 Pro",
+    "rating": 4.5,
+    "reviewCount": 143,
+    "imageUrl": null,
+    "deal": "Price drop",
+    "note": "Down $30 this week",
+    "priceIsGood": true,
+    "wasPrice": 289,
+    "priceHistory": [
+      289.0,
+      284.0,
+      279.0,
+      274.0,
+      269.0,
+      264.0,
+      259.0
+    ],
+    "featuredQuote": "Fantastic value — plays like sticks $60 more.",
+    "retailers": [
+      {
+        "name": "HockeyMonkey",
+        "price": 259,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Ice Warehouse",
+        "price": 269,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 279,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Flex",
+        "value": "75"
+      },
+      {
+        "label": "Kick point",
+        "value": "Low-mid"
+      },
+      {
+        "label": "Weight",
+        "value": "390g"
+      },
+      {
+        "label": "Blade pattern",
+        "value": "W28"
+      },
+      {
+        "label": "Hand",
+        "value": "Right"
+      },
+      {
+        "label": "Warranty",
+        "value": "45-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Fantastic value — plays like sticks $60 more.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Fit runs a touch small; size up if you're in between.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 105,
+    "category": "Sticks",
+    "brand": "Bauer",
+    "name": "Nexus Sync",
+    "rating": 4.4,
+    "reviewCount": 97,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      279.0,
+      281.79,
+      277.61,
+      279.0,
+      284.58,
+      276.21,
+      279.0
+    ],
+    "featuredQuote": "Forgiving mid-kick, great for an all-around game.",
+    "retailers": [
+      {
+        "name": "Perani's",
+        "price": 279,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 289,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 299,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Flex",
+        "value": "87"
+      },
+      {
+        "label": "Kick point",
+        "value": "Mid"
+      },
+      {
+        "label": "Weight",
+        "value": "400g"
+      },
+      {
+        "label": "Blade pattern",
+        "value": "P92"
+      },
+      {
+        "label": "Hand",
+        "value": "Right"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Forgiving mid-kick, great for an all-around game.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Ordered Tuesday, skating on it Thursday. Retailer shipping was quick.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "3mo ago"
+      }
+    ]
+  },
+  {
+    "id": 106,
+    "category": "Sticks",
+    "brand": "True",
+    "name": "Catalyst 9X3",
+    "rating": 4.6,
+    "reviewCount": 121,
+    "imageUrl": null,
+    "deal": "−15%",
+    "note": "Lowest ever recorded",
+    "priceIsGood": true,
+    "wasPrice": 319,
+    "priceHistory": [
+      319.0,
+      310.67,
+      302.33,
+      294.0,
+      285.67,
+      277.33,
+      269.0
+    ],
+    "featuredQuote": "Balanced and light — this is my new gamer.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 269,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 284,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 289,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Flex",
+        "value": "82"
+      },
+      {
+        "label": "Kick point",
+        "value": "Mid-low"
+      },
+      {
+        "label": "Weight",
+        "value": "378g"
+      },
+      {
+        "label": "Blade pattern",
+        "value": "TC2"
+      },
+      {
+        "label": "Hand",
+        "value": "Right"
+      },
+      {
+        "label": "Warranty",
+        "value": "60-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Balanced and light — this is my new gamer.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Pro-level performance without the pro-level price tag.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "3mo ago"
+      }
+    ]
+  },
+  {
+    "id": 201,
+    "category": "Skates",
+    "brand": "Bauer",
+    "name": "Vapor Hyperlite 2 Skate",
+    "rating": 4.7,
+    "reviewCount": 156,
+    "imageUrl": null,
+    "deal": "−10%",
+    "note": "Down $100",
+    "priceIsGood": true,
+    "wasPrice": 949,
+    "priceHistory": [
+      949.0,
+      932.33,
+      915.67,
+      899.0,
+      882.33,
+      865.67,
+      849.0
+    ],
+    "featuredQuote": "Heat-molded to my foot perfectly. Elite response.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 849,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 879,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Tapered"
+      },
+      {
+        "label": "Level",
+        "value": "Elite"
+      },
+      {
+        "label": "Weight",
+        "value": "780g"
+      },
+      {
+        "label": "Holder",
+        "value": "Tuuk LS Pulse"
+      },
+      {
+        "label": "Steel",
+        "value": "Stainless"
+      },
+      {
+        "label": "Warranty",
+        "value": "90-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Heat-molded to my foot perfectly. Elite response.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Ordered Tuesday, skating on it Thursday. Retailer shipping was quick.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 202,
+    "category": "Skates",
+    "brand": "CCM",
+    "name": "Jetspeed FT6 Pro Skate",
+    "rating": 4.6,
+    "reviewCount": 132,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      829.0,
+      837.29,
+      824.86,
+      829.0,
+      845.58,
+      820.71,
+      829.0
+    ],
+    "featuredQuote": "Stiff boot, incredible energy transfer.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 829,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 849,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Tapered"
+      },
+      {
+        "label": "Level",
+        "value": "Elite"
+      },
+      {
+        "label": "Weight",
+        "value": "800g"
+      },
+      {
+        "label": "Holder",
+        "value": "XS Holder"
+      },
+      {
+        "label": "Steel",
+        "value": "Stainless"
+      },
+      {
+        "label": "Warranty",
+        "value": "90-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Stiff boot, incredible energy transfer.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Pro-level performance without the pro-level price tag.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 203,
+    "category": "Skates",
+    "brand": "Bauer",
+    "name": "X-LP Skate",
+    "rating": 4.4,
+    "reviewCount": 289,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Great starter",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      199.0,
+      200.99,
+      198.0,
+      199.0,
+      202.98,
+      197.01,
+      199.0
+    ],
+    "featuredQuote": "Perfect first pair for getting back on the ice.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 199,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Ice Warehouse",
+        "price": 205,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 209,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Standard"
+      },
+      {
+        "label": "Level",
+        "value": "Rec"
+      },
+      {
+        "label": "Weight",
+        "value": "900g"
+      },
+      {
+        "label": "Holder",
+        "value": "Tuuk LS"
+      },
+      {
+        "label": "Steel",
+        "value": "Stainless"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Perfect first pair for getting back on the ice.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Great value for the price point — would absolutely buy again.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 204,
+    "category": "Skates",
+    "brand": "CCM",
+    "name": "Tacks AS-580 Skate",
+    "rating": 4.5,
+    "reviewCount": 174,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      399.0,
+      402.99,
+      397.0,
+      399.0,
+      406.98,
+      395.01,
+      399.0
+    ],
+    "featuredQuote": "Comfortable straight out of the box.",
+    "retailers": [
+      {
+        "name": "HockeyMonkey",
+        "price": 399,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 419,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Anatomical"
+      },
+      {
+        "label": "Level",
+        "value": "Intermediate"
+      },
+      {
+        "label": "Weight",
+        "value": "850g"
+      },
+      {
+        "label": "Holder",
+        "value": "SB 4.0"
+      },
+      {
+        "label": "Steel",
+        "value": "Stainless"
+      },
+      {
+        "label": "Warranty",
+        "value": "60-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Comfortable straight out of the box.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Ordered Tuesday, skating on it Thursday. Retailer shipping was quick.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 205,
+    "category": "Skates",
+    "brand": "True",
+    "name": "TF7 Skate",
+    "rating": 4.6,
+    "reviewCount": 88,
+    "imageUrl": null,
+    "deal": "−8%",
+    "note": "Down $50",
+    "priceIsGood": true,
+    "wasPrice": 599,
+    "priceHistory": [
+      599.0,
+      590.67,
+      582.33,
+      574.0,
+      565.67,
+      557.33,
+      549.0
+    ],
+    "featuredQuote": "The adaptive fit is a game changer for wide feet.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 549,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 579,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Adaptive"
+      },
+      {
+        "label": "Level",
+        "value": "Performance"
+      },
+      {
+        "label": "Weight",
+        "value": "820g"
+      },
+      {
+        "label": "Holder",
+        "value": "Shift"
+      },
+      {
+        "label": "Steel",
+        "value": "Stainless"
+      },
+      {
+        "label": "Warranty",
+        "value": "90-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "The adaptive fit is a game changer for wide feet.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Fit runs a touch small; size up if you're in between.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "3mo ago"
+      }
+    ]
+  },
+  {
+    "id": 301,
+    "category": "Helmets",
+    "brand": "Bauer",
+    "name": "Re-Akt 200",
+    "rating": 4.7,
+    "reviewCount": 143,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      159.0,
+      160.59,
+      158.21,
+      159.0,
+      162.18,
+      157.41,
+      159.0
+    ],
+    "featuredQuote": "Best-in-class protection and it's genuinely comfy.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 159,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 169,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Sizes",
+        "value": "S–L"
+      },
+      {
+        "label": "Cert",
+        "value": "HECC / CSA"
+      },
+      {
+        "label": "Fit system",
+        "value": "Tool-free dial"
+      },
+      {
+        "label": "Weight",
+        "value": "520g"
+      },
+      {
+        "label": "Warranty",
+        "value": "1-yr"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Best-in-class protection and it's genuinely comfy.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Fit runs a touch small; size up if you're in between.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 302,
+    "category": "Helmets",
+    "brand": "CCM",
+    "name": "Tacks 720",
+    "rating": 4.5,
+    "reviewCount": 167,
+    "imageUrl": null,
+    "deal": "−15%",
+    "note": "Down $40",
+    "priceIsGood": true,
+    "wasPrice": 149,
+    "priceHistory": [
+      149.0,
+      142.33,
+      135.67,
+      129.0,
+      122.33,
+      115.67,
+      109.0
+    ],
+    "featuredQuote": "Great mid-tier lid, easy dial adjustment.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 109,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 129,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Sizes",
+        "value": "S–XL"
+      },
+      {
+        "label": "Cert",
+        "value": "HECC / CSA"
+      },
+      {
+        "label": "Fit system",
+        "value": "Dial"
+      },
+      {
+        "label": "Weight",
+        "value": "540g"
+      },
+      {
+        "label": "Warranty",
+        "value": "1-yr"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Great mid-tier lid, easy dial adjustment.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Great value for the price point — would absolutely buy again.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 303,
+    "category": "Helmets",
+    "brand": "Warrior",
+    "name": "Alpha One Pro",
+    "rating": 4.6,
+    "reviewCount": 72,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      189.0,
+      190.89,
+      188.06,
+      189.0,
+      192.78,
+      187.11,
+      189.0
+    ],
+    "featuredQuote": "Light and low-profile without feeling cheap.",
+    "retailers": [
+      {
+        "name": "HockeyMonkey",
+        "price": 189,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 199,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Sizes",
+        "value": "S–L"
+      },
+      {
+        "label": "Cert",
+        "value": "HECC / CSA"
+      },
+      {
+        "label": "Fit system",
+        "value": "Micro-dial"
+      },
+      {
+        "label": "Weight",
+        "value": "500g"
+      },
+      {
+        "label": "Warranty",
+        "value": "1-yr"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Light and low-profile without feeling cheap.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Pro-level performance without the pro-level price tag.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 304,
+    "category": "Helmets",
+    "brand": "Bauer",
+    "name": "IMS 5.0",
+    "rating": 4.3,
+    "reviewCount": 231,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Best budget",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      79.0,
+      79.79,
+      78.61,
+      79.0,
+      80.58,
+      78.21,
+      79.0
+    ],
+    "featuredQuote": "Can't beat the price for a certified helmet.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 79,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Ice Warehouse",
+        "price": 82,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 85,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Sizes",
+        "value": "S–XL"
+      },
+      {
+        "label": "Cert",
+        "value": "HECC / CSA"
+      },
+      {
+        "label": "Fit system",
+        "value": "Tool adjust"
+      },
+      {
+        "label": "Weight",
+        "value": "560g"
+      },
+      {
+        "label": "Warranty",
+        "value": "6-mo"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Can't beat the price for a certified helmet.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Fit runs a touch small; size up if you're in between.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 401,
+    "category": "Gloves",
+    "brand": "Bauer",
+    "name": "Vapor Hyperlite 2 Glove",
+    "rating": 4.6,
+    "reviewCount": 98,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      189.0,
+      190.89,
+      188.06,
+      189.0,
+      192.78,
+      187.11,
+      189.0
+    ],
+    "featuredQuote": "Broke in quick, great mobility on stickhandling.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 189,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 199,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Tapered"
+      },
+      {
+        "label": "Cuff",
+        "value": "Traditional"
+      },
+      {
+        "label": "Palm",
+        "value": "Nash"
+      },
+      {
+        "label": "Warranty",
+        "value": "60-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Broke in quick, great mobility on stickhandling.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Ordered Tuesday, skating on it Thursday. Retailer shipping was quick.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 402,
+    "category": "Gloves",
+    "brand": "CCM",
+    "name": "Jetspeed FT6 Pro Glove",
+    "rating": 4.6,
+    "reviewCount": 84,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      179.0,
+      180.79,
+      178.1,
+      179.0,
+      182.58,
+      177.21,
+      179.0
+    ],
+    "featuredQuote": "Protective and still flexible where it counts.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 179,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 189,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Tapered"
+      },
+      {
+        "label": "Cuff",
+        "value": "3-piece"
+      },
+      {
+        "label": "Palm",
+        "value": "Nash"
+      },
+      {
+        "label": "Warranty",
+        "value": "60-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Protective and still flexible where it counts.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Pro-level performance without the pro-level price tag.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 403,
+    "category": "Gloves",
+    "brand": "Warrior",
+    "name": "Covert QR5 Pro Glove",
+    "rating": 4.5,
+    "reviewCount": 63,
+    "imageUrl": null,
+    "deal": "−20%",
+    "note": "Clearance deal",
+    "priceIsGood": true,
+    "wasPrice": 149,
+    "priceHistory": [
+      149.0,
+      144.0,
+      139.0,
+      134.0,
+      129.0,
+      124.0,
+      119.0
+    ],
+    "featuredQuote": "Anatomical fit hugs the hand — love these.",
+    "retailers": [
+      {
+        "name": "HockeyMonkey",
+        "price": 119,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 139,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Anatomical"
+      },
+      {
+        "label": "Cuff",
+        "value": "Adjustable"
+      },
+      {
+        "label": "Palm",
+        "value": "Digi"
+      },
+      {
+        "label": "Warranty",
+        "value": "45-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Anatomical fit hugs the hand — love these.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Great value for the price point — would absolutely buy again.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 404,
+    "category": "Gloves",
+    "brand": "Bauer",
+    "name": "Vapor 3X Glove",
+    "rating": 4.3,
+    "reviewCount": 142,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Value pick",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      89.0,
+      89.89,
+      88.55,
+      89.0,
+      90.78,
+      88.11,
+      89.0
+    ],
+    "featuredQuote": "Solid gloves for rec hockey, comfortable palm.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 89,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Ice Warehouse",
+        "price": 92,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 95,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Standard"
+      },
+      {
+        "label": "Cuff",
+        "value": "Traditional"
+      },
+      {
+        "label": "Palm",
+        "value": "PVC"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Solid gloves for rec hockey, comfortable palm.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Ordered Tuesday, skating on it Thursday. Retailer shipping was quick.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 501,
+    "category": "Shoulder pads",
+    "brand": "CCM",
+    "name": "Jetspeed FT4",
+    "rating": 4.5,
+    "reviewCount": 76,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      99.0,
+      99.99,
+      98.5,
+      99.0,
+      100.98,
+      98.01,
+      99.0
+    ],
+    "featuredQuote": "Great mobility, doesn't restrict the shot.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 99,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 109,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Tapered"
+      },
+      {
+        "label": "Level",
+        "value": "Intermediate"
+      },
+      {
+        "label": "Adjust.",
+        "value": "Dual-density"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Great mobility, doesn't restrict the shot.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Fit runs a touch small; size up if you're in between.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 502,
+    "category": "Shoulder pads",
+    "brand": "Bauer",
+    "name": "Supreme M5 Pro",
+    "rating": 4.6,
+    "reviewCount": 54,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      139.0,
+      140.39,
+      138.31,
+      139.0,
+      141.78,
+      137.61,
+      139.0
+    ],
+    "featuredQuote": "Serious protection for shot-blockers.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 139,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 149,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Anatomical"
+      },
+      {
+        "label": "Level",
+        "value": "Elite"
+      },
+      {
+        "label": "Adjust.",
+        "value": "Molded"
+      },
+      {
+        "label": "Warranty",
+        "value": "60-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Serious protection for shot-blockers.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Great value for the price point — would absolutely buy again.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 503,
+    "category": "Shoulder pads",
+    "brand": "Warrior",
+    "name": "Covert QR5",
+    "rating": 4.3,
+    "reviewCount": 41,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Lightweight",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      79.0,
+      79.79,
+      78.61,
+      79.0,
+      80.58,
+      78.21,
+      79.0
+    ],
+    "featuredQuote": "Barely notice I'm wearing them.",
+    "retailers": [
+      {
+        "name": "HockeyMonkey",
+        "price": 79,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 89,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Low-profile"
+      },
+      {
+        "label": "Level",
+        "value": "Rec"
+      },
+      {
+        "label": "Adjust.",
+        "value": "Strap"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Barely notice I'm wearing them.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Pro-level performance without the pro-level price tag.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 601,
+    "category": "Elbow pads",
+    "brand": "CCM",
+    "name": "Jetspeed FT4 Elbow",
+    "rating": 4.5,
+    "reviewCount": 63,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      49.0,
+      49.49,
+      48.76,
+      49.0,
+      49.98,
+      48.51,
+      49.0
+    ],
+    "featuredQuote": "Stay put, no sliding around mid-game.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 49,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 55,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Tapered"
+      },
+      {
+        "label": "Level",
+        "value": "Intermediate"
+      },
+      {
+        "label": "Strap",
+        "value": "Two-strap"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Stay put, no sliding around mid-game.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Ordered Tuesday, skating on it Thursday. Retailer shipping was quick.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 602,
+    "category": "Elbow pads",
+    "brand": "Bauer",
+    "name": "Supreme M3 Elbow",
+    "rating": 4.4,
+    "reviewCount": 88,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Value pick",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      44.0,
+      44.44,
+      43.78,
+      44.0,
+      44.88,
+      43.56,
+      44.0
+    ],
+    "featuredQuote": "Good coverage for the money.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 44,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 49,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Standard"
+      },
+      {
+        "label": "Level",
+        "value": "Rec"
+      },
+      {
+        "label": "Strap",
+        "value": "Single"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Good coverage for the money.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Pro-level performance without the pro-level price tag.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 603,
+    "category": "Elbow pads",
+    "brand": "Warrior",
+    "name": "Alpha LX2 Elbow",
+    "rating": 4.5,
+    "reviewCount": 37,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      59.0,
+      59.59,
+      58.7,
+      59.0,
+      60.18,
+      58.41,
+      59.0
+    ],
+    "featuredQuote": "Locked-in fit with the dual straps.",
+    "retailers": [
+      {
+        "name": "HockeyMonkey",
+        "price": 59,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 65,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Anatomical"
+      },
+      {
+        "label": "Level",
+        "value": "Performance"
+      },
+      {
+        "label": "Strap",
+        "value": "Two-strap"
+      },
+      {
+        "label": "Warranty",
+        "value": "45-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Locked-in fit with the dual straps.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Great value for the price point — would absolutely buy again.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 701,
+    "category": "Shin guards",
+    "brand": "CCM",
+    "name": "Next Shin",
+    "rating": 4.4,
+    "reviewCount": 52,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Value pick",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      59.0,
+      59.59,
+      58.7,
+      59.0,
+      60.18,
+      58.41,
+      59.0
+    ],
+    "featuredQuote": "Comfortable liner, solid kneecap coverage.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 59,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 65,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Tapered"
+      },
+      {
+        "label": "Level",
+        "value": "Rec"
+      },
+      {
+        "label": "Liner",
+        "value": "Moisture-wick"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Comfortable liner, solid kneecap coverage.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Fit runs a touch small; size up if you're in between.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 702,
+    "category": "Shin guards",
+    "brand": "Bauer",
+    "name": "Vapor Hyperlite Shin",
+    "rating": 4.6,
+    "reviewCount": 44,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      129.0,
+      130.29,
+      128.35,
+      129.0,
+      131.58,
+      127.71,
+      129.0
+    ],
+    "featuredQuote": "Blocks slap shots without feeling bulky.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 129,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 139,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Anatomical"
+      },
+      {
+        "label": "Level",
+        "value": "Elite"
+      },
+      {
+        "label": "Liner",
+        "value": "Aeromesh"
+      },
+      {
+        "label": "Warranty",
+        "value": "60-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Blocks slap shots without feeling bulky.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Great value for the price point — would absolutely buy again.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 703,
+    "category": "Shin guards",
+    "brand": "Warrior",
+    "name": "Covert QR5 Shin",
+    "rating": 4.3,
+    "reviewCount": 29,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Lightweight",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      79.0,
+      79.79,
+      78.61,
+      79.0,
+      80.58,
+      78.21,
+      79.0
+    ],
+    "featuredQuote": "Slim profile fits perfectly under my pants.",
+    "retailers": [
+      {
+        "name": "HockeyMonkey",
+        "price": 79,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 89,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Low-profile"
+      },
+      {
+        "label": "Level",
+        "value": "Intermediate"
+      },
+      {
+        "label": "Liner",
+        "value": "Mesh"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Slim profile fits perfectly under my pants.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Pro-level performance without the pro-level price tag.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 801,
+    "category": "Pants",
+    "brand": "Warrior",
+    "name": "Covert QR5 Pants",
+    "rating": 4.5,
+    "reviewCount": 58,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      99.0,
+      99.99,
+      98.5,
+      99.0,
+      100.98,
+      98.01,
+      99.0
+    ],
+    "featuredQuote": "Great range of motion, adjustable waist is clutch.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 99,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 109,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Contoured"
+      },
+      {
+        "label": "Level",
+        "value": "Performance"
+      },
+      {
+        "label": "Adjust.",
+        "value": "Belt + lace"
+      },
+      {
+        "label": "Warranty",
+        "value": "45-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Great range of motion, adjustable waist is clutch.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Ordered Tuesday, skating on it Thursday. Retailer shipping was quick.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 802,
+    "category": "Pants",
+    "brand": "CCM",
+    "name": "Jetspeed FT4 Pants",
+    "rating": 4.4,
+    "reviewCount": 47,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      89.0,
+      89.89,
+      88.55,
+      89.0,
+      90.78,
+      88.11,
+      89.0
+    ],
+    "featuredQuote": "Good protection, internal adjustment is easy.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 89,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 99,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Tapered"
+      },
+      {
+        "label": "Level",
+        "value": "Intermediate"
+      },
+      {
+        "label": "Adjust.",
+        "value": "Internal"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Good protection, internal adjustment is easy.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Pro-level performance without the pro-level price tag.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 803,
+    "category": "Pants",
+    "brand": "Bauer",
+    "name": "Supreme M3 Pants",
+    "rating": 4.3,
+    "reviewCount": 66,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Value pick",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      69.0,
+      69.69,
+      68.66,
+      69.0,
+      70.38,
+      68.31,
+      69.0
+    ],
+    "featuredQuote": "Does everything a rec player needs.",
+    "retailers": [
+      {
+        "name": "HockeyMonkey",
+        "price": 69,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 79,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Fit",
+        "value": "Standard"
+      },
+      {
+        "label": "Level",
+        "value": "Rec"
+      },
+      {
+        "label": "Adjust.",
+        "value": "Belt"
+      },
+      {
+        "label": "Warranty",
+        "value": "30-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Does everything a rec player needs.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Great value for the price point — would absolutely buy again.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 901,
+    "category": "Bags",
+    "brand": "Grit",
+    "name": "HTFX Wheeled Tower",
+    "rating": 4.6,
+    "reviewCount": 412,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Best seller",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      119.0,
+      120.19,
+      118.41,
+      119.0,
+      121.38,
+      117.81,
+      119.0
+    ],
+    "featuredQuote": "Holds everything and the tower design keeps gear dry.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 119,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 129,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Type",
+        "value": "Wheeled tower"
+      },
+      {
+        "label": "Capacity",
+        "value": "33\""
+      },
+      {
+        "label": "Wheels",
+        "value": "Yes"
+      },
+      {
+        "label": "Warranty",
+        "value": "1-yr"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Holds everything and the tower design keeps gear dry.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Fit runs a touch small; size up if you're in between.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 902,
+    "category": "Bags",
+    "brand": "Bauer",
+    "name": "Elite Wheeled Bag",
+    "rating": 4.5,
+    "reviewCount": 187,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      139.0,
+      140.39,
+      138.31,
+      139.0,
+      141.78,
+      137.61,
+      139.0
+    ],
+    "featuredQuote": "Durable wheels, rolls easy through the parking lot.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 139,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 149,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Type",
+        "value": "Wheeled"
+      },
+      {
+        "label": "Capacity",
+        "value": "33\""
+      },
+      {
+        "label": "Wheels",
+        "value": "Yes"
+      },
+      {
+        "label": "Warranty",
+        "value": "1-yr"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Durable wheels, rolls easy through the parking lot.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Great value for the price point — would absolutely buy again.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 903,
+    "category": "Bags",
+    "brand": "CCM",
+    "name": "350 Player Carry",
+    "rating": 4.4,
+    "reviewCount": 231,
+    "imageUrl": null,
+    "deal": "−18%",
+    "note": "Deal of the week",
+    "priceIsGood": true,
+    "wasPrice": 59,
+    "priceHistory": [
+      59.0,
+      57.33,
+      55.67,
+      54.0,
+      52.33,
+      50.67,
+      49.0
+    ],
+    "featuredQuote": "Simple, cheap, and it lasts. What more do you need.",
+    "retailers": [
+      {
+        "name": "HockeyMonkey",
+        "price": 49,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 59,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Type",
+        "value": "Carry"
+      },
+      {
+        "label": "Capacity",
+        "value": "33\""
+      },
+      {
+        "label": "Wheels",
+        "value": "No"
+      },
+      {
+        "label": "Warranty",
+        "value": "6-mo"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Lars H.",
+        "rating": 4,
+        "text": "Simple, cheap, and it lasts. What more do you need.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Mike D.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Pro-level performance without the pro-level price tag.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "2w ago"
+      }
+    ]
+  },
+  {
+    "id": 1001,
+    "category": "Goalie gear",
+    "brand": "CCM",
+    "name": "Axis 2 Leg Pads",
+    "rating": 4.7,
+    "reviewCount": 58,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      1899.0,
+      1917.99,
+      1889.5,
+      1899.0,
+      1936.98,
+      1880.01,
+      1899.0
+    ],
+    "featuredQuote": "Rebounds are crisp and they break in fast.",
+    "retailers": [
+      {
+        "name": "Pure Hockey",
+        "price": 1899,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "HockeyMonkey",
+        "price": 1999,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Type",
+        "value": "Leg pads"
+      },
+      {
+        "label": "Level",
+        "value": "Elite"
+      },
+      {
+        "label": "Size",
+        "value": "34+2\""
+      },
+      {
+        "label": "Warranty",
+        "value": "90-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Jenny R.",
+        "rating": 4,
+        "text": "Rebounds are crisp and they break in fast.",
+        "date": "2w ago"
+      },
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Ordered Tuesday, skating on it Thursday. Retailer shipping was quick.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Lighter than my old setup, and you notice it by the third period.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 1002,
+    "category": "Goalie gear",
+    "brand": "Bauer",
+    "name": "Vapor Hyperlite Catch Glove",
+    "rating": 4.6,
+    "reviewCount": 42,
+    "imageUrl": null,
+    "deal": null,
+    "note": "Stable price",
+    "priceIsGood": false,
+    "wasPrice": null,
+    "priceHistory": [
+      329.0,
+      332.29,
+      327.36,
+      329.0,
+      335.58,
+      325.71,
+      329.0
+    ],
+    "featuredQuote": "Deep pocket, closes smooth. Love it.",
+    "retailers": [
+      {
+        "name": "Ice Warehouse",
+        "price": 329,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 349,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Type",
+        "value": "Catch glove"
+      },
+      {
+        "label": "Level",
+        "value": "Performance"
+      },
+      {
+        "label": "Size",
+        "value": "590°"
+      },
+      {
+        "label": "Warranty",
+        "value": "60-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Tommy K.",
+        "rating": 5,
+        "text": "Deep pocket, closes smooth. Love it.",
+        "date": "1mo ago"
+      },
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Pro-level performance without the pro-level price tag.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Broke in fast and feels dialed. Zero complaints after a full season.",
+        "date": "5mo ago"
+      }
+    ]
+  },
+  {
+    "id": 1003,
+    "category": "Goalie gear",
+    "brand": "Warrior",
+    "name": "Ritual G7 Blocker",
+    "rating": 4.4,
+    "reviewCount": 31,
+    "imageUrl": null,
+    "deal": "−12%",
+    "note": "Down $30",
+    "priceIsGood": true,
+    "wasPrice": 229,
+    "priceHistory": [
+      229.0,
+      224.0,
+      219.0,
+      214.0,
+      209.0,
+      204.0,
+      199.0
+    ],
+    "featuredQuote": "Big rebound board, solid deflections.",
+    "retailers": [
+      {
+        "name": "HockeyMonkey",
+        "price": 199,
+        "url": "#",
+        "inStock": true
+      },
+      {
+        "name": "Pure Hockey",
+        "price": 229,
+        "url": "#",
+        "inStock": true
+      }
+    ],
+    "specs": [
+      {
+        "label": "Type",
+        "value": "Blocker"
+      },
+      {
+        "label": "Level",
+        "value": "Intermediate"
+      },
+      {
+        "label": "Size",
+        "value": "Standard"
+      },
+      {
+        "label": "Warranty",
+        "value": "45-day"
+      }
+    ],
+    "reviewList": [
+      {
+        "author": "Sarah P.",
+        "rating": 4,
+        "text": "Big rebound board, solid deflections.",
+        "date": "3mo ago"
+      },
+      {
+        "author": "Chris B.",
+        "rating": 5,
+        "text": "Solid all-around. Nothing flashy, just does the job every shift.",
+        "date": "5mo ago"
+      },
+      {
+        "author": "Angela M.",
+        "rating": 4,
+        "text": "Great value for the price point — would absolutely buy again.",
+        "date": "4d ago"
+      },
+      {
+        "author": "Dave S.",
+        "rating": 5,
+        "text": "Durable and comfortable. Held up to heavy beer-league abuse.",
+        "date": "2w ago"
+      }
+    ]
+  }
+]

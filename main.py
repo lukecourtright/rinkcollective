@@ -24,6 +24,7 @@ GOOGLE_PLACES_API_KEY = os.environ.get("GOOGLE_PLACES_API_KEY")
 ADMIN_EMAILS = {e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()}
 
 RINKS_FILE = pathlib.Path("rinks.json")
+EQUIPMENT_FILE = pathlib.Path("equipment.json")
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./dev.db")
 if DATABASE_URL.startswith("postgres://"):
@@ -54,6 +55,25 @@ class Rink(SQLModel, table=True):
     reviews: list = Field(default_factory=list, sa_column=Column(JSON))
     photos: list = Field(default_factory=list, sa_column=Column(JSON))
     googlePlaceId: Optional[str] = None
+
+
+class Equipment(SQLModel, table=True):
+    id: int = Field(primary_key=True)
+    category: str
+    brand: str
+    name: str
+    rating: float = 0
+    reviewCount: int = 0
+    imageUrl: Optional[str] = None
+    deal: Optional[str] = None
+    note: str = "Stable price"
+    priceIsGood: bool = False
+    wasPrice: Optional[float] = None
+    priceHistory: list = Field(default_factory=list, sa_column=Column(JSON))
+    featuredQuote: str = ""
+    retailers: list = Field(default_factory=list, sa_column=Column(JSON))
+    specs: list = Field(default_factory=list, sa_column=Column(JSON))
+    reviewList: list = Field(default_factory=list, sa_column=Column(JSON))
 
 
 class PendingRink(SQLModel, table=True):
@@ -108,14 +128,16 @@ def ensure_new_columns():
     # that already exist in production — this adds any model column the live
     # table doesn't have yet, so schema additions don't need Alembic.
     inspector = inspect(engine)
-    if "rink" not in inspector.get_table_names():
-        return
-    existing = {col["name"] for col in inspector.get_columns("rink")}
-    with engine.begin() as conn:
-        for column in Rink.__table__.columns:
-            if column.name not in existing:
-                ddl = CreateColumn(column).compile(dialect=engine.dialect)
-                conn.execute(text(f"ALTER TABLE rink ADD COLUMN {ddl}"))
+    existing_tables = set(inspector.get_table_names())
+    for table_name, model in (("rink", Rink), ("equipment", Equipment)):
+        if table_name not in existing_tables:
+            continue
+        existing = {col["name"] for col in inspector.get_columns(table_name)}
+        with engine.begin() as conn:
+            for column in model.__table__.columns:
+                if column.name not in existing:
+                    ddl = CreateColumn(column).compile(dialect=engine.dialect)
+                    conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {ddl}"))
 
 
 def sync_rinks_from_file():
@@ -129,11 +151,23 @@ def sync_rinks_from_file():
         session.commit()
 
 
+def sync_equipment_from_file():
+    products = json.loads(EQUIPMENT_FILE.read_text(encoding="utf-8"))
+    with Session(engine) as session:
+        for product in products:
+            session.merge(Equipment(**product))
+        file_ids = {p["id"] for p in products}
+        for stale in session.exec(select(Equipment).where(Equipment.id.not_in(file_ids))).all():
+            session.delete(stale)
+        session.commit()
+
+
 @app.on_event("startup")
 def on_startup():
     SQLModel.metadata.create_all(engine)
     ensure_new_columns()
     sync_rinks_from_file()
+    sync_equipment_from_file()
 
 
 @app.get("/")
@@ -141,11 +175,23 @@ def root():
     return FileResponse("static/index.html")
 
 
+@app.get("/equipment")
+def equipment_page():
+    return FileResponse("static/equipment.html")
+
+
 @app.get("/api/rinks")
 def get_rinks():
     with Session(engine) as session:
         rinks = session.exec(select(Rink)).all()
         return [rink.model_dump() for rink in rinks]
+
+
+@app.get("/api/equipment")
+def get_equipment():
+    with Session(engine) as session:
+        products = session.exec(select(Equipment)).all()
+        return [product.model_dump() for product in products]
 
 
 @app.get("/api/photos/{rink_id}/{photo_idx}")

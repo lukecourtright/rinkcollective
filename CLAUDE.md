@@ -35,7 +35,8 @@ Live at `https://barnandbiscuit-production.up.railway.app`. GitHub repo: `github
 The brand name is TBD — "HockeyLifers" domain was taken, "Barn & Biscuit" is the current placeholder. To rename:
 1. Change `this.BRAND = 'Barn & Biscuit'` near the top of `static/index.html`
 2. Update `<title>` in the same file
-3. That's it — all wordmark rendering derives from `this.BRAND`
+3. That's it for Rink Finder — all wordmark rendering there derives from `this.BRAND`
+4. `static/equipment.html` has its own hardcoded wordmark markup (nav) and `<title>` — it's a standalone page, not driven by `this.BRAND`, so update it separately
 
 ---
 
@@ -48,6 +49,7 @@ barnbiscuit/
 ├── main.py                    # FastAPI app + SQLModel models
 ├── rinks.json                 # Curated rink data — source of truth, synced into the DB on startup
 ├── rinks_import_template.csv  # CSV template for bulk-adding rinks (fill in, run import script)
+├── equipment.json             # Curated gear catalog data — source of truth, synced into the DB on startup
 ├── scripts/
 │   ├── import_rinks_csv.py         # Merges a filled CSV batch (new rinks) into rinks.json
 │   ├── export_rinks_csv.py         # Dumps all of rinks.json to one CSV for manual review/editing
@@ -58,7 +60,8 @@ barnbiscuit/
 ├── railway.toml
 ├── run.bat
 └── static/
-    ├── index.html           # Entire frontend SPA
+    ├── index.html           # Entire frontend SPA (Rink Finder)
+    ├── equipment.html       # Standalone page — gear catalog/compare/detail-drawer app (affiliate shopping, see Equipment section below)
     ├── admin.html           # Standalone page — review/approve/reject pending user-submitted photos (see ADMIN_EMAILS above)
     ├── brand-tokens.css     # CSS custom properties (Neon Night palette)
     └── logo/                # Favicons + SVG marks
@@ -66,10 +69,12 @@ barnbiscuit/
 
 ### Backend (`main.py`)
 
-Data is stored in a database (Postgres in production via Railway addon, local SQLite fallback otherwise) accessed through SQLModel. `rinks.json` remains the human/AI-edited source of truth — on every startup, `SQLModel.metadata.create_all()` creates tables if missing, `ensure_new_columns()` `ALTER TABLE ADD COLUMN`s anything the `Rink` model has that an *already-existing* table doesn't (since `create_all()` only creates missing tables, not missing columns — without this, adding a field to `Rink` crashes startup against a live Postgres table with `UndefinedColumn`), then `sync_rinks_from_file()` upserts (by `id`) every rink from `rinks.json` into the `Rink` table and deletes any row whose `id` is no longer in the file. Pushing an updated `rinks.json` to `main` (additions, edits, *and* removals) is enough to update production data on the next deploy — and adding a new column to the `Rink` model itself is safe to deploy directly, no manual migration step needed.
+Data is stored in a database (Postgres in production via Railway addon, local SQLite fallback otherwise) accessed through SQLModel. `rinks.json` remains the human/AI-edited source of truth — on every startup, `SQLModel.metadata.create_all()` creates tables if missing, `ensure_new_columns()` `ALTER TABLE ADD COLUMN`s anything the `Rink`/`Equipment` models have that their *already-existing* tables don't (since `create_all()` only creates missing tables, not missing columns — without this, adding a field to either model crashes startup against a live Postgres table with `UndefinedColumn`; it loops over both tables so new columns on either are covered), then `sync_rinks_from_file()` and `sync_equipment_from_file()` each upsert (by `id`) every row from their JSON file into the matching table and delete any row whose `id` is no longer in the file. Pushing an updated `rinks.json`/`equipment.json` to `main` (additions, edits, *and* removals) is enough to update production data on the next deploy — and adding a new column to `Rink`/`Equipment` itself is safe to deploy directly, no manual migration step needed.
 
 - `GET /` → serves `static/index.html`
 - `GET /api/rinks` → queries the `Rink` table, returns all rows as JSON (same shape as before)
+- `GET /equipment` → serves `static/equipment.html`, the gear catalog page (not part of the `RinkFinder` SPA — same standalone-page pattern as `/admin/photos`)
+- `GET /api/equipment` → queries the `Equipment` table, returns all rows as JSON. The catalog is small (~37 rows) so all data ships at once; filtering/sorting/comparing happens client-side, same approach `RinkFinder` uses for the much larger rinks list
 - `GET /api/photos/{rink_id}/{photo_idx}` → looks up `rink.photos[photo_idx].ref` (a Google Places photo resource name) and redirects to a freshly-fetched Google-hosted image URL, with a `Cache-Control` header so browsers don't re-hit this (and therefore Google) on every load. Requires `GOOGLE_PLACES_API_KEY`; 404s otherwise or if the rink/index doesn't exist, which the frontend treats as "no real photo" and falls back to placeholders
 - `POST /api/rinks/submit` → inserts community-submitted rinks into the `PendingRink` table (`id`, `submittedAt`, raw `data` JSON blob) — not public until moderated, no validation yet
 - `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/logout`, `GET /api/auth/me` → email/password auth against the `User` table (`id`, `email`, `passwordHash` (bcrypt), `displayName`, `createdAt`). Login state is a signed, httponly session cookie (Starlette `SessionMiddleware`, see `SECRET_KEY` above) holding `user_id` — no tokens handled in JS.
@@ -187,6 +192,44 @@ Source of truth for rink data — edit by hand to add/remove/update. Synced into
 ```
 `reviews` entries pulled from Google get an additional `"source": "google"` key (absent = hand-curated). `photos`/`googlePlaceId` are populated by `scripts/fetch_google_places_data.py` — see the backfill workflow above — and are omitted entirely for rinks that haven't been matched yet.
 
+### Equipment (`static/equipment.html`, `equipment.json`)
+
+Full-screen gear catalog/comparison app — Barn & Biscuit's second feature alongside Rink Finder, and its first revenue path (affiliate shopping links). Standalone page at `GET /equipment`, sharing only the nav bar and brand tokens with Rink Finder; it has its own `class Equipment { state, setState(), render() }` (same pattern as `RinkFinder`, not the thin `admin.html` template-string style) because its UI — filters, sort, a multi-select compare tray, a compare overlay, a detail drawer — is comparably complex.
+
+- **State** (`this.state` in `static/equipment.html`): `products` (fetched from `/api/equipment` on init), `category`, `search`, `brands` (checked filters), `maxPrice`, `minRating`, `sort`, `compare` (selected product ids, max 4), `compareOpen`, `detailId`.
+- **Sidebar** — 10 fixed categories (Skates, Sticks, Helmets, Gloves, Shoulder pads, Elbow pads, Shin guards, Pants, Bags, Goalie gear) each with a live product count; brand checkboxes generated per-category; a max-price slider bounded by that category's cheapest/priciest product; min-rating pills. Selecting a category resets brand/price/rating filters and clears the compare tray (`selectCategory()`) — compare is intentionally single-category.
+- **Catalog cards** — image tile (category SVG icon placeholder — swap for `imageUrl` once real product photography exists), spec chips, star rating, featured review quote, best price with a synthetic 90-day sparkline (`sparkline()`), a primary "Buy at {retailer}" button, up to 2 other retailer prices, and a Compare toggle.
+- **Compare** — sticky bottom tray appears at 1+ selected, "Compare N →" enables at 2+, opens a modal (`renderCompareOverlay()`) with a CSS-grid spec table; Best price (lowest), Rating (highest), and Weight (lowest, parsed numerically) get a gold "BEST" flag via `BEST_NUMERIC_SPECS`.
+- **Detail drawer** (`renderDrawer()`) — slides in from the right on card click; price panel with all retailers ranked cheapest-first, the FTC-style affiliate disclosure line, full specs table, and a reviews summary (rating histogram) + list.
+- **Buy/View links are inert placeholders** (`href="#"`, `app.noop()` calls `preventDefault()`/`stopPropagation()`) — see Not Yet Implemented below.
+
+### Data (`equipment.json`)
+
+Source of truth for the gear catalog, same sync-on-startup treatment as `rinks.json` (see Backend above): upserted by `id` into the `Equipment` table, stale rows deleted. **All 37 products are illustrative mock data** (ported from the design handoff prototype) — brands, model names, specs, prices, and reviews are not real and must not be treated as live pricing.
+
+**Schema** (mirrors the `Equipment` SQLModel in `main.py`):
+```json
+{
+  "id": 101,
+  "category": "Sticks",
+  "brand": "Bauer",
+  "name": "Vapor Hyperlite 2",
+  "rating": 4.7,
+  "reviewCount": 212,
+  "imageUrl": null,
+  "deal": "−12%",
+  "note": "Lowest in 90 days",
+  "priceIsGood": true,
+  "wasPrice": 329,
+  "priceHistory": [329.0, 322.33, "..."],
+  "featuredQuote": "Lightning-quick release — the snap is unreal.",
+  "retailers": [{ "name": "Pure Hockey", "price": 289, "url": "#", "inStock": true }],
+  "specs": [{ "label": "Flex", "value": "77" }],
+  "reviewList": [{ "author": "Mike D.", "rating": 5, "text": "...", "date": "4d ago" }]
+}
+```
+`deal`/`wasPrice` are omitted (`null`) for products with no active deal. `priceIsGood` drives the sparkline/note color (green "positive signal" vs neutral "Stable price"). Specs are consistent within a category (same label set) so the compare table aligns.
+
 ### Brand System (`static/brand-tokens.css`, `static/logo/`)
 
 - Copied from `C:\Users\lukec\Desktop\SpendTools\design_handoff_brand_system\` — do not edit in place; re-copy from source if the design system is updated
@@ -202,5 +245,7 @@ Source of truth for rink data — edit by hand to add/remove/update. Synced into
 - Admin UI for moderating community-submitted rinks (sit in the `PendingRink` table, unvalidated) — the pending-photo review page (`/admin/photos`, gated on `ADMIN_EMAILS`, see Backend above) is a close precedent to extend for this: same `require_admin()` gate, same list/approve/reject shape, just against `PendingRink` instead of `RinkPhoto`
 - Server-persisted *user-submitted* check-ins and reviews (session-only in v1 — see `myCheckins`/`myReviews` above) — accounts now exist to attribute these to, but neither is wired to the `User` table yet. Photos got this treatment already (`POST /api/rinks/{rink_id}/photos` → `RinkPhoto` table → `/admin/photos` review queue → public once approved) and would be the template to follow. This is separate from the Google-sourced reviews/photos in `rinks.json`, which are real but were pulled once, not submitted by app users
 - Real schema migrations (no Alembic) — `ensure_new_columns()` in `main.py` covers the common case of adding a new nullable column, but column renames/type changes/drops still have no automated path and would need a manual `ALTER TABLE` against the Railway Postgres addon
-- Community and News sections (nav links present but inactive)
+- Community section — **temporarily removed from the nav** (not deleted) in favor of Equipment, a business decision to prioritize the affiliate revenue path. The dead `<a>` link is commented out in `static/index.html`'s nav (`static/equipment.html` never had it); there's no actual Community route/component to restore beyond that. News is unaffected (nav link present but inactive, as before)
+- Real affiliate program for Equipment — no partner tags or confirmed retailer relationships exist yet, so every "Buy"/"View →" link in `static/equipment.html` is an inert placeholder (`href="#"`, no navigation). Wiring this up means: real outbound links with partner parameters per retailer, click analytics, and legal sign-off on the disclosure copy. Product data itself is also mock (see Equipment Data above) and needs a real catalog + price feed (own product/UPC matching across retailers, daily price snapshots for the sparkline/"lowest in 90 days" signal)
+- Equipment mobile layout — the catalog/sidebar/compare-table/drawer are desktop-only (matches the design handoff, which explicitly flagged mobile as an unscoped follow-up)
 - "Submit an Event" button (UI only, no backend) — "Write a Review" now has a working session-local composer (see above), just not server-persisted
