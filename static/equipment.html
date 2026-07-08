@@ -64,7 +64,7 @@
   .stars { color: var(--color-accent); font-size: 12px; letter-spacing: 1px; }
 
   .price-col { width: 216px; flex-shrink: 0; padding-left: 16px; border-left: 1px solid var(--hair); display: flex; flex-direction: column; }
-  .buy-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; background: var(--color-primary); color: var(--on-primary); border: none; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .buy-btn { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 12px; background: var(--color-primary); color: var(--on-primary); border: none; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; text-decoration: none; }
   .retailer-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
   .compare-toggle { margin-top: 8px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: transparent; color: var(--neutral-400); font-family: inherit; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
   .compare-toggle.active { border-color: var(--color-primary); background: rgba(20,207,207,0.12); color: var(--color-primary); font-weight: 600; }
@@ -241,7 +241,16 @@ class Equipment {
   closeDetail() { this.setState({ detailId: null }); }
   openCompare() { if (this.state.compare.length >= 2) this.setState({ compareOpen: true }); }
   closeCompare() { this.setState({ compareOpen: false }); }
-  noop(e) { e.preventDefault(); e.stopPropagation(); }
+  // Stops the click from also triggering the card/row's own onclick (e.g.
+  // opening the detail drawer), and only blocks navigation for products
+  // with no real offer yet (mock data's retailer urls are still "#").
+  // Reads href off the DOM instead of interpolating the url into this
+  // onclick string, to avoid breaking the attribute on urls with quotes.
+  buyClick(e) {
+    e.stopPropagation();
+    const href = e.currentTarget.getAttribute('href');
+    if (!href || href === '#') e.preventDefault();
+  }
 
   sparkline(history, w, h, color) {
     if (!history || history.length < 2) return '';
@@ -380,7 +389,7 @@ class Equipment {
             <span>${p.note}</span>
           </div>
           <div style="margin-bottom:8px;">${this.sparkline(p.priceHistory, 72, 22, p.priceIsGood ? '#34E0A0' : '#656C84')}</div>
-          <button class="buy-btn" onclick="app.noop(event)">Buy at ${bestRet.name} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></button>
+          <a class="buy-btn" href="${bestRet.url}" target="_blank" rel="noopener sponsored" onclick="app.buyClick(event)">Buy at ${bestRet.name} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></a>
           ${others.map(r => `<div class="retailer-row"><span style="color:var(--neutral-500);">${r.name}</span><span style="font-family:var(--font-mono);color:var(--text-muted);">$${r.price}</span></div>`).join('')}
           <button class="compare-toggle ${inCompare ? 'active' : ''}" onclick="app.toggleCompare(${p.id}, event)">${inCompare ? '✓ In compare' : '＋ Compare'}</button>
         </div>
@@ -469,7 +478,7 @@ class Equipment {
     const buyRow = items.map(p => {
       const best = this.bestPrice(p);
       const ret = this.bestRetailer(p);
-      return `<button onclick="app.noop(event)" style="padding:8px;border-radius:9px;border:none;background:var(--color-primary);color:var(--on-primary);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">$${best} · ${ret.name}</button>`;
+      return `<a href="${ret.url}" target="_blank" rel="noopener sponsored" onclick="app.buyClick(event)" style="display:inline-block;text-decoration:none;padding:8px;border-radius:9px;border:none;background:var(--color-primary);color:var(--on-primary);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;">$${best} · ${ret.name}</a>`;
     }).join('');
 
     root.innerHTML = `
@@ -513,7 +522,7 @@ class Equipment {
         <span style="font-size:13px;color:var(--text-muted);">${r.name}</span>
         <div style="display:flex;align-items:center;gap:10px;">
           <span style="font-family:var(--font-mono);font-size:13px;color:${i === 0 ? 'var(--success)' : 'var(--text-muted)'};">$${r.price}</span>
-          <a href="#" onclick="app.noop(event)" style="font-size:12px;color:var(--color-primary);">View →</a>
+          <a href="${r.url}" target="_blank" rel="noopener sponsored" onclick="app.buyClick(event)" style="font-size:12px;color:var(--color-primary);">View →</a>
         </div>
       </div>`).join('');
 
@@ -573,7 +582,7 @@ class Equipment {
             </div>
             <div style="font-size:12px;color:${noteColor};margin-bottom:8px;">${p.note}</div>
             <div style="margin-bottom:12px;">${this.sparkline(p.priceHistory, 90, 30, p.priceIsGood ? '#34E0A0' : '#656C84')}</div>
-            <button class="buy-btn" style="width:100%;margin-bottom:10px;" onclick="app.noop(event)">Buy at ${bestRet.name} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></button>
+            <a class="buy-btn" style="width:100%;margin-bottom:10px;" href="${bestRet.url}" target="_blank" rel="noopener sponsored" onclick="app.buyClick(event)">Buy at ${bestRet.name} <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M7 7h10v10"/></svg></a>
             ${retailerRows}
             <div style="font-size:10px;color:var(--neutral-700);margin-top:8px;line-height:1.5;">Barn &amp; Biscuit earns a commission on purchases made through these links, at no extra cost to you. Prices updated daily.</div>
           </div>
