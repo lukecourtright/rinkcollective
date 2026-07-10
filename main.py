@@ -1,7 +1,7 @@
 import json
 import os
 import pathlib
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 import bcrypt
@@ -9,7 +9,7 @@ import httpx
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import JSON, Column, LargeBinary, inspect, text
+from sqlalchemy import JSON, Column, LargeBinary, func, inspect, text
 from sqlalchemy.schema import CreateColumn
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 from starlette.middleware.sessions import SessionMiddleware
@@ -56,6 +56,7 @@ class Rink(SQLModel, table=True):
     reviews: list = Field(default_factory=list, sa_column=Column(JSON))
     photos: list = Field(default_factory=list, sa_column=Column(JSON))
     googlePlaceId: Optional[str] = None
+    adminEditedAt: Optional[str] = None
 
 
 class Equipment(SQLModel, table=True):
@@ -156,6 +157,28 @@ class User(SQLModel, table=True):
     passwordHash: str
     displayName: str
     createdAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    loginCount: int = 0
+
+
+class AdminActivity(SQLModel, table=True):
+    # Server-generated audit trail behind the Admin Console's Overview
+    # "recent activity" card and the Activity Log section. kind drives icon
+    # + color in the frontend: "user" | "photo" | "reject" | "rink".
+    id: Optional[int] = Field(default=None, primary_key=True)
+    kind: str
+    text: str
+    actorId: Optional[int] = None
+    actorName: Optional[str] = None
+    createdAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+def log_activity(session: Session, kind: str, text: str, actor: Optional[User] = None):
+    session.add(AdminActivity(
+        kind=kind,
+        text=text,
+        actorId=actor.id if actor else None,
+        actorName=actor.displayName if actor else None,
+    ))
 
 
 def hash_password(password: str) -> str:
@@ -193,6 +216,8 @@ def ensure_new_columns():
         ("equipmentpricesnapshot", EquipmentPriceSnapshot),
         ("guide", Guide),
         ("guideprogress", GuideProgress),
+        ("user", User),
+        ("adminactivity", AdminActivity),
     ):
         if table_name not in existing_tables:
             continue
@@ -208,6 +233,13 @@ def sync_rinks_from_file():
     rinks = json.loads(RINKS_FILE.read_text(encoding="utf-8"))
     with Session(engine) as session:
         for rink in rinks:
+            existing = session.get(Rink, rink["id"])
+            if existing is not None and existing.adminEditedAt:
+                # Rink was edited in the Admin Console — rinks.json no longer
+                # owns its fields, so skip the overwrite (see CLAUDE.md "Live
+                # Offers" precedent: EquipmentOffer/GuideProgress are also
+                # exceptions to the file-is-truth pattern).
+                continue
             session.merge(Rink(**rink))
         file_ids = {r["id"] for r in rinks}
         for stale in session.exec(select(Rink).where(Rink.id.not_in(file_ids))).all():
@@ -430,32 +462,46 @@ async def upload_rink_photo(
     return {"status": "pending_review"}
 
 
-@app.get("/admin/photos")
-def admin_photos_page():
+@app.get("/admin")
+def admin_console_page():
     return FileResponse("static/admin.html")
 
 
+@app.get("/admin/photos")
+def admin_photos_redirect():
+    # Old bare-bones photo-review page's route, kept for bookmark
+    # compatibility — now redirects into the full Admin Console.
+    return RedirectResponse("/admin?view=photos")
+
+
+def serialize_admin_photo(photo: RinkPhoto, session: Session) -> dict:
+    rink = session.get(Rink, photo.rinkId)
+    user = session.get(User, photo.userId)
+    return {
+        "id": photo.id,
+        "rinkId": photo.rinkId,
+        "rinkName": rink.name if rink else "(deleted rink)",
+        "rinkCity": rink.city if rink else "",
+        "rinkState": rink.state if rink else "",
+        "rinkType": rink.type if rink else "STANDARD",
+        "caption": photo.caption,
+        "submittedAt": photo.submittedAt,
+        "submitterName": user.displayName if user else "(deleted user)",
+        "submitterEmail": user.email if user else "",
+    }
+
+
 @app.get("/api/admin/photos")
-def list_pending_photos(request: Request):
+def list_admin_photos(request: Request, status: str = "pending"):
     with Session(engine) as session:
         require_admin(request, session)
-        photos = session.exec(select(RinkPhoto).where(RinkPhoto.status == "pending")).all()
-        result = []
-        for photo in photos:
-            rink = session.get(Rink, photo.rinkId)
-            user = session.get(User, photo.userId)
-            result.append({
-                "id": photo.id,
-                "rinkId": photo.rinkId,
-                "rinkName": rink.name if rink else "(deleted rink)",
-                "rinkCity": rink.city if rink else "",
-                "rinkState": rink.state if rink else "",
-                "caption": photo.caption,
-                "submittedAt": photo.submittedAt,
-                "submitterName": user.displayName if user else "(deleted user)",
-                "submitterEmail": user.email if user else "",
-            })
-        return result
+        photos = session.exec(select(RinkPhoto).where(RinkPhoto.status == status)).all()
+        pending_count = session.exec(select(func.count(RinkPhoto.id)).where(RinkPhoto.status == "pending")).one()
+        approved_count = session.exec(select(func.count(RinkPhoto.id)).where(RinkPhoto.status == "approved")).one()
+        return {
+            "items": [serialize_admin_photo(p, session) for p in photos],
+            "counts": {"pending": pending_count, "approved": approved_count},
+        }
 
 
 @app.get("/api/admin/photos/{photo_id}/image")
@@ -471,26 +517,171 @@ def admin_photo_image(photo_id: int, request: Request):
 @app.post("/api/admin/photos/{photo_id}/approve")
 def approve_photo(photo_id: int, request: Request):
     with Session(engine) as session:
-        require_admin(request, session)
+        admin = require_admin(request, session)
         photo = session.get(RinkPhoto, photo_id)
         if photo is None:
             raise HTTPException(404, "Photo not found")
+        rink = session.get(Rink, photo.rinkId)
         photo.status = "approved"
         session.add(photo)
+        log_activity(session, "photo", f"{admin.displayName} approved a photo of {rink.name if rink else 'a rink'}", admin)
         session.commit()
     return {"status": "approved"}
 
 
 @app.post("/api/admin/photos/{photo_id}/reject")
-def reject_photo(photo_id: int, request: Request):
+async def reject_photo(photo_id: int, request: Request):
     with Session(engine) as session:
-        require_admin(request, session)
+        admin = require_admin(request, session)
+        body = await request.json()
+        reason = (body.get("reason") or "").strip()
         photo = session.get(RinkPhoto, photo_id)
         if photo is None:
             raise HTTPException(404, "Photo not found")
+        rink = session.get(Rink, photo.rinkId)
+        text_ = f"{admin.displayName} rejected a photo of {rink.name if rink else 'a rink'}"
+        if reason:
+            text_ += f" — {reason}"
+        log_activity(session, "reject", text_, admin)
         session.delete(photo)
         session.commit()
     return {"status": "rejected"}
+
+
+def hours_summary(hours: dict) -> str:
+    days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    values = [hours.get(d, "") for d in days]
+    if not any(values):
+        return "Hours not set"
+    if all(v == values[0] for v in values):
+        return f"Daily {values[0]}"
+    weekday, weekend = values[:5], values[5:]
+    if all(v == weekday[0] for v in weekday) and all(v == weekend[0] for v in weekend):
+        return f"Weekdays {weekday[0]} · Weekends {weekend[0]}"
+    return "Hours vary by day"
+
+
+@app.get("/api/admin/users")
+def list_admin_users(request: Request, q: str = "", page: int = 1):
+    page_size = 50
+    with Session(engine) as session:
+        require_admin(request, session)
+        query = select(User)
+        if q:
+            like = f"%{q.lower()}%"
+            query = query.where(
+                (func.lower(User.displayName).like(like)) | (func.lower(User.email).like(like))
+            )
+        total = session.exec(select(func.count()).select_from(query.subquery())).one()
+        users = session.exec(
+            query.order_by(User.createdAt.desc()).offset((page - 1) * page_size).limit(page_size)
+        ).all()
+        items = []
+        for u in users:
+            contributed = session.exec(
+                select(RinkPhoto).where(RinkPhoto.userId == u.id, RinkPhoto.status == "approved")
+            ).first() is not None
+            role = "superadmin" if u.email in ADMIN_EMAILS else ("contributor" if contributed else "member")
+            items.append({
+                "id": u.id, "name": u.displayName, "email": u.email,
+                "joined": u.createdAt, "logins": u.loginCount, "role": role,
+            })
+        return {"items": items, "total": total, "page": page, "pageSize": page_size}
+
+
+@app.get("/api/admin/rinks")
+def list_admin_rinks(request: Request, q: str = "", page: int = 1):
+    page_size = 50
+    with Session(engine) as session:
+        require_admin(request, session)
+        query = select(Rink)
+        if q:
+            like = f"%{q.lower()}%"
+            query = query.where(
+                (func.lower(Rink.name).like(like)) | (func.lower(Rink.city).like(like))
+            )
+        total = session.exec(select(func.count()).select_from(query.subquery())).one()
+        rinks = session.exec(
+            query.order_by(Rink.name).offset((page - 1) * page_size).limit(page_size)
+        ).all()
+        items = [{
+            "id": r.id, "name": r.name, "city": f"{r.city}, {r.state}",
+            "type": r.type, "phone": r.phone or "",
+            "hoursSummary": hours_summary(r.hours),
+        } for r in rinks]
+        return {"items": items, "total": total, "page": page, "pageSize": page_size}
+
+
+@app.get("/api/admin/rinks/{rink_id}")
+def get_admin_rink(rink_id: int, request: Request):
+    with Session(engine) as session:
+        require_admin(request, session)
+        rink = session.get(Rink, rink_id)
+        if rink is None:
+            raise HTTPException(404, "Rink not found")
+        return rink.model_dump()
+
+
+@app.patch("/api/admin/rinks/{rink_id}")
+async def update_admin_rink(rink_id: int, request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        body = await request.json()
+        rink = session.get(Rink, rink_id)
+        if rink is None:
+            raise HTTPException(404, "Rink not found")
+        rink.type = body.get("type", rink.type)
+        rink.phone = body.get("phone", rink.phone)
+        rink.address = body.get("address", rink.address)
+        rink.hours = body.get("hours", rink.hours)
+        rink.amenities = body.get("amenities", rink.amenities)
+        rink.adminEditedAt = datetime.now(timezone.utc).isoformat()
+        session.add(rink)
+        log_activity(session, "rink", f"{admin.displayName} updated {rink.name}", admin)
+        session.commit()
+        session.refresh(rink)
+        return rink.model_dump()
+
+
+@app.get("/api/admin/activity")
+def list_admin_activity(request: Request, limit: int = 50):
+    with Session(engine) as session:
+        require_admin(request, session)
+        rows = session.exec(
+            select(AdminActivity).order_by(AdminActivity.createdAt.desc()).limit(limit)
+        ).all()
+        return [r.model_dump() for r in rows]
+
+
+@app.get("/api/admin/overview")
+def admin_overview(request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        pending_photos = session.exec(select(RinkPhoto).where(RinkPhoto.status == "pending")).all()
+        total_members = session.exec(select(func.count(User.id))).one()
+        thirty_days_ago = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        members_delta = session.exec(
+            select(func.count(User.id)).where(User.createdAt >= thirty_days_ago)
+        ).one()
+        total_rinks = session.exec(select(func.count(Rink.id))).one()
+        today = datetime.now(timezone.utc).date().isoformat()
+        actions_today = session.exec(
+            select(func.count(AdminActivity.id)).where(
+                AdminActivity.actorId == admin.id, AdminActivity.createdAt >= today
+            )
+        ).one()
+        recent_activity = session.exec(
+            select(AdminActivity).order_by(AdminActivity.createdAt.desc()).limit(6)
+        ).all()
+        return {
+            "pendingPhotos": len(pending_photos),
+            "totalMembers": total_members,
+            "membersDelta30d": members_delta,
+            "totalRinks": total_rinks,
+            "actionsToday": actions_today,
+            "pendingPreview": [serialize_admin_photo(p, session) for p in pending_photos[:4]],
+            "recentActivity": [a.model_dump() for a in recent_activity],
+        }
 
 
 @app.get("/api/rinks/{rink_id}/photos")
@@ -526,10 +717,12 @@ async def signup(request: Request):
     with Session(engine) as session:
         if session.exec(select(User).where(User.email == email)).first():
             raise HTTPException(409, "Email already registered")
-        user = User(email=email, passwordHash=hash_password(password), displayName=displayName)
+        user = User(email=email, passwordHash=hash_password(password), displayName=displayName, loginCount=1)
         session.add(user)
         session.commit()
         session.refresh(user)
+        log_activity(session, "user", f"{user.displayName} joined")
+        session.commit()
         request.session["user_id"] = user.id
         return user_public(user)
 
@@ -543,6 +736,9 @@ async def login(request: Request):
         user = session.exec(select(User).where(User.email == email)).first()
         if not user or not verify_password(password, user.passwordHash):
             raise HTTPException(401, "Invalid email or password")
+        user.loginCount += 1
+        session.add(user)
+        session.commit()
         request.session["user_id"] = user.id
         return user_public(user)
 

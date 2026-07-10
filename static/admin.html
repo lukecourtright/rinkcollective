@@ -3,83 +3,971 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>RinkCollective — Photo Review</title>
+<title>RinkCollective — Admin Console</title>
 <link rel="icon" href="/static/logo/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/static/brand-tokens.css">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; padding: 24px; }
-  h1 { font-family: var(--font-display); font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-  .subtitle { font-size: 13px; color: var(--text-faint); margin-bottom: 24px; }
-  #list { display: flex; flex-direction: column; gap: 12px; max-width: 640px; }
-  .card { display: flex; gap: 14px; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
-  .card img { width: 96px; height: 96px; object-fit: cover; border-radius: 8px; background: var(--surface-2); flex-shrink: 0; }
-  .meta { flex: 1; min-width: 0; }
-  .rink-name { font-size: 14px; font-weight: 600; color: var(--text); }
-  .rink-loc { font-size: 12px; color: var(--text-faint); margin-bottom: 6px; }
-  .caption { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
-  .submitted { font-size: 11px; color: var(--text-faint); margin-bottom: 10px; }
-  .actions { display: flex; gap: 8px; }
-  button { padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; }
-  .approve { background: var(--color-primary); border: none; color: #06181A; }
-  .reject { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
-  #empty, #denied { font-size: 13px; color: var(--text-faint); }
-  #denied a { color: var(--color-primary); }
+  html, body { background: var(--bg); }
+  body { font-family: var(--font-body); color: var(--text); -webkit-font-smoothing: antialiased; }
+  a { color: #07C8C8; text-decoration: none; }
+  input, textarea, button { font-family: inherit; }
+  input::placeholder, textarea::placeholder { color: #4B5168; }
+  input:focus, textarea:focus { outline: none; border-color: var(--color-primary) !important; box-shadow: 0 0 0 3px rgba(20,207,207,0.12); }
+  button { cursor: pointer; }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  #app { display: flex; min-height: 100vh; background: var(--bg); }
+
+  /* ---------- sidebar ---------- */
+  #sidebar-scrim { position: fixed; inset: 0; background: rgba(5,7,15,0.6); z-index: 199; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+  #sidebar-scrim.open { opacity: 1; pointer-events: auto; }
+  #sidebar { width: 240px; flex-shrink: 0; background: #0E1322; border-right: 1px solid var(--hair); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; z-index: 200; }
+  .sb-header { display: flex; align-items: center; gap: 10px; padding: 18px 18px 16px; border-bottom: 1px solid var(--hair); flex-shrink: 0; }
+  .sb-mark { width: 32px; height: 32px; border-radius: 9px; background: rgba(20,207,207,0.1); border: 1px solid rgba(20,207,207,0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sb-word { font-family: var(--font-display); font-weight: 700; font-size: 15px; color: var(--text); letter-spacing: -0.02em; }
+  .sb-eyebrow { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #07C8C8; margin-top: 2px; }
+  .sb-nav { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .sb-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #4B5168; padding: 6px 10px 8px; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 9px 10px; border-radius: 9px; background: none; border: none; color: var(--text-muted); font-size: 13.5px; font-weight: 500; width: 100%; text-align: left; }
+  .nav-item .ic { font-size: 18px; color: #656C84; display: flex; }
+  .nav-item.active { background: rgba(20,207,207,0.1); color: var(--color-primary); font-weight: 600; }
+  .nav-item.active .ic { color: var(--color-primary); }
+  .nav-badge { margin-left: auto; background: #FFC83D; color: #2A1F00; font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; border-radius: 20px; padding: 1px 7px; }
+  .soon-row { display: flex; align-items: center; gap: 11px; padding: 9px 10px; border-radius: 9px; opacity: 0.5; cursor: not-allowed; }
+  .soon-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: #656C84; border: 1px solid var(--border); border-radius: 5px; padding: 2px 5px; }
+  .sb-footer { padding: 12px; border-top: 1px solid var(--hair); display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .sb-avatar { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg,#14CFCF,#07C8C8); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #06181A; flex-shrink: 0; }
+  .sb-logout { width: 34px; height: 34px; border-radius: 8px; background: transparent; border: 1px solid var(--border); color: #888FA8; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .sb-logout:hover { background: rgba(255,107,125,0.1); border-color: rgba(255,107,125,0.3); color: #FF6B7D; }
+
+  /* ---------- main / topbar ---------- */
+  #main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  #topbar { height: 60px; flex-shrink: 0; background: rgba(10,14,26,0.82); backdrop-filter: blur(10px); border-bottom: 1px solid var(--hair); display: flex; align-items: center; gap: 14px; padding: 0 24px; position: sticky; top: 0; z-index: 120; }
+  #hamburger-btn { display: none; background: none; border: none; padding: 6px; }
+  .page-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; line-height: 1.1; }
+  .page-subtitle { font-size: 12px; color: #656C84; margin-top: 1px; }
+  .synced-chip { display: flex; align-items: center; gap: 7px; padding: 5px 11px; background: rgba(52,224,160,0.09); border: 1px solid rgba(52,224,160,0.25); border-radius: 20px; margin-left: auto; }
+  .synced-dot { width: 7px; height: 7px; border-radius: 50%; background: #34E0A0; box-shadow: 0 0 8px rgba(52,224,160,0.7); }
+  #content { flex: 1; overflow-y: auto; padding: 26px 24px 60px; }
+  .content-inner { max-width: 1160px; margin: 0 auto; }
+
+  /* ---------- overview ---------- */
+  .stat-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 22px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 18px 16px; }
+  .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .stat-icon-wrap { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; }
+  .stat-delta { font-family: var(--font-mono); font-size: 10.5px; }
+  .stat-value { font-family: var(--font-mono); font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; }
+  .stat-label { font-size: 12.5px; color: #888FA8; margin-top: 3px; }
+  .split { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .panel-head { display: flex; align-items: center; padding: 15px 18px; border-bottom: 1px solid var(--hair); }
+  .panel-title { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--text); }
+  .panel-link { margin-left: auto; background: none; border: none; color: #07C8C8; font-size: 12.5px; font-weight: 600; }
+  .pending-row { display: flex; align-items: center; gap: 12px; padding: 12px 18px; border-bottom: 1px solid #171F33; }
+  .pending-thumb { width: 52px; height: 52px; border-radius: 9px; background-size: cover; background-position: center; background-color: #0E1322; border: 1px solid var(--border); flex-shrink: 0; padding: 0; }
+  .pending-name { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pending-meta { font-size: 12px; color: #656C84; margin-top: 2px; }
+  .icon-btn { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 1px solid; flex-shrink: 0; }
+  .icon-btn.approve { background: rgba(52,224,160,0.12); border-color: rgba(52,224,160,0.3); color: #34E0A0; }
+  .icon-btn.reject { background: rgba(255,107,125,0.1); border-color: rgba(255,107,125,0.28); color: #FF6B7D; }
+  .empty-note { padding: 34px 18px; text-align: center; color: #656C84; font-size: 13px; }
+  .activity-row { display: flex; gap: 12px; padding: 11px 18px; border-bottom: 1px solid #171F33; }
+  .activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+  .activity-text { font-size: 13px; color: #D0D6E6; line-height: 1.4; }
+  .activity-time { font-family: var(--font-mono); font-size: 10.5px; color: #4B5168; margin-top: 2px; }
+
+  /* ---------- tabs / search ---------- */
+  .tabs { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .tab-btn { padding: 8px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 500; }
+  .tab-btn.active { background: rgba(20,207,207,0.1); border-color: var(--color-primary); color: var(--color-primary); font-weight: 600; }
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .search-wrap { position: relative; flex: 1; min-width: 220px; max-width: 380px; }
+  .search-wrap .ic { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; color: #4B5168; display: flex; }
+  .search-wrap input { width: 100%; height: 40px; padding: 0 14px 0 38px; background: #0E1322; border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 13.5px; }
+  .count-label { font-family: var(--font-mono); font-size: 12px; color: #656C84; margin-left: auto; }
+
+  /* ---------- photo queue ---------- */
+  .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(268px, 1fr)); gap: 14px; }
+  .photo-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+  .photo-thumb-btn { height: 158px; background-size: cover; background-position: center; background-color: #0E1322; border: none; border-bottom: 1px solid var(--hair); position: relative; padding: 0; }
+  .type-badge { border-radius: 20px; padding: 3px 9px; font-size: 10.5px; font-weight: 600; }
+  .thumb-badge { position: absolute; top: 10px; left: 10px; }
+  .thumb-eye { position: absolute; top: 10px; right: 10px; background: rgba(10,14,26,0.75); backdrop-filter: blur(4px); border-radius: 7px; padding: 4px 7px; font-size: 15px; color: var(--text); display: flex; }
+  .photo-body { padding: 13px 15px; flex: 1; display: flex; flex-direction: column; }
+  .photo-rink { font-size: 14px; font-weight: 600; color: var(--text); line-height: 1.3; }
+  .photo-city { font-size: 12px; color: #888FA8; margin-top: 3px; }
+  .submitter-row { display: flex; align-items: center; gap: 8px; margin-top: 11px; padding-top: 11px; border-top: 1px solid var(--hair); }
+  .av-chip { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10.5px; font-weight: 700; color: #06181A; flex-shrink: 0; }
+  .submitter-name { font-size: 12px; color: #D0D6E6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+  .photo-footer { margin-top: 12px; display: flex; gap: 8px; }
+  .btn-approve { flex: 1; height: 36px; border-radius: 8px; background: rgba(52,224,160,0.12); border: 1px solid rgba(52,224,160,0.32); color: #34E0A0; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .btn-reject { flex: 1; height: 36px; border-radius: 8px; background: rgba(255,107,125,0.1); border: 1px solid rgba(255,107,125,0.3); color: #FF6B7D; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .status-pill { display: flex; align-items: center; justify-content: center; gap: 6px; height: 36px; border-radius: 8px; font-size: 12.5px; font-weight: 600; background: rgba(52,224,160,0.1); color: #34E0A0; }
+  .dashed-empty { background: var(--surface); border: 1px dashed var(--border); border-radius: 14px; padding: 56px 20px; text-align: center; }
+
+  /* ---------- tables ---------- */
+  .data-table { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .table-head { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #656C84; padding: 12px 18px; background: #0E1322; display: grid; gap: 10px; border-bottom: 1px solid var(--hair); }
+  .table-row { display: grid; gap: 10px; align-items: center; padding: 14px 18px; border-bottom: 1px solid #171F33; }
+  .table-row:last-child { border-bottom: none; }
+  #users-table .table-head, #users-table .table-row { grid-template-columns: 1.5fr 1.6fr 0.9fr 0.7fr 0.9fr; }
+  #rinks-table .table-head, #rinks-table .table-row { grid-template-columns: 1.7fr 0.8fr 0.9fr 1.5fr auto; }
+  .cell-member { display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .cell-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #06181A; flex-shrink: 0; }
+  .cell-name { font-size: 13.5px; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell-muted { font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cell-mono { font-family: var(--font-mono); font-size: 12px; color: #888FA8; }
+  .role-pill { font-size: 10.5px; font-weight: 600; padding: 3px 9px; border-radius: 20px; }
+  .pager { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 14px; border-top: 1px solid var(--hair); }
+  .pager button { background: transparent; border: 1px solid var(--border); color: var(--text-muted); border-radius: 8px; padding: 6px 12px; font-size: 12.5px; }
+  .pager button:disabled { opacity: 0.4; cursor: not-allowed; }
+  .pager span { font-family: var(--font-mono); font-size: 12px; color: #656C84; }
+  .edit-btn { height: 32px; padding: 0 13px; border-radius: 8px; background: rgba(20,207,207,0.1); border: 1px solid rgba(20,207,207,0.3); color: var(--color-primary); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+
+  /* ---------- activity log ---------- */
+  .activity-log-row { display: flex; align-items: center; gap: 12px; padding: 13px 18px; border-bottom: 1px solid #171F33; }
+  .activity-log-row:last-child { border-bottom: none; }
+  .activity-icon { width: 34px; height: 34px; border-radius: 9px; border: 1px solid; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+
+  /* ---------- rink editor drawer ---------- */
+  #editor-scrim { position: fixed; inset: 0; background: rgba(5,7,15,0.55); z-index: 1300; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+  #editor-scrim.open { opacity: 1; pointer-events: auto; }
+  #editor-drawer { position: fixed; right: 0; top: 0; bottom: 0; width: 440px; background: var(--bg); border-left: 1px solid var(--border); box-shadow: -8px 0 40px rgba(0,0,0,0.55); z-index: 1301; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s ease; }
+  #editor-drawer.open { transform: translateX(0); }
+  .editor-head { display: flex; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--hair); flex-shrink: 0; }
+  .editor-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #07C8C8; }
+  .editor-name { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .editor-close { margin-left: auto; width: 34px; height: 34px; border-radius: 8px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .editor-body { flex: 1; overflow-y: auto; padding: 20px; }
+  .field-label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+  .field-input { width: 100%; height: 40px; padding: 0 13px; background: #0E1322; border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-size: 13.5px; margin-bottom: 16px; }
+  .field-textarea { width: 100%; padding: 10px 13px; background: #0E1322; border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-size: 13.5px; resize: vertical; line-height: 1.4; margin-bottom: 16px; }
+  .section-label { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #4B5168; margin: 22px 0 12px; }
+  .type-seg { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; }
+  .type-opt { padding: 7px 12px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12.5px; font-weight: 600; }
+  .day-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .day-label { width: 38px; font-size: 12.5px; font-weight: 600; color: var(--text-muted); flex-shrink: 0; }
+  .day-input { flex: 1; min-width: 0; height: 36px; padding: 0 10px; background: #0E1322; border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 12.5px; }
+  .day-closed-btn { flex-shrink: 0; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: #656C84; font-size: 11px; font-weight: 600; }
+  .editor-footer { display: flex; gap: 10px; padding: 16px 20px; border-top: 1px solid var(--hair); flex-shrink: 0; background: #0E1322; }
+  .btn-cancel { flex: 1; height: 42px; border-radius: 9px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 13.5px; font-weight: 600; }
+  .btn-save { flex: 1.6; height: 42px; border-radius: 9px; background: var(--color-primary); border: none; color: #06181A; font-size: 13.5px; font-weight: 700; }
+
+  /* ---------- modals ---------- */
+  .modal-scrim { position: fixed; inset: 0; background: rgba(5,7,15,0.7); backdrop-filter: blur(4px); z-index: 1400; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .reject-modal { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; width: 440px; max-width: 100%; padding: 20px; }
+  .reason-chips { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 10px; }
+  .reason-chip { padding: 6px 11px; border-radius: 20px; background: #0E1322; border: 1px solid var(--border); color: var(--text-muted); font-size: 12px; }
+  .photo-modal { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; width: 520px; max-width: 100%; max-height: 92vh; overflow-y: auto; }
+  .photo-modal-hero { height: 340px; background-size: cover; background-position: center; background-color: #0E1322; border-radius: 16px 16px 0 0; position: relative; }
+  .photo-modal-close { position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; border-radius: 9px; background: rgba(10,14,26,0.7); backdrop-filter: blur(4px); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; font-size: 17px; }
+  .meta-strip { display: flex; gap: 22px; margin: 16px 0 18px; padding: 14px 0; border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
+  .meta-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #4B5168; }
+
+  /* ---------- toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px); display: flex; align-items: center; gap: 9px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; padding: 11px 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); z-index: 1500; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .denied-wrap { max-width: 420px; margin: 80px auto; text-align: center; padding: 0 20px; }
+  .denied-wrap h1 { font-family: var(--font-display); font-size: 20px; margin-bottom: 10px; }
+  .denied-wrap p { color: var(--text-muted); font-size: 14px; line-height: 1.5; }
+
+  @media (max-width: 900px) {
+    #sidebar { position: fixed; top: 0; left: 0; height: 100vh; transform: translateX(-100%); transition: transform 0.28s ease; box-shadow: 8px 0 32px rgba(0,0,0,0.5); }
+    #sidebar.open { transform: translateX(0); }
+    #hamburger-btn { display: flex; align-items: center; justify-content: center; }
+    .stat-grid { grid-template-columns: 1fr 1fr; }
+    .split { grid-template-columns: 1fr; }
+    #users-table .table-head, #users-table .table-row { grid-template-columns: 1.4fr 1fr 0.7fr; }
+    #users-table .col-joined, #users-table .col-logins { display: none; }
+    #rinks-table .table-head, #rinks-table .table-row { grid-template-columns: 1.6fr 0.9fr auto; }
+    #rinks-table .col-phone, #rinks-table .col-hours { display: none; }
+    #editor-drawer { width: 100vw; }
+  }
 </style>
 </head>
 <body>
-  <h1>Pending Photos</h1>
-  <div class="subtitle">Review community-submitted rink photos before they go live.</div>
-  <div id="denied" style="display:none;">You need to be signed in as an admin to view this page. <a href="/">Go sign in</a>.</div>
-  <div id="empty" style="display:none;">No pending photos right now.</div>
-  <div id="list"></div>
-
-<script>
-async function load() {
-  const res = await fetch('/api/admin/photos');
-  if (res.status === 401 || res.status === 403) {
-    document.getElementById('denied').style.display = 'block';
-    return;
-  }
-  const photos = await res.json();
-  if (!photos.length) {
-    document.getElementById('empty').style.display = 'block';
-    return;
-  }
-  const list = document.getElementById('list');
-  list.innerHTML = photos.map(p => `
-    <div class="card" data-id="${p.id}">
-      <img src="/api/admin/photos/${p.id}/image" alt="">
-      <div class="meta">
-        <div class="rink-name">${esc(p.rinkName)}</div>
-        <div class="rink-loc">${esc(p.rinkCity)}, ${esc(p.rinkState)}</div>
-        ${p.caption ? `<div class="caption">"${esc(p.caption)}"</div>` : ''}
-        <div class="submitted">${esc(p.submitterName)} · ${esc(p.submittedAt)}</div>
-        <div class="actions">
-          <button class="approve" onclick="act(${p.id}, 'approve')">Approve</button>
-          <button class="reject" onclick="act(${p.id}, 'reject')">Reject</button>
-        </div>
+<div id="app">
+  <div id="sidebar-scrim"></div>
+  <aside id="sidebar">
+    <div class="sb-header">
+      <div class="sb-mark">
+        <svg width="19" height="19" viewBox="0 0 56 56" fill="none"><line x1="6" y1="47" x2="50" y2="47" stroke="#14CFCF" stroke-width="4" stroke-linecap="round"/><path d="M9 47 L9 25 L28 11 L47 25 L47 47" stroke="#14CFCF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="18" y="36.5" width="20" height="9.5" rx="4.75" fill="#FFC83D"/></svg>
+      </div>
+      <div>
+        <div class="sb-word">Rink<span style="color:#FFC83D;">Collective</span></div>
+        <div class="sb-eyebrow">Admin Console</div>
       </div>
     </div>
-  `).join('');
+    <nav class="sb-nav" id="sb-nav-items"></nav>
+    <div class="sb-footer" id="sb-footer"></div>
+  </aside>
+
+  <div id="main">
+    <header id="topbar">
+      <button id="hamburger-btn" aria-label="Menu">
+        <span style="font-size:20px;color:#B0B8CF;display:flex;" id="hamburger-icon"></span>
+      </button>
+      <div style="min-width:0;">
+        <div class="page-title" id="page-title">Overview</div>
+        <div class="page-subtitle" id="page-subtitle"></div>
+      </div>
+      <div class="synced-chip"><span class="synced-dot"></span><span style="font-family:var(--font-mono);font-size:10.5px;letter-spacing:0.04em;color:#34E0A0;">SYNCED</span></div>
+    </header>
+    <main id="content"><div class="content-inner" id="content-inner"></div></main>
+  </div>
+
+  <div id="editor-scrim"></div>
+  <aside id="editor-drawer"></aside>
+
+  <div id="modal-root"></div>
+  <div id="toast"></div>
+</div>
+
+<script>
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const AV_COLORS = ['#14CFCF','#CB78FF','#34E0A0','#FFD24D','#FF6B7D','#4FB8FF'];
+const TYPE_INFO = {
+  NHL: { label: 'NHL Size', color: '#14CFCF', bg: 'rgba(20,207,207,0.1)' },
+  OLYMPIC: { label: 'Olympic', color: '#CB78FF', bg: 'rgba(203,120,255,0.1)' },
+  SYNTHETIC: { label: 'Synthetic', color: '#34E0A0', bg: 'rgba(52,224,160,0.1)' },
+  STANDARD: { label: 'Standard', color: '#888FA8', bg: 'rgba(136,143,168,0.1)' },
+};
+const ACTIVITY_STYLE = {
+  user: { icon: 'users', color: '#14CFCF', bg: 'rgba(20,207,207,0.12)', border: 'rgba(20,207,207,0.3)' },
+  photo: { icon: 'check', color: '#34E0A0', bg: 'rgba(52,224,160,0.12)', border: 'rgba(52,224,160,0.3)' },
+  reject: { icon: 'x', color: '#FF6B7D', bg: 'rgba(255,107,125,0.1)', border: 'rgba(255,107,125,0.28)' },
+  rink: { icon: 'edit', color: '#CB78FF', bg: 'rgba(203,120,255,0.12)', border: 'rgba(203,120,255,0.3)' },
+};
+const NAV_ITEMS = [
+  { id: 'overview', label: 'Overview', icon: 'grid' },
+  { id: 'photos', label: 'Photo Queue', icon: 'image' },
+  { id: 'users', label: 'Users', icon: 'users' },
+  { id: 'rinks', label: 'Rinks', icon: 'rink' },
+  { id: 'activity', label: 'Activity Log', icon: 'activity' },
+];
+const PAGE_META = {
+  overview: ['Overview', 'Day-to-day snapshot of the site'],
+  photos: ['Photo Queue', 'Review community-submitted rink photos'],
+  users: ['Users', 'Search the member directory'],
+  rinks: ['Rinks', 'Search and edit rink listings'],
+  activity: ['Activity Log', 'A running record of admin actions'],
+};
+const REASON_CHIPS = ['Blurry / low quality', 'Not this rink', 'Duplicate', 'Inappropriate'];
+const ICONS = {
+  grid: '<path d="M4 4h6v6H4zM14 4h6v6h-6zM14 14h6v6h-6zM4 14h6v6H4z"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+  users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  rink: '<path d="M3 21h18"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/><path d="M9 8h.01M15 8h.01M9 12h.01M15 12h.01M9 16h.01M15 16h.01"/>',
+  activity: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  eye: '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>',
+  edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+  search: '<circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>',
+  menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
+  shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',
+};
+function icon(name, sw) {
+  return `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw||2}" stroke-linecap="round" stroke-linejoin="round" style="display:block;">${ICONS[name]||''}</svg>`;
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+function initials(name) { return (name||'?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
+function seedOf(str) { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; }
+function avColor(str) { return AV_COLORS[seedOf(str) % AV_COLORS.length]; }
+function typeBadge(t) { const info = TYPE_INFO[t] || TYPE_INFO.STANDARD; return `<span class="type-badge" style="background:${info.bg};border:1px solid ${info.color}40;color:${info.color};">${info.label}</span>`; }
+function relTime(iso) {
+  if (!iso) return '';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
 }
 
-async function act(id, action) {
-  await fetch(`/api/admin/photos/${id}/${action}`, { method: 'POST' });
-  const card = document.querySelector(`.card[data-id="${id}"]`);
-  if (card) card.remove();
-  if (!document.querySelector('.card')) document.getElementById('empty').style.display = 'block';
+class Admin {
+  constructor() {
+    this.state = {
+      ready: false, denied: null, currentUser: null,
+      view: 'overview', isNarrow: window.matchMedia('(max-width: 900px)').matches, drawerOpen: false,
+
+      overview: null,
+
+      photoFilter: 'pending', photoCounts: { pending: 0, approved: 0 }, photos: [],
+      photoModalId: null, rejectForId: null, rejectReason: '',
+
+      users: [], usersTotal: 0, usersPage: 1, userSearch: '',
+      rinks: [], rinksTotal: 0, rinksPage: 1, rinkSearch: '',
+
+      editRinkId: null, rinkDraft: null,
+
+      activity: [],
+
+      toast: null,
+    };
+    this.init();
+  }
+
+  setState(partial) { Object.assign(this.state, partial); this.render(); }
+
+  async api(path, opts) {
+    const res = await fetch(path, opts);
+    if (res.status === 401 || res.status === 403) {
+      // Renders the denied screen right here so every caller — not just the
+      // ones with a try/catch — surfaces a session that expired mid-use.
+      this.state.denied = res.status;
+      this.render();
+      throw new Error('denied');
+    }
+    return res;
+  }
+
+  async init() {
+    const meRes = await fetch('/api/auth/me');
+    const me = await meRes.json();
+    this.state.currentUser = me.user;
+
+    const params = new URLSearchParams(location.search);
+    const view = params.get('view');
+    if (view && PAGE_META[view]) this.state.view = view;
+    history.replaceState(null, '', '/admin');
+
+    if (!me.user) {
+      this.setState({ denied: 401, ready: true });
+      return;
+    }
+
+    try {
+      await this.loadOverview();
+    } catch (e) {
+      this.render();
+      return;
+    }
+    this.state.ready = true;
+    this.bindShell();
+    await this.loadViewData(this.state.view);
+    this.render();
+  }
+
+  bindShell() {
+    const mq = window.matchMedia('(max-width: 900px)');
+    const onMq = (e) => this.setState({ isNarrow: e.matches, drawerOpen: false });
+    (mq.addEventListener ? mq.addEventListener.bind(mq, 'change', onMq) : mq.addListener.bind(mq, onMq))();
+    document.getElementById('hamburger-btn').addEventListener('click', () => this.toggleDrawer());
+    document.getElementById('sidebar-scrim').addEventListener('click', () => this.setState({ drawerOpen: false }));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (this.state.photoModalId != null) this.closePhotoModal();
+        else if (this.state.rejectForId != null) this.closeReject();
+        else if (this.state.editRinkId != null) this.closeEditor();
+        else if (this.state.drawerOpen) this.setState({ drawerOpen: false });
+      }
+    });
+  }
+
+  toggleDrawer() { this.setState({ drawerOpen: !this.state.drawerOpen }); }
+
+  async setView(view) {
+    this.setState({ view, drawerOpen: false });
+    await this.loadViewData(view);
+    this.render();
+  }
+
+  async loadViewData(view) {
+    if (view === 'overview') return this.loadOverview();
+    if (view === 'photos') return this.loadPhotos();
+    if (view === 'users') return this.loadUsers();
+    if (view === 'rinks') return this.loadRinks();
+    if (view === 'activity') return this.loadActivity();
+  }
+
+  async loadOverview() {
+    const res = await this.api('/api/admin/overview');
+    this.state.overview = await res.json();
+    this.state.photoCounts.pending = this.state.overview.pendingPhotos;
+  }
+
+  async loadPhotos() {
+    const res = await this.api(`/api/admin/photos?status=${this.state.photoFilter}`);
+    const data = await res.json();
+    this.state.photos = data.items;
+    this.state.photoCounts = data.counts;
+  }
+
+  async loadUsers() {
+    const q = encodeURIComponent(this.state.userSearch);
+    const res = await this.api(`/api/admin/users?q=${q}&page=${this.state.usersPage}`);
+    const data = await res.json();
+    this.state.users = data.items;
+    this.state.usersTotal = data.total;
+  }
+
+  async loadRinks() {
+    const q = encodeURIComponent(this.state.rinkSearch);
+    const res = await this.api(`/api/admin/rinks?q=${q}&page=${this.state.rinksPage}`);
+    const data = await res.json();
+    this.state.rinks = data.items;
+    this.state.rinksTotal = data.total;
+  }
+
+  async loadActivity() {
+    const res = await this.api('/api/admin/activity?limit=50');
+    this.state.activity = await res.json();
+  }
+
+  showToast(text, color, iconName) {
+    this.state.toast = { text, color, icon: iconName };
+    this.render();
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => { this.state.toast = null; this.render(); }, 2800);
+  }
+
+  // ---------- photo actions ----------
+  async approvePhoto(id) {
+    await this.api(`/api/admin/photos/${id}/approve`, { method: 'POST' });
+    await this.loadPhotos();
+    if (this.state.photoModalId === id) this.state.photoModalId = null;
+    if (this.state.overview) this.state.overview.pendingPhotos = this.state.photoCounts.pending;
+    this.showToast('Photo approved & published', '#34E0A0', 'check');
+    this.render();
+  }
+
+  openReject(id) { this.setState({ rejectForId: id, rejectReason: '' }); }
+  closeReject() { this.setState({ rejectForId: null, rejectReason: '' }); }
+
+  async confirmReject() {
+    const id = this.state.rejectForId;
+    if (!this.state.rejectReason.trim()) return;
+    await this.api(`/api/admin/photos/${id}/reject`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: this.state.rejectReason.trim() }),
+    });
+    await this.loadPhotos();
+    if (this.state.photoModalId === id) this.state.photoModalId = null;
+    if (this.state.overview) this.state.overview.pendingPhotos = this.state.photoCounts.pending;
+    this.setState({ rejectForId: null, rejectReason: '' });
+    this.showToast('Photo rejected', '#FF6B7D', 'x');
+  }
+
+  openPhotoModal(id) { this.setState({ photoModalId: id }); }
+  closePhotoModal() { this.setState({ photoModalId: null }); }
+
+  // ---------- users / rinks search ----------
+  onUserSearch(v) {
+    this.state.userSearch = v; this.state.usersPage = 1;
+    clearTimeout(this._userSearchTimer);
+    this._userSearchTimer = setTimeout(async () => {
+      await this.loadUsers(); this.render(); this.refocusSearch('user-search-input');
+    }, 300);
+  }
+  onRinkSearch(v) {
+    this.state.rinkSearch = v; this.state.rinksPage = 1;
+    clearTimeout(this._rinkSearchTimer);
+    this._rinkSearchTimer = setTimeout(async () => {
+      await this.loadRinks(); this.render(); this.refocusSearch('rink-search-input');
+    }, 300);
+  }
+  refocusSearch(id) {
+    const input = document.getElementById(id);
+    if (input) { input.focus(); const n = input.value.length; input.setSelectionRange(n, n); }
+  }
+  async goUsersPage(delta) {
+    this.state.usersPage += delta;
+    await this.loadUsers();
+    this.render();
+  }
+  async goRinksPage(delta) {
+    this.state.rinksPage += delta;
+    await this.loadRinks();
+    this.render();
+  }
+
+  // ---------- rink editor ----------
+  async openEditor(rinkId) {
+    const res = await this.api(`/api/admin/rinks/${rinkId}`);
+    const rink = await res.json();
+    this.setState({ editRinkId: rinkId, rinkDraft: JSON.parse(JSON.stringify(rink)) });
+  }
+  closeEditor() { this.setState({ editRinkId: null, rinkDraft: null }); }
+
+  updateDraft(field, value) { this.state.rinkDraft[field] = value; this.render(); }
+  updateDraftHour(day, value) { this.state.rinkDraft.hours[day] = value; this.render(); }
+  updateDraftAmenities(value) { this.state.rinkDraft.amenities = value.split(',').map(s => s.trim()).filter(Boolean); }
+
+  async saveRink() {
+    const draft = this.state.rinkDraft;
+    const res = await this.api(`/api/admin/rinks/${this.state.editRinkId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: draft.type, phone: draft.phone, address: draft.address, hours: draft.hours, amenities: draft.amenities }),
+    });
+    await res.json();
+    this.closeEditor();
+    await this.loadRinks();
+    if (this.state.overview) await this.loadOverview();
+    this.showToast('Rink saved', '#14CFCF', 'check');
+  }
+
+  async logout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    location.href = '/';
+  }
+
+  // ================= RENDER =================
+  render() {
+    if (!this.state.ready) {
+      if (this.state.denied) this.renderDenied();
+      return;
+    }
+    if (this.state.denied) { this.renderDenied(); return; }
+
+    this.renderSidebar();
+    this.renderTopbar();
+    this.renderContent();
+    this.renderEditor();
+    this.renderModals();
+    this.renderToast();
+
+    document.getElementById('sidebar').classList.toggle('open', this.state.isNarrow && this.state.drawerOpen);
+    document.getElementById('sidebar-scrim').classList.toggle('open', this.state.isNarrow && this.state.drawerOpen);
+    document.getElementById('hamburger-icon').innerHTML = icon('menu');
+  }
+
+  renderDenied() {
+    document.getElementById('app').innerHTML = `
+      <div class="denied-wrap">
+        <h1>${this.state.denied === 403 ? 'Admin access required' : 'Sign in required'}</h1>
+        <p>${this.state.denied === 403
+          ? "You're signed in, but this account doesn't have admin access."
+          : 'You need to be signed in as an admin to view this page.'}
+        </p>
+        <p style="margin-top:14px;"><a href="/">Go to RinkCollective →</a></p>
+      </div>`;
+  }
+
+  renderSidebar() {
+    const s = this.state;
+    const navHtml = NAV_ITEMS.map(item => {
+      const active = s.view === item.id;
+      const badge = item.id === 'photos' && s.photoCounts.pending > 0
+        ? `<span class="nav-badge">${s.photoCounts.pending}</span>` : '';
+      return `<button class="nav-item ${active ? 'active' : ''}" data-nav="${item.id}"><span class="ic">${icon(item.icon)}</span><span style="flex:1;text-align:left;">${item.label}</span>${badge}</button>`;
+    }).join('');
+    document.getElementById('sb-nav-items').innerHTML = `
+      <div class="sb-label">Manage</div>
+      ${navHtml}
+      <div class="sb-label" style="padding-top:16px;">Coming soon</div>
+      <div class="soon-row" title="Rink Admin delegation ships in a later phase">
+        <span class="ic" style="font-size:18px;color:#656C84;display:flex;">${icon('shield')}</span>
+        <span style="flex:1;font-size:13.5px;font-weight:500;color:#888FA8;">Rink Admin roles</span>
+        <span class="soon-tag">soon</span>
+      </div>`;
+    document.querySelectorAll('[data-nav]').forEach(btn => {
+      btn.addEventListener('click', () => this.setView(btn.dataset.nav));
+    });
+
+    const user = s.currentUser || {};
+    document.getElementById('sb-footer').innerHTML = `
+      <div class="sb-avatar">${initials(user.displayName)}</div>
+      <div style="flex:1;min-width:0;line-height:1.2;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(user.displayName || '')}</div>
+        <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;color:#FFD24D;">Superadmin</div>
+      </div>
+      <button class="sb-logout" id="logout-btn" aria-label="Log out" title="Log out">${icon('logout')}</button>`;
+    document.getElementById('logout-btn').addEventListener('click', () => this.logout());
+  }
+
+  renderTopbar() {
+    const [title, subtitle] = PAGE_META[this.state.view];
+    document.getElementById('page-title').textContent = title;
+    document.getElementById('page-subtitle').textContent = subtitle;
+  }
+
+  renderContent() {
+    const el = document.getElementById('content-inner');
+    const v = this.state.view;
+    if (v === 'overview') el.innerHTML = this.viewOverview();
+    else if (v === 'photos') el.innerHTML = this.viewPhotos();
+    else if (v === 'users') el.innerHTML = this.viewUsers();
+    else if (v === 'rinks') el.innerHTML = this.viewRinks();
+    else if (v === 'activity') el.innerHTML = this.viewActivity();
+    this.bindContentEvents();
+  }
+
+  bindContentEvents() {
+    const v = this.state.view;
+    document.querySelectorAll('[data-approve]').forEach(b => b.addEventListener('click', () => this.approvePhoto(Number(b.dataset.approve))));
+    document.querySelectorAll('[data-reject]').forEach(b => b.addEventListener('click', () => this.openReject(Number(b.dataset.reject))));
+    document.querySelectorAll('[data-view-photo]').forEach(b => b.addEventListener('click', () => this.openPhotoModal(Number(b.dataset.viewPhoto))));
+    document.querySelectorAll('[data-photo-tab]').forEach(b => b.addEventListener('click', async () => {
+      this.state.photoFilter = b.dataset.photoTab; await this.loadPhotos(); this.render();
+    }));
+    document.querySelectorAll('[data-edit-rink]').forEach(b => b.addEventListener('click', () => this.openEditor(Number(b.dataset.editRink))));
+    document.querySelectorAll('[data-go-photos]').forEach(b => b.addEventListener('click', () => this.setView('photos')));
+
+    if (v === 'users') {
+      const input = document.getElementById('user-search-input');
+      if (input) input.addEventListener('input', (e) => this.onUserSearch(e.target.value));
+      const prev = document.getElementById('users-prev'), next = document.getElementById('users-next');
+      if (prev) prev.addEventListener('click', () => this.goUsersPage(-1));
+      if (next) next.addEventListener('click', () => this.goUsersPage(1));
+    }
+    if (v === 'rinks') {
+      const input = document.getElementById('rink-search-input');
+      if (input) input.addEventListener('input', (e) => this.onRinkSearch(e.target.value));
+      const prev = document.getElementById('rinks-prev'), next = document.getElementById('rinks-next');
+      if (prev) prev.addEventListener('click', () => this.goRinksPage(-1));
+      if (next) next.addEventListener('click', () => this.goRinksPage(1));
+    }
+  }
+
+  viewOverview() {
+    const ov = this.state.overview;
+    if (!ov) return '';
+    const stats = [
+      { icon: 'image', color: '#FFC83D', bg: 'rgba(255,210,77,0.12)', value: ov.pendingPhotos, label: 'Photos pending review', delta: ov.pendingPhotos > 0 ? 'Needs review' : 'All clear', deltaColor: ov.pendingPhotos > 0 ? '#FFD24D' : '#34E0A0' },
+      { icon: 'users', color: '#14CFCF', bg: 'rgba(20,207,207,0.12)', value: ov.totalMembers.toLocaleString(), label: 'Total members', delta: `+${ov.membersDelta30d} / 30d`, deltaColor: '#14CFCF' },
+      { icon: 'rink', color: '#CB78FF', bg: 'rgba(203,120,255,0.12)', value: ov.totalRinks.toLocaleString(), label: 'Rinks in directory', delta: 'Directory total', deltaColor: '#CB78FF' },
+      { icon: 'activity', color: '#34E0A0', bg: 'rgba(52,224,160,0.12)', value: ov.actionsToday, label: 'Your actions today', delta: 'Today', deltaColor: '#34E0A0' },
+    ];
+    const statCards = stats.map(s => `
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon-wrap" style="background:${s.bg};color:${s.color};">${icon(s.icon)}</div>
+          <span class="stat-delta" style="color:${s.deltaColor};">${s.delta}</span>
+        </div>
+        <div class="stat-value">${s.value}</div>
+        <div class="stat-label">${s.label}</div>
+      </div>`).join('');
+
+    const pending = ov.pendingPreview.slice(0, 4);
+    const pendingHtml = pending.length ? pending.map(p => `
+      <div class="pending-row">
+        <button class="pending-thumb" data-view-photo="${p.id}" style="background-image:url('/api/admin/photos/${p.id}/image');"></button>
+        <div style="flex:1;min-width:0;">
+          <div class="pending-name">${esc(p.rinkName)}</div>
+          <div class="pending-meta">by ${esc(p.submitterName)} · <span style="font-family:var(--font-mono);font-size:11px;">${relTime(p.submittedAt)}</span></div>
+        </div>
+        <div style="display:flex;gap:7px;flex-shrink:0;">
+          <button class="icon-btn approve" data-approve="${p.id}" title="Approve">${icon('check', 2.5)}</button>
+          <button class="icon-btn reject" data-reject="${p.id}" title="Reject">${icon('x', 2.2)}</button>
+        </div>
+      </div>`).join('') : `<div class="empty-note">🎉 Queue is clear — no photos waiting.</div>`;
+
+    const activityHtml = ov.recentActivity.length ? ov.recentActivity.map(a => {
+      const st = ACTIVITY_STYLE[a.kind] || ACTIVITY_STYLE.rink;
+      return `<div class="activity-row"><span class="activity-dot" style="background:${st.color};"></span><div style="flex:1;min-width:0;"><div class="activity-text">${esc(a.text)}</div><div class="activity-time">${relTime(a.createdAt)}</div></div></div>`;
+    }).join('') : `<div class="empty-note">No activity yet.</div>`;
+
+    return `
+      <div class="stat-grid">${statCards}</div>
+      <div class="split">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Pending photo submissions</span><button class="panel-link" data-go-photos>Review all →</button></div>
+          ${pendingHtml}
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Recent activity</span></div>
+          ${activityHtml}
+        </div>
+      </div>`;
+  }
+
+  viewPhotos() {
+    const s = this.state;
+    const tabs = [['pending', `Pending (${s.photoCounts.pending})`], ['approved', `Approved (${s.photoCounts.approved})`]];
+    const tabsHtml = tabs.map(([id, label]) => `<button class="tab-btn ${s.photoFilter === id ? 'active' : ''}" data-photo-tab="${id}">${label}</button>`).join('');
+
+    if (!s.photos.length) {
+      const msg = s.photoFilter === 'pending' ? 'No photos waiting for review.' : 'No approved photos yet.';
+      return `<div class="tabs">${tabsHtml}</div><div class="dashed-empty"><div style="font-size:15px;font-weight:600;color:var(--text-muted);">Nothing here</div><div style="font-size:13px;color:#656C84;margin-top:5px;">${msg}</div></div>`;
+    }
+
+    const cards = s.photos.map(p => {
+      const info = TYPE_INFO[p.rinkType] || TYPE_INFO.STANDARD;
+      const footer = s.photoFilter === 'pending'
+        ? `<div class="photo-footer"><button class="btn-approve" data-approve="${p.id}">${icon('check')}Approve</button><button class="btn-reject" data-reject="${p.id}">${icon('x')}Reject</button></div>`
+        : `<div class="photo-footer"><div class="status-pill">${icon('check')}Published</div></div>`;
+      return `
+        <div class="photo-card">
+          <button class="photo-thumb-btn" data-view-photo="${p.id}" style="background-image:url('/api/admin/photos/${p.id}/image');">
+            <span class="type-badge thumb-badge" style="background:${info.bg};border:1px solid ${info.color}40;color:${info.color};">${info.label}</span>
+            <span class="thumb-eye">${icon('eye')}</span>
+          </button>
+          <div class="photo-body">
+            <div class="photo-rink">${esc(p.rinkName)}</div>
+            <div class="photo-city">${esc(p.rinkCity)}, ${esc(p.rinkState)}</div>
+            <div class="submitter-row">
+              <div class="av-chip" style="background:${avColor(p.submitterName)};">${initials(p.submitterName)}</div>
+              <span class="submitter-name">${esc(p.submitterName)}</span>
+              <span style="font-family:var(--font-mono);font-size:10.5px;color:#4B5168;flex-shrink:0;">${relTime(p.submittedAt)}</span>
+            </div>
+            ${footer}
+          </div>
+        </div>`;
+    }).join('');
+
+    return `<div class="tabs">${tabsHtml}</div><div class="photo-grid">${cards}</div>`;
+  }
+
+  viewUsers() {
+    const s = this.state;
+    const rows = s.users.map(u => `
+      <div class="table-row">
+        <div class="cell-member"><div class="cell-avatar" style="background:${avColor(u.name)};">${initials(u.name)}</div><span class="cell-name">${esc(u.name)}</span></div>
+        <div class="cell-muted">${esc(u.email)}</div>
+        <div class="cell-mono col-joined">${new Date(u.joined).toLocaleDateString()}</div>
+        <div class="cell-mono col-logins" style="text-align:right;">${u.logins}</div>
+        <div style="display:flex;justify-content:flex-end;">${this.roleBadge(u.role)}</div>
+      </div>`).join('');
+
+    const totalPages = Math.max(1, Math.ceil(s.usersTotal / 50));
+    return `
+      <div class="toolbar">
+        <div class="search-wrap"><span class="ic">${icon('search')}</span><input id="user-search-input" type="text" placeholder="Search by name or email…" value="${esc(s.userSearch)}"></div>
+        <div class="count-label">${s.users.length} of ${s.usersTotal} members shown</div>
+      </div>
+      <div class="data-table" id="users-table">
+        <div class="table-head"><div>Member</div><div>Email</div><div class="col-joined">Joined</div><div class="col-logins" style="text-align:right;">Logins</div><div style="text-align:right;">Role</div></div>
+        ${rows || `<div class="empty-note">No members match "${esc(s.userSearch)}".</div>`}
+      </div>
+      ${totalPages > 1 ? `<div class="pager"><button id="users-prev" ${s.usersPage <= 1 ? 'disabled' : ''}>← Prev</button><span>Page ${s.usersPage} of ${totalPages}</span><button id="users-next" ${s.usersPage >= totalPages ? 'disabled' : ''}>Next →</button></div>` : ''}`;
+  }
+
+  roleBadge(role) {
+    const styles = {
+      superadmin: 'background:rgba(255,210,77,0.12);color:#FFD24D;',
+      contributor: 'background:rgba(203,120,255,0.12);color:#CB78FF;',
+      member: 'background:rgba(136,143,168,0.12);color:#888FA8;',
+    };
+    const labels = { superadmin: 'Superadmin', contributor: 'Contributor', member: 'Member' };
+    return `<span class="role-pill" style="${styles[role] || styles.member}">${labels[role] || 'Member'}</span>`;
+  }
+
+  viewRinks() {
+    const s = this.state;
+    const rows = s.rinks.map(r => `
+      <div class="table-row">
+        <div style="min-width:0;"><div class="cell-name">${esc(r.name)}</div><div style="font-size:12px;color:#656C84;margin-top:2px;">${esc(r.city)}</div></div>
+        <div>${typeBadge(r.type)}</div>
+        <div class="cell-mono col-phone">${esc(r.phone)}</div>
+        <div class="col-hours" style="font-size:12px;color:#888FA8;line-height:1.4;">${esc(r.hoursSummary)}</div>
+        <div style="display:flex;justify-content:flex-end;"><button class="edit-btn" data-edit-rink="${r.id}">${icon('edit')}Edit</button></div>
+      </div>`).join('');
+
+    const totalPages = Math.max(1, Math.ceil(s.rinksTotal / 50));
+    return `
+      <div class="toolbar">
+        <div class="search-wrap"><span class="ic">${icon('search')}</span><input id="rink-search-input" type="text" placeholder="Search rinks by name or city…" value="${esc(s.rinkSearch)}"></div>
+        <div class="count-label">${s.rinks.length} of ${s.rinksTotal} rinks</div>
+      </div>
+      <div class="data-table" id="rinks-table">
+        <div class="table-head"><div>Rink</div><div>Type</div><div class="col-phone">Phone</div><div class="col-hours">Hours</div><div></div></div>
+        ${rows}
+      </div>
+      ${totalPages > 1 ? `<div class="pager"><button id="rinks-prev" ${s.rinksPage <= 1 ? 'disabled' : ''}>← Prev</button><span>Page ${s.rinksPage} of ${totalPages}</span><button id="rinks-next" ${s.rinksPage >= totalPages ? 'disabled' : ''}>Next →</button></div>` : ''}`;
+  }
+
+  viewActivity() {
+    const rows = this.state.activity.map(a => {
+      const st = ACTIVITY_STYLE[a.kind] || ACTIVITY_STYLE.rink;
+      return `<div class="activity-log-row"><div class="activity-icon" style="background:${st.bg};border-color:${st.border};color:${st.color};">${icon(st.icon)}</div><div style="flex:1;min-width:0;"><div class="activity-text">${esc(a.text)}</div></div><div class="cell-mono" style="flex-shrink:0;">${relTime(a.createdAt)}</div></div>`;
+    }).join('');
+    return `<div class="data-table">${rows || `<div class="empty-note">No activity yet.</div>`}</div>`;
+  }
+
+  // ---------- rink editor drawer ----------
+  renderEditor() {
+    const s = this.state;
+    const drawer = document.getElementById('editor-drawer');
+    const scrim = document.getElementById('editor-scrim');
+    const open = s.editRinkId != null && s.rinkDraft;
+    drawer.classList.toggle('open', open);
+    scrim.classList.toggle('open', open);
+    if (!open) { drawer.innerHTML = ''; return; }
+
+    const d = s.rinkDraft;
+    const typeOpts = Object.keys(TYPE_INFO).map(t => {
+      const info = TYPE_INFO[t];
+      const active = d.type === t;
+      const style = active ? `border-color:${info.color};background:${info.bg};color:${info.color};` : '';
+      return `<button class="type-opt" data-type-opt="${t}" style="${style}">${info.label}</button>`;
+    }).join('');
+
+    const dayRows = DAYS.map(day => `
+      <div class="day-row">
+        <span class="day-label">${day}</span>
+        <input class="day-input" data-day="${day}" value="${esc(d.hours[day] || '')}" placeholder="6:00a–11:00p">
+        <button class="day-closed-btn" data-day-closed="${day}">Closed</button>
+      </div>`).join('');
+
+    drawer.innerHTML = `
+      <div class="editor-head">
+        <div style="min-width:0;">
+          <div class="editor-eyebrow">Edit rink</div>
+          <div class="editor-name">${esc(d.name)}</div>
+        </div>
+        <button class="editor-close" id="editor-close-btn" aria-label="Close">${icon('x')}</button>
+      </div>
+      <div class="editor-body">
+        <div class="section-label" style="margin-top:0;">Details</div>
+        <label class="field-label">Rink type</label>
+        <div class="type-seg">${typeOpts}</div>
+        <label class="field-label">Phone</label>
+        <input class="field-input" id="draft-phone" value="${esc(d.phone || '')}" placeholder="(000) 000-0000">
+        <label class="field-label">Address</label>
+        <textarea class="field-textarea" id="draft-address" rows="2" placeholder="Street, city, state ZIP">${esc(d.address || '')}</textarea>
+        <div class="section-label">Hours</div>
+        <div>${dayRows}</div>
+        <div class="section-label">Amenities</div>
+        <textarea class="field-textarea" id="draft-amenities" rows="3" placeholder="Pro Shop, Skate Rental, Concessions…">${esc((d.amenities || []).join(', '))}</textarea>
+      </div>
+      <div class="editor-footer">
+        <button class="btn-cancel" id="editor-cancel-btn">Cancel</button>
+        <button class="btn-save" id="editor-save-btn">Save changes</button>
+      </div>`;
+
+    document.getElementById('editor-close-btn').addEventListener('click', () => this.closeEditor());
+    document.getElementById('editor-cancel-btn').addEventListener('click', () => this.closeEditor());
+    scrim.onclick = () => this.closeEditor();
+    document.getElementById('editor-save-btn').addEventListener('click', () => this.saveRink());
+    document.getElementById('draft-phone').addEventListener('input', (e) => this.updateDraft('phone', e.target.value));
+    document.getElementById('draft-address').addEventListener('input', (e) => this.updateDraft('address', e.target.value));
+    document.getElementById('draft-amenities').addEventListener('input', (e) => this.updateDraftAmenities(e.target.value));
+    document.querySelectorAll('[data-type-opt]').forEach(b => b.addEventListener('click', () => this.updateDraft('type', b.dataset.typeOpt)));
+    document.querySelectorAll('[data-day]').forEach(inp => inp.addEventListener('input', (e) => this.updateDraftHour(inp.dataset.day, e.target.value)));
+    document.querySelectorAll('[data-day-closed]').forEach(b => b.addEventListener('click', () => {
+      this.state.rinkDraft.hours[b.dataset.dayClosed] = 'Closed';
+      this.render();
+    }));
+  }
+
+  // ---------- modals ----------
+  renderModals() {
+    const root = document.getElementById('modal-root');
+    const s = this.state;
+
+    if (s.rejectForId != null) {
+      root.innerHTML = this.rejectModalHtml();
+      document.getElementById('reject-scrim').addEventListener('click', (e) => { if (e.target.id === 'reject-scrim') this.closeReject(); });
+      document.getElementById('reject-cancel-btn').addEventListener('click', () => this.closeReject());
+      document.getElementById('reject-confirm-btn').addEventListener('click', () => this.confirmReject());
+      const textarea = document.getElementById('reject-reason-input');
+      textarea.addEventListener('input', (e) => { this.state.rejectReason = e.target.value; this.updateRejectConfirmState(); });
+      document.querySelectorAll('[data-reason-chip]').forEach(chip => chip.addEventListener('click', () => {
+        textarea.value = chip.dataset.reasonChip;
+        this.state.rejectReason = chip.dataset.reasonChip;
+        this.updateRejectConfirmState();
+      }));
+      return;
+    }
+
+    if (s.photoModalId != null) {
+      root.innerHTML = this.photoModalHtml();
+      document.getElementById('photo-scrim').addEventListener('click', (e) => { if (e.target.id === 'photo-scrim') this.closePhotoModal(); });
+      document.getElementById('photo-modal-close-btn').addEventListener('click', () => this.closePhotoModal());
+      const approveBtn = document.getElementById('photo-modal-approve');
+      if (approveBtn) approveBtn.addEventListener('click', () => this.approvePhoto(s.photoModalId));
+      const rejectBtn = document.getElementById('photo-modal-reject');
+      if (rejectBtn) rejectBtn.addEventListener('click', () => { this.closePhotoModal(); this.openReject(s.photoModalId); });
+      return;
+    }
+
+    root.innerHTML = '';
+  }
+
+  updateRejectConfirmState() {
+    const btn = document.getElementById('reject-confirm-btn');
+    const has = this.state.rejectReason.trim().length > 0;
+    btn.disabled = !has;
+    btn.style.cssText = has
+      ? 'flex:1;height:42px;border-radius:9px;font-size:13.5px;font-weight:700;background:#FF6B7D;border:none;color:#06181A;'
+      : 'flex:1;height:42px;border-radius:9px;font-size:13.5px;font-weight:700;background:#2A2331;border:none;color:#656C84;cursor:not-allowed;';
+  }
+
+  rejectModalHtml() {
+    const s = this.state;
+    const photo = [...s.photos, ...(s.overview ? s.overview.pendingPreview : [])].find(p => p.id === s.rejectForId);
+    const chips = REASON_CHIPS.map(c => `<button class="reason-chip" data-reason-chip="${esc(c)}">${esc(c)}</button>`).join('');
+    return `
+      <div class="modal-scrim" id="reject-scrim">
+        <div class="reject-modal">
+          <div style="display:flex;gap:13px;align-items:center;margin-bottom:16px;">
+            <div style="width:56px;height:56px;border-radius:10px;background-size:cover;background-position:center;background-color:#0E1322;border:1px solid var(--border);flex-shrink:0;background-image:url('/api/admin/photos/${s.rejectForId}/image');"></div>
+            <div style="min-width:0;">
+              <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);">Reject submission</div>
+              <div style="font-size:12.5px;color:#888FA8;margin-top:2px;">${photo ? esc(photo.rinkName) + ' · by ' + esc(photo.submitterName) : ''}</div>
+            </div>
+          </div>
+          <label class="field-label">Reason (shared with submitter)</label>
+          <div class="reason-chips">${chips}</div>
+          <textarea class="field-textarea" id="reject-reason-input" rows="3" placeholder="Add a short reason…">${esc(s.rejectReason)}</textarea>
+          <div style="display:flex;gap:10px;margin-top:18px;">
+            <button class="btn-cancel" id="reject-cancel-btn">Cancel</button>
+            <button id="reject-confirm-btn" disabled style="flex:1;height:42px;border-radius:9px;font-size:13.5px;font-weight:700;background:#2A2331;border:none;color:#656C84;cursor:not-allowed;">Reject photo</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  photoModalHtml() {
+    const s = this.state;
+    const inQueue = s.photos.find(p => p.id === s.photoModalId);
+    const inOverview = s.overview ? s.overview.pendingPreview.find(p => p.id === s.photoModalId) : null;
+    const photo = inQueue || inOverview;
+    if (!photo) return '';
+    const info = TYPE_INFO[photo.rinkType] || TYPE_INFO.STANDARD;
+    // pendingPreview only ever holds pending photos; when the modal was
+    // opened from the Photo Queue itself, trust the active tab instead —
+    // serialize_admin_photo() doesn't echo a status field back.
+    const isPending = inQueue ? s.photoFilter === 'pending' : true;
+    const actions = isPending
+      ? `<div style="display:flex;gap:11px;">
+          <button id="photo-modal-approve" style="flex:1;height:44px;border-radius:9px;background:#34E0A0;border:none;color:#06181A;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px;">${icon('check')}Approve</button>
+          <button id="photo-modal-reject" style="flex:1;height:44px;border-radius:9px;background:transparent;border:1px solid rgba(255,107,125,0.4);color:#FF6B7D;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:7px;">${icon('x')}Reject</button>
+        </div>`
+      : `<div class="status-pill" style="height:44px;">${icon('check')}Published</div>`;
+
+    return `
+      <div class="modal-scrim" id="photo-scrim">
+        <div class="photo-modal">
+          <div class="photo-modal-hero" style="background-image:url('/api/admin/photos/${photo.id}/image');">
+            <button class="photo-modal-close" id="photo-modal-close-btn" aria-label="Close">${icon('x')}</button>
+            <span class="type-badge thumb-badge" style="background:${info.bg};border:1px solid ${info.color}40;color:${info.color};">${info.label}</span>
+          </div>
+          <div style="padding:18px 20px 20px;">
+            <div style="font-family:var(--font-display);font-size:19px;font-weight:700;color:var(--text);">${esc(photo.rinkName)}</div>
+            <div style="font-size:13px;color:#888FA8;margin-top:3px;">${esc(photo.rinkCity)}, ${esc(photo.rinkState)}</div>
+            <div class="meta-strip">
+              <div><div class="meta-eyebrow">Submitter</div><div style="font-size:13.5px;color:var(--text);margin-top:4px;">${esc(photo.submitterName)}</div></div>
+              <div><div class="meta-eyebrow">Submitted</div><div style="font-size:13.5px;color:var(--text);margin-top:4px;">${relTime(photo.submittedAt)}</div></div>
+            </div>
+            ${actions}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  renderToast() {
+    const el = document.getElementById('toast');
+    const t = this.state.toast;
+    if (!t) { el.classList.remove('show'); return; }
+    el.innerHTML = `<span style="font-size:16px;display:flex;color:${t.color};">${icon(t.icon)}</span><span style="font-size:13.5px;color:var(--text);">${esc(t.text)}</span>`;
+    requestAnimationFrame(() => el.classList.add('show'));
+  }
 }
 
-function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s == null ? '' : s;
-  return d.innerHTML;
-}
-
-load();
+const app = new Admin();
 </script>
 </body>
 </html>
