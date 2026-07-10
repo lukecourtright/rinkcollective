@@ -38,6 +38,7 @@
   #menu-overlay.open #menu-panel { transform: translateX(0); }
   .menu-link { padding: 12px; font-size: 15px; font-weight: 500; color: var(--text); border-radius: 9px; }
   .menu-link.active { color: var(--color-primary); font-weight: 600; background: rgba(20,207,207,0.08); }
+  .account-menu-item:hover { background: var(--surface-2); color: var(--text); }
 
   /* ── Shared layout ── */
   .wrap { max-width: 1120px; margin: 0 auto; }
@@ -178,7 +179,7 @@
   .footer-cta .btn-primary { padding: 13px 26px; font-size: 15px; }
 
   @media (max-width: 768px) {
-    #nav-links, #nav-signin { display: none; }
+    #nav-links, #nav-auth-links, #nav-account-wrap { display: none; }
     #hamburger-btn { display: flex; }
 
     .section-pad { padding: 34px 20px; }
@@ -217,8 +218,23 @@
     <a href="/guides" class="nav-link active">Guides</a>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
-    <a href="/rinks?auth=login" id="nav-signin">Sign in</a>
-    <a href="/rinks?auth=signup" class="btn-primary">Create account</a>
+    <div id="nav-auth-links" style="display:flex;align-items:center;gap:8px;">
+      <a href="/rinks?auth=login" id="nav-signin">Sign in</a>
+      <a href="/rinks?auth=signup" class="btn-primary">Create account</a>
+    </div>
+    <div id="nav-account-wrap" style="display:none;position:relative;">
+      <div id="nav-account" style="display:flex;align-items:center;gap:6px;cursor:pointer;" onclick="app.toggleAccountMenu(event)">
+        <span id="nav-username" style="font-size:12px;font-weight:500;color:var(--text-muted);white-space:nowrap;"></span>
+        <div style="width:30px;height:30px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-faint);flex-shrink:0;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+      </div>
+      <div id="account-menu" style="display:none;position:absolute;top:calc(100% + 8px);right:0;min-width:180px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,0.45);z-index:500;overflow:hidden;">
+        <div id="account-menu-name" style="padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);border-bottom:1px solid var(--hair);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+        <a id="account-menu-admin" href="/admin" class="account-menu-item" style="display:none;padding:9px 14px;font-size:13px;color:var(--text-muted);text-decoration:none;">Admin Console</a>
+        <button id="account-menu-logout" class="account-menu-item" style="width:100%;text-align:left;padding:9px 14px;font-size:13px;color:var(--text-muted);background:none;border:none;cursor:pointer;font-family:inherit;">Log out</button>
+      </div>
+    </div>
     <button id="hamburger-btn" aria-label="Menu" aria-expanded="false">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#B0B8CF" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
     </button>
@@ -239,8 +255,15 @@
     <a href="/equipment" class="menu-link">Equipment</a>
     <a href="/guides" class="menu-link active">Guides</a>
     <div style="height:1px;background:var(--hair);margin:10px 2px;"></div>
-    <a href="/rinks?auth=login" class="menu-link" style="color:var(--text-muted);">Sign in</a>
-    <a href="/rinks?auth=signup" style="margin-top:4px;padding:13px;text-align:center;background:var(--color-primary);border-radius:9px;color:var(--on-primary);font-size:15px;font-weight:700;">Create account</a>
+    <div id="menu-auth-signed-out">
+      <a href="/rinks?auth=login" class="menu-link" style="color:var(--text-muted);">Sign in</a>
+      <a href="/rinks?auth=signup" style="margin-top:4px;padding:13px;text-align:center;background:var(--color-primary);border-radius:9px;color:var(--on-primary);font-size:15px;font-weight:700;">Create account</a>
+    </div>
+    <div id="menu-auth-signed-in" style="display:none;">
+      <div id="menu-account-name" style="padding:10px 12px;font-size:14px;font-weight:600;color:var(--text);"></div>
+      <a href="/admin" id="menu-account-admin" class="menu-link" style="display:none;color:var(--text-muted);">Admin Console</a>
+      <button id="menu-account-logout" class="menu-link" style="display:block;width:100%;text-align:left;background:none;border:none;cursor:pointer;font-family:inherit;color:var(--text-muted);">Log out</button>
+    </div>
   </div>
 </div>
 
@@ -442,6 +465,7 @@ function topicIconSvg(id, size) {
 const ICON_TIP = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#34E0A0" stroke-width="2.2" stroke-linecap="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.3M12 2a7 7 0 0 1 4 12.7c-.6.5-1 1.3-1 2.3"/></svg>`;
 const ICON_WARN = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFC83D" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>`;
 const ICON_GEAR = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`;
+function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
 
 class Guides {
   constructor() {
@@ -452,6 +476,7 @@ class Guides {
       articleId: null,
       query: '',
       currentUser: null,
+      accountMenuOpen: false,
       progress: {},
       menuOpen: false,
       activeSec: 'top',
@@ -462,6 +487,7 @@ class Guides {
     document.getElementById('nav-wordmark').innerHTML = `${BRAND_INK}<span style="color:#FFC83D;">${BRAND_GOLD}</span>`;
     this.bindNav();
     this.bindMenu();
+    this.bindAccountMenu();
     document.getElementById('guides-search').addEventListener('input', (e) => this.setState({ query: e.target.value }));
     document.getElementById('cat-breadcrumb-home').addEventListener('click', (e) => { e.preventDefault(); this.goHome(); });
     document.getElementById('article-breadcrumb-home').addEventListener('click', (e) => { e.preventDefault(); this.goHome(); });
@@ -502,12 +528,40 @@ class Guides {
   openArticle(id) { this.setState({ view: 'article', articleId: id, activeSec: 'top' }); window.scrollTo({ top: 0 }); }
 
   render() {
+    this.renderAccountNav();
     document.getElementById('view-landing').style.display = this.state.view === 'landing' ? '' : 'none';
     document.getElementById('view-category').style.display = this.state.view === 'category' ? '' : 'none';
     document.getElementById('view-article').style.display = this.state.view === 'article' ? '' : 'none';
     if (this.state.view === 'landing') this.renderLanding();
     if (this.state.view === 'category') this.renderCategory();
     if (this.state.view === 'article') this.renderArticle();
+  }
+
+  toggleAccountMenu(e) {
+    if (e) e.stopPropagation();
+    this.setState({ accountMenuOpen: !this.state.accountMenuOpen });
+  }
+
+  async logout() {
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    this.setState({ currentUser: null, accountMenuOpen: false });
+    if (this.state.menuOpen) this.closeMenu();
+  }
+
+  renderAccountNav() {
+    const s = this.state;
+    const signedIn = !!s.currentUser;
+    document.getElementById('nav-auth-links').style.display = signedIn ? 'none' : 'flex';
+    document.getElementById('nav-account-wrap').style.display = signedIn ? 'block' : 'none';
+    document.getElementById('menu-auth-signed-out').style.display = signedIn ? 'none' : 'block';
+    document.getElementById('menu-auth-signed-in').style.display = signedIn ? 'block' : 'none';
+    if (!signedIn) return;
+    document.getElementById('nav-username').textContent = s.currentUser.displayName;
+    document.getElementById('account-menu').style.display = s.accountMenuOpen ? 'block' : 'none';
+    document.getElementById('account-menu-name').textContent = s.currentUser.displayName;
+    document.getElementById('account-menu-admin').style.display = s.currentUser.isAdmin ? 'block' : 'none';
+    document.getElementById('menu-account-name').textContent = s.currentUser.displayName;
+    document.getElementById('menu-account-admin').style.display = s.currentUser.isAdmin ? 'block' : 'none';
   }
 
   guideCardHtml(g) {
@@ -717,6 +771,19 @@ class Guides {
     panel.querySelectorAll('a').forEach(a => a.addEventListener('click', () => this.closeMenu()));
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && this.state.menuOpen) this.closeMenu();
+    });
+  }
+
+  bindAccountMenu() {
+    document.getElementById('account-menu-logout').addEventListener('click', () => this.logout());
+    document.getElementById('menu-account-logout').addEventListener('click', () => this.logout());
+    document.addEventListener('click', (e) => {
+      if (!this.state.accountMenuOpen) return;
+      const wrap = document.getElementById('nav-account-wrap');
+      if (wrap && !wrap.contains(e.target)) this.setState({ accountMenuOpen: false });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.state.accountMenuOpen) this.setState({ accountMenuOpen: false });
     });
   }
 

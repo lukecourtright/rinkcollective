@@ -194,7 +194,12 @@ def verify_password(password: str, password_hash: str) -> bool:
 
 
 def user_public(user: User) -> dict:
-    return {"id": user.id, "email": user.email, "displayName": user.displayName}
+    return {
+        "id": user.id,
+        "email": user.email,
+        "displayName": user.displayName,
+        "isAdmin": user.email in ADMIN_EMAILS,
+    }
 
 
 def require_admin(request: Request, session: Session) -> User:

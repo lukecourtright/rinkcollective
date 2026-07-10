@@ -83,6 +83,7 @@
 
   #detail-drawer { position: fixed; right: 0; top: 0; bottom: 0; width: 440px; background: var(--bg); border-left: 1px solid var(--border); box-shadow: -8px 0 40px rgba(0,0,0,0.55); z-index: 1301; display: flex; flex-direction: column; animation: slideInRight 0.22s ease; }
   #detail-scrim { position: fixed; inset: 0; background: rgba(6,9,15,0.6); z-index: 1300; }
+  .account-menu-item:hover { background: var(--surface-2); color: var(--text); }
   .price-panel { background: var(--surface); border-radius: 14px; padding: 16px; }
   .review-card { background: var(--surface); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
   .hist-bar-track { flex: 1; height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; }
@@ -117,9 +118,7 @@
         <svg style="position:absolute;left:11px;top:50%;transform:translateY(-50%);" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5168" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input id="nav-search" type="text" placeholder="Search gear…" style="width:210px;padding:7px 12px 7px 32px;background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--text);font-size:12px;font-family:inherit;outline:none;">
       </div>
-      <div style="width:30px;height:30px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--neutral-500);flex-shrink:0;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      </div>
+      <div id="nav-account-wrap" style="position:relative;flex-shrink:0;"></div>
     </div>
   </nav>
 
@@ -149,6 +148,7 @@ const ICON_SVG = {
   mask: "<svg width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M6 4h12a2 2 0 0 1 2 2v6a8 8 0 0 1-16 0V6a2 2 0 0 1 2-2z'/><path d='M9 8v6M15 8v6M6 11h12'/></svg>",
 };
 const BEST_NUMERIC_SPECS = { "Weight": "min" };
+function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
 
 class Equipment {
   constructor() {
@@ -163,18 +163,47 @@ class Equipment {
       compare: [],
       compareOpen: false,
       detailId: null,
+      currentUser: null,
+      accountMenuOpen: false,
     };
     this.init();
   }
 
   async init() {
-    const res = await fetch('/api/equipment');
-    const products = await res.json();
-    this.setState({ products });
+    const [products, me] = await Promise.all([
+      fetch('/api/equipment').then(r => r.json()),
+      fetch('/api/auth/me').then(r => r.json()),
+    ]);
+    this.setState({ products, currentUser: me.user });
 
     document.getElementById('nav-search').addEventListener('input', (e) => {
       this.setState({ search: e.target.value });
     });
+
+    document.addEventListener('click', (e) => {
+      if (!this.state.accountMenuOpen) return;
+      const wrap = document.getElementById('nav-account-wrap');
+      if (wrap && !wrap.contains(e.target)) this.setState({ accountMenuOpen: false });
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.state.accountMenuOpen) this.setState({ accountMenuOpen: false });
+    });
+  }
+
+  toggleAccountMenu(e) {
+    // stopPropagation is required here (not just defensive): renderNavAccount()
+    // rebuilds #nav-account-wrap via innerHTML on every render, so the click
+    // target node is destroyed and recreated as part of handling this very
+    // click — if the event bubbles to the document-level outside-click
+    // listener, wrap.contains(e.target) sees a now-detached stale node and
+    // immediately closes the menu this click just opened.
+    if (e) e.stopPropagation();
+    this.setState({ accountMenuOpen: !this.state.accountMenuOpen });
+  }
+
+  async logout() {
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    this.setState({ currentUser: null, accountMenuOpen: false });
   }
 
   setState(partial) {
@@ -266,11 +295,29 @@ class Equipment {
   }
 
   render() {
+    this.renderNavAccount();
     this.renderSidebar();
     this.renderCatalog();
     this.renderTray();
     this.renderCompareOverlay();
     this.renderDrawer();
+  }
+
+  renderNavAccount() {
+    const s = this.state;
+    const root = document.getElementById('nav-account-wrap');
+    const avatarSvg = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+    if (!s.currentUser) {
+      root.innerHTML = `<a href="/rinks?auth=login" title="Sign in" style="width:30px;height:30px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--neutral-500);flex-shrink:0;text-decoration:none;">${avatarSvg}</a>`;
+      return;
+    }
+    root.innerHTML = `
+      <div title="${esc(s.currentUser.displayName)}" onclick="app.toggleAccountMenu(event)" style="width:30px;height:30px;border-radius:50%;background:var(--surface);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--neutral-500);flex-shrink:0;cursor:pointer;">${avatarSvg}</div>
+      <div id="account-menu" style="display:${s.accountMenuOpen ? 'block' : 'none'};position:absolute;top:calc(100% + 8px);right:0;min-width:180px;background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,0.45);z-index:500;overflow:hidden;">
+        <div style="padding:10px 14px;font-size:13px;font-weight:600;color:var(--text);border-bottom:1px solid var(--hair);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(s.currentUser.displayName)}</div>
+        ${s.currentUser.isAdmin ? `<a href="/admin" id="account-menu-admin" class="account-menu-item" style="display:block;padding:9px 14px;font-size:13px;color:var(--neutral-400);text-decoration:none;">Admin Console</a>` : ''}
+        <button onclick="app.logout()" class="account-menu-item" style="width:100%;text-align:left;padding:9px 14px;font-size:13px;color:var(--neutral-400);background:none;border:none;cursor:pointer;font-family:inherit;">Log out</button>
+      </div>`;
   }
 
   renderSidebar() {
