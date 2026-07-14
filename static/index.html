@@ -259,6 +259,7 @@
       <button class="drawer-tab" data-tab="photos" onclick="app.setTab('photos')">Photos</button>
       <button class="drawer-tab" data-tab="reviews" onclick="app.setTab('reviews')">Reviews</button>
       <button class="drawer-tab" data-tab="schedule" onclick="app.setTab('schedule')">Schedule</button>
+      <button class="drawer-tab" data-tab="programs" onclick="app.setTab('programs')">Programs</button>
     </div>
     <div id="drawer-body" style="padding:16px;"></div>
   </div>
@@ -393,6 +394,9 @@ class RinkFinder {
     myCheckins: {},
     myReviews: {},
     communityPhotos: {},
+    rinkSchedules: {},
+    rinkAnnouncements: {},
+    rinkPrograms: {},
     reviewOpen: false,
     reviewRating: 0,
     reviewToast: false,
@@ -842,7 +846,9 @@ class RinkFinder {
     } else if (s.activeTab === 'reviews') {
       body.innerHTML = this.renderReviewsTab(rink, s);
     } else if (s.activeTab === 'schedule') {
-      body.innerHTML = this.renderEventsTab(rink);
+      body.innerHTML = this.renderEventsTab(rink, s);
+    } else if (s.activeTab === 'programs') {
+      body.innerHTML = this.renderProgramsTab(rink);
     }
   }
 
@@ -918,6 +924,16 @@ class RinkFinder {
     const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
     const today = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()];
 
+    const TYPE_COLORS = { alert: '#FF6B7D', update: '#14CFCF', event: '#FFD24D' };
+    const pinned = (this.state.rinkAnnouncements[rink.id] || []).filter(a => a.pinned);
+    const bannersHTML = pinned.map(a => {
+      const color = TYPE_COLORS[a.type] || '#14CFCF';
+      return `<div style="display:flex;gap:8px;align-items:flex-start;padding:11px 12px;background:${color}0F;border:1px solid ${color}59;border-radius:10px;margin-bottom:8px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+        <span style="font-size:12.5px;color:var(--text);line-height:1.4;">${this.esc(a.text)}</span>
+      </div>`;
+    }).join('');
+
     const distStr = dist !== null ? `<div style="font-size:11px;color:var(--color-primary);margin-top:3px;font-family:var(--font-mono);">${dist.toFixed(1)} mi away</div>` : '';
 
     const hoursRows = days.map((day, i) => {
@@ -933,7 +949,7 @@ class RinkFinder {
       `<span style="padding:3px 10px;background:var(--surface);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text-muted);">${this.esc(a)}</span>`
     ).join('');
 
-    return `<div style="display:flex;gap:10px;margin-bottom:14px;align-items:flex-start;">
+    return `${bannersHTML}<div style="display:flex;gap:10px;margin-bottom:14px;align-items:flex-start;">
         <div style="width:32px;height:32px;background:var(--surface);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--color-primary);margin-top:1px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>
@@ -1029,17 +1045,93 @@ class RinkFinder {
       <div style="font-size:11px;color:var(--text-faint);margin-top:10px;">${footnote}</div>`;
   }
 
-  renderEventsTab(rink) {
-    const eventsHTML = rink.events.map(ev =>
-      `<div style="padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
-        <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;">${this.esc(ev.title)}</div>
-        <div style="display:flex;align-items:center;gap:5px;">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span style="font-size:12px;color:var(--color-primary);font-family:var(--font-mono);">${this.esc(ev.date)}</span>
+  renderEventsTab(rink, s) {
+    const schedule = s && s.rinkSchedules[rink.id];
+    if (!schedule || !schedule.sheets || !schedule.sheets.length) {
+      // No real console-managed schedule for this rink yet — fall back to
+      // the legacy rinks.json `events` placeholder list.
+      const eventsHTML = rink.events.map(ev =>
+        `<div style="padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:5px;">${this.esc(ev.title)}</div>
+          <div style="display:flex;align-items:center;gap:5px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span style="font-size:12px;color:var(--color-primary);font-family:var(--font-mono);">${this.esc(ev.date)}</span>
+          </div>
+        </div>`
+      ).join('');
+      return `${eventsHTML}<button style="width:100%;padding:11px;background:transparent;border:1px dashed var(--border);border-radius:10px;color:var(--text-faint);font-size:13px;font-family:inherit;cursor:pointer;margin-top:4px;">+ Submit an Event</button>`;
+    }
+
+    const TYPE_COLORS = { 'Stick & Puck': '#14CFCF', 'Drop-In': '#CB78FF', 'Public Skate': '#34E0A0', 'Learn to Skate': '#FFD24D', 'Hockey League': '#4FB8FF' };
+    const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const sheetNameById = Object.fromEntries(schedule.sheets.map(sh => [sh.id, sh.name]));
+    const multiSheet = schedule.sheets.length > 1;
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const mondayOffset = today.getDay() === 0 ? -6 : 1 - today.getDay();
+    const monday = new Date(today); monday.setDate(monday.getDate() + mondayOffset);
+
+    const rows = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday); d.setDate(monday.getDate() + i);
+      const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      schedule.sessions
+        .filter(sess => sess.repeatWeekly ? sess.dayOfWeek === i : sess.date === iso)
+        .forEach(sess => rows.push({ dayLabel: DAY_LABELS[i], sess }));
+    }
+
+    if (!rows.length) {
+      return `<div style="text-align:center;padding:30px 0;color:var(--text-faint);font-size:13px;">No ice time scheduled this week.</div>`;
+    }
+
+    return rows.map(({ dayLabel, sess }) => {
+      const color = TYPE_COLORS[sess.type] || 'var(--color-primary)';
+      const sheetNote = multiSheet ? ` · ${this.esc(sheetNameById[sess.sheetId] || '')}` : '';
+      return `<div style="padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <div style="font-size:14px;font-weight:600;color:var(--text);">${this.esc(sess.type)}</div>
+          <div style="font-size:13px;font-weight:700;color:${color};font-family:var(--font-mono);">$${Math.round(sess.price || 0)}</div>
         </div>
-      </div>`
-    ).join('');
-    return `${eventsHTML}<button style="width:100%;padding:11px;background:transparent;border:1px dashed var(--border);border-radius:10px;color:var(--text-faint);font-size:13px;font-family:inherit;cursor:pointer;margin-top:4px;">+ Submit an Event</button>`;
+        <div style="display:flex;align-items:center;gap:5px;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span style="font-size:12px;color:${color};font-family:var(--font-mono);">${dayLabel} ${this.esc(sess.start)}–${this.esc(sess.end)}${sheetNote}</span>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  renderProgramsTab(rink) {
+    const programs = this.state.rinkPrograms[rink.id] || [];
+    if (!programs.length) {
+      return `<div style="text-align:center;padding:30px 0;color:var(--text-faint);font-size:13px;">No programs currently scheduled.</div>`;
+    }
+
+    const STATUS_META = {
+      open: { label: 'Open', color: '#34E0A0' },
+      waitlist: { label: 'Waitlist', color: '#FFD24D' },
+      closed: { label: 'Closed', color: '#888FA8' },
+      past: { label: 'Completed', color: '#888FA8' },
+    };
+    const fmt = (iso) => iso ? new Date(iso + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+
+    return programs.map(p => {
+      const meta = STATUS_META[p.effectiveStatus] || STATUS_META.open;
+      const dateRange = p.startDate ? (p.endDate && p.endDate !== p.startDate ? `${fmt(p.startDate)}–${fmt(p.endDate)}` : fmt(p.startDate)) : '';
+      const metaParts = [dateRange, p.scheduleNote, p.ageRange ? `ages ${p.ageRange}` : ''].filter(Boolean).join(' · ');
+      const spots = p.effectiveStatus === 'waitlist'
+        ? `Waitlist only — ${p.waitlistCount} waiting`
+        : (p.cap ? `${Math.max(p.cap - p.enrolledCount, 0)} spot${p.cap - p.enrolledCount === 1 ? '' : 's'} left of ${p.cap}` : '');
+      return `<div style="padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:5px;">
+          <div style="font-size:14px;font-weight:600;color:var(--text);">${this.esc(p.name)}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--color-primary);font-family:var(--font-mono);flex-shrink:0;">$${Math.round(p.price || 0)}</div>
+        </div>
+        <div style="font-size:12px;color:var(--text-faint);font-family:var(--font-mono);margin-bottom:6px;">${this.esc(metaParts)}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:11.5px;font-weight:600;color:${meta.color};">${meta.label}${spots ? ` · ${this.esc(spots)}` : ''}</span>
+        </div>
+      </div>`;
+    }).join('') + `<div style="text-align:center;padding:10px 0 2px;color:var(--text-faint);font-size:12px;">Contact the rink to register for a program.</div>`;
   }
 
   renderReviewsTab(rink, s) {
@@ -1151,6 +1243,27 @@ class RinkFinder {
       fetch(`/api/rinks/${id}/photos`).then(r => r.json()).then(photos => {
         if (this.state.selectedRinkId === id) {
           this.setState(s => ({ communityPhotos: { ...s.communityPhotos, [id]: photos } }));
+        }
+      }).catch(() => {});
+    }
+    if (!this.state.rinkSchedules[id]) {
+      fetch(`/api/rinks/${id}/schedule`).then(r => r.json()).then(schedule => {
+        if (this.state.selectedRinkId === id) {
+          this.setState(s => ({ rinkSchedules: { ...s.rinkSchedules, [id]: schedule } }));
+        }
+      }).catch(() => {});
+    }
+    if (!this.state.rinkAnnouncements[id]) {
+      fetch(`/api/rinks/${id}/announcements`).then(r => r.json()).then(announcements => {
+        if (this.state.selectedRinkId === id) {
+          this.setState(s => ({ rinkAnnouncements: { ...s.rinkAnnouncements, [id]: announcements } }));
+        }
+      }).catch(() => {});
+    }
+    if (!this.state.rinkPrograms[id]) {
+      fetch(`/api/rinks/${id}/programs`).then(r => r.json()).then(programs => {
+        if (this.state.selectedRinkId === id) {
+          this.setState(s => ({ rinkPrograms: { ...s.rinkPrograms, [id]: programs } }));
         }
       }).catch(() => {});
     }

@@ -311,6 +311,7 @@ class Admin {
       rinks: [], rinksTotal: 0, rinksPage: 1, rinkSearch: '',
 
       editRinkId: null, rinkDraft: null,
+      rinkAdmins: [], rinkAdminEmailInput: '', rinkAdminError: '',
 
       activity: [],
 
@@ -497,9 +498,39 @@ class Admin {
   async openEditor(rinkId) {
     const res = await this.api(`/api/admin/rinks/${rinkId}`);
     const rink = await res.json();
-    this.setState({ editRinkId: rinkId, rinkDraft: JSON.parse(JSON.stringify(rink)) });
+    this.setState({ editRinkId: rinkId, rinkDraft: JSON.parse(JSON.stringify(rink)), rinkAdmins: [], rinkAdminEmailInput: '', rinkAdminError: '' });
+    await this.loadRinkAdmins();
   }
-  closeEditor() { this.setState({ editRinkId: null, rinkDraft: null }); }
+  closeEditor() { this.setState({ editRinkId: null, rinkDraft: null, rinkAdmins: [], rinkAdminEmailInput: '', rinkAdminError: '' }); }
+
+  async loadRinkAdmins() {
+    const res = await this.api(`/api/admin/rinks/${this.state.editRinkId}/admins`);
+    const admins = await res.json();
+    this.setState({ rinkAdmins: admins });
+  }
+
+  async addRinkAdmin() {
+    const email = this.state.rinkAdminEmailInput.trim();
+    if (!email) return;
+    const res = await fetch(`/api/admin/rinks/${this.state.editRinkId}/admins`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      this.setState({ rinkAdminError: err.detail || 'Could not add that admin' });
+      return;
+    }
+    this.setState({ rinkAdminEmailInput: '', rinkAdminError: '' });
+    await this.loadRinkAdmins();
+    this.showToast('Rink admin added', '#14CFCF', 'check');
+  }
+
+  async removeRinkAdmin(adminId) {
+    await this.api(`/api/admin/rinks/${this.state.editRinkId}/admins/${adminId}`, { method: 'DELETE' });
+    await this.loadRinkAdmins();
+    this.showToast('Rink admin removed', '#FF6B7D', 'x');
+  }
 
   updateDraft(field, value) { this.state.rinkDraft[field] = value; this.render(); }
   updateDraftHour(day, value) { this.state.rinkDraft.hours[day] = value; this.render(); }
@@ -831,6 +862,8 @@ class Admin {
         <div>${dayRows}</div>
         <div class="section-label">Amenities</div>
         <textarea class="field-textarea" id="draft-amenities" rows="3" placeholder="Pro Shop, Skate Rental, Concessions…">${esc((d.amenities || []).join(', '))}</textarea>
+        <div class="section-label">Rink Admins</div>
+        ${this.rinkAdminsHtml()}
       </div>
       <div class="editor-footer">
         <button class="btn-cancel" id="editor-cancel-btn">Cancel</button>
@@ -850,6 +883,34 @@ class Admin {
       this.state.rinkDraft.hours[b.dataset.dayClosed] = 'Closed';
       this.render();
     }));
+
+    const adminEmailInput = document.getElementById('rink-admin-email-input');
+    adminEmailInput.addEventListener('input', (e) => { this.state.rinkAdminEmailInput = e.target.value; });
+    adminEmailInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') this.addRinkAdmin(); });
+    document.getElementById('rink-admin-add-btn').addEventListener('click', () => this.addRinkAdmin());
+    document.querySelectorAll('[data-remove-rink-admin]').forEach(b => b.addEventListener('click', () => this.removeRinkAdmin(Number(b.dataset.removeRinkAdmin))));
+  }
+
+  rinkAdminsHtml() {
+    const admins = this.state.rinkAdmins;
+    const rows = admins.length
+      ? admins.map(a => `
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--hair);">
+          <div style="min-width:0;flex:1;">
+            <div style="font-size:12.5px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.name)}</div>
+            <div style="font-size:11px;color:#656C84;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(a.email)}</div>
+          </div>
+          <button data-remove-rink-admin="${a.id}" style="width:30px;height:30px;border-radius:8px;background:transparent;border:1px solid var(--border);color:#656C84;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;" aria-label="Remove">${icon('x')}</button>
+        </div>`).join('')
+      : `<div style="font-size:12.5px;color:#656C84;padding:6px 0 10px;">No rink admins yet — grant access below.</div>`;
+
+    return `
+      <div style="margin-bottom:10px;">${rows}</div>
+      <div style="display:flex;gap:8px;margin-bottom:${this.state.rinkAdminError ? '6px' : '16px'};">
+        <input class="field-input" id="rink-admin-email-input" style="margin-bottom:0;" value="${esc(this.state.rinkAdminEmailInput)}" placeholder="owner@email.com" type="email">
+        <button id="rink-admin-add-btn" style="flex-shrink:0;height:40px;padding:0 16px;border-radius:9px;background:var(--color-primary);border:none;color:#06181A;font-size:13px;font-weight:700;">Add</button>
+      </div>
+      ${this.state.rinkAdminError ? `<div style="font-size:12px;color:#FF6B7D;margin-bottom:16px;">${esc(this.state.rinkAdminError)}</div>` : ''}`;
   }
 
   // ---------- modals ----------

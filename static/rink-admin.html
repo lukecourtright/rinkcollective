@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RinkCollective — Rink Owner Console</title>
+<link rel="icon" href="/static/logo/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/brand-tokens.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); }
+  body { font-family: var(--font-body); color: var(--text); -webkit-font-smoothing: antialiased; }
+  a { color: #07C8C8; text-decoration: none; }
+  input, textarea, button, select { font-family: inherit; }
+  input::placeholder, textarea::placeholder { color: #4B5168; }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--color-primary) !important; box-shadow: 0 0 0 3px rgba(20,207,207,0.12); }
+  button { cursor: pointer; }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  #app { display: flex; min-height: 100vh; background: var(--bg); }
+
+  /* ---------- sidebar (shared shell — matches static/admin.html) ---------- */
+  #sidebar-scrim { position: fixed; inset: 0; background: rgba(5,7,15,0.6); z-index: 199; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+  #sidebar-scrim.open { opacity: 1; pointer-events: auto; }
+  #sidebar { width: 236px; flex-shrink: 0; background: #0E1322; border-right: 1px solid var(--hair); display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; z-index: 200; }
+  .sb-header { display: flex; align-items: center; gap: 10px; padding: 18px 18px 16px; border-bottom: 1px solid var(--hair); flex-shrink: 0; }
+  .sb-mark { width: 32px; height: 32px; border-radius: 9px; background: rgba(20,207,207,0.1); border: 1px solid rgba(20,207,207,0.3); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sb-word { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--text); letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sb-eyebrow { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #07C8C8; margin-top: 2px; }
+  .sb-nav { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 2px; overflow-y: auto; }
+  .sb-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase; color: #4B5168; padding: 6px 10px 8px; }
+  .nav-item { display: flex; align-items: center; gap: 11px; padding: 9px 10px; border-radius: 9px; background: none; border: none; color: var(--text-muted); font-size: 13.5px; font-weight: 500; width: 100%; text-align: left; }
+  .nav-item .ic { font-size: 18px; color: #656C84; display: flex; }
+  .nav-item.active { background: rgba(20,207,207,0.1); color: var(--color-primary); font-weight: 600; }
+  .nav-item.active .ic { color: var(--color-primary); }
+  .nav-badge { margin-left: auto; background: #FFC83D; color: #3A2A05; font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 6px; }
+  .muted-row { display: flex; align-items: center; gap: 11px; padding: 9px 10px; border-radius: 9px; opacity: 0.55; cursor: default; }
+  .sb-footer { padding: 12px; border-top: 1px solid var(--hair); flex-shrink: 0; }
+  .view-public-btn { width: 100%; height: 38px; border-radius: 9px; background: rgba(20,207,207,0.08); border: 1px solid rgba(20,207,207,0.3); color: var(--color-primary); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 7px; margin-bottom: 10px; }
+  .admin-console-link { display: block; text-align: center; font-size: 11px; color: #656C84; margin-bottom: 10px; }
+  .sb-user-row { display: flex; align-items: center; gap: 10px; }
+  .sb-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#14CFCF,#07C8C8); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #06181A; flex-shrink: 0; }
+  .sb-logout { width: 32px; height: 32px; border-radius: 8px; background: transparent; border: 1px solid var(--border); color: #888FA8; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .sb-logout:hover { background: rgba(255,107,125,0.1); border-color: rgba(255,107,125,0.3); color: #FF6B7D; }
+
+  /* ---------- main / topbar ---------- */
+  #main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  #topbar { height: 60px; flex-shrink: 0; background: rgba(10,14,26,0.82); backdrop-filter: blur(10px); border-bottom: 1px solid var(--hair); display: flex; align-items: center; gap: 14px; padding: 0 24px; position: sticky; top: 0; z-index: 120; }
+  #hamburger-btn { display: none; background: none; border: none; padding: 6px; }
+  .page-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.02em; line-height: 1.1; }
+  .page-subtitle { font-size: 12px; color: #656C84; margin-top: 1px; }
+  .status-pill { display: flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 20px; margin-left: auto; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.04em; }
+  .status-pill.live { background: rgba(52,224,160,0.09); border: 1px solid rgba(52,224,160,0.25); color: #34E0A0; }
+  .status-pill.unpublished { background: rgba(255,210,77,0.09); border: 1px solid rgba(255,210,77,0.3); color: #FFD24D; }
+  .status-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; box-shadow: 0 0 8px currentColor; }
+  #content { flex: 1; overflow-y: auto; padding: 22px 24px 60px; }
+  .content-inner { max-width: 1120px; margin: 0 auto; }
+
+  /* ---------- toolbar / segmented controls ---------- */
+  .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .seg { display: flex; align-items: center; background: #0E1322; border: 1px solid var(--border); border-radius: 9px; padding: 2px; gap: 2px; }
+  .seg-btn { padding: 6px 13px; border-radius: 7px; background: transparent; border: none; color: #656C84; font-size: 13px; font-weight: 600; }
+  .seg-btn.active-cyan { background: var(--color-primary); color: #06181A; }
+  .seg-btn.active-neutral { background: #1C2540; color: var(--text); }
+  .gear-btn { width: 28px; height: 26px; border-radius: 7px; background: transparent; border: none; color: #656C84; display: flex; align-items: center; justify-content: center; }
+  .icon-nav-btn { width: 30px; height: 30px; border-radius: 8px; background: #0E1322; border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; }
+  .week-label { font-family: var(--font-mono); font-size: 12.5px; color: #B0B8CF; min-width: 96px; text-align: center; }
+  .toolbar-btn { height: 34px; padding: 0 13px; border-radius: 8px; background: #0E1322; border: 1px solid var(--border); color: #B0B8CF; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+  .btn-primary { height: 34px; padding: 0 15px; border-radius: 9px; background: var(--color-primary); border: none; color: #06181A; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; margin-left: auto; }
+
+  /* ---------- schedule grid ---------- */
+  .sched-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+  .sched-grid { display: grid; gap: 5px; }
+  .sched-daycol-head { text-align: center; font-family: var(--font-mono); font-size: 10.5px; font-weight: 600; color: #4B5168; padding-bottom: 4px; }
+  .sched-daycol-head.weekend { color: var(--color-primary); }
+  .sched-period-label { font-family: var(--font-mono); font-size: 9.5px; color: #656C84; display: flex; align-items: center; justify-content: center; }
+  .sched-cell { min-height: 40px; border-radius: 7px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3px; border: none; text-align: center; }
+  .sched-cell.empty { border: 1px dashed var(--border); background: #0E1322; color: #2A3450; font-size: 15px; }
+  .sched-cell.filled { border: 1px solid; }
+  .sched-code { font-family: var(--font-display); font-size: 9px; font-weight: 700; line-height: 1.3; }
+  .sched-time { font-family: var(--font-mono); font-size: 8px; opacity: 0.9; }
+  .sched-extra { font-family: var(--font-mono); font-size: 7px; opacity: 0.75; }
+
+  /* ---------- day view ---------- */
+  .day-pill-row { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; }
+  .day-pill { padding: 7px 13px; border-radius: 20px; background: transparent; border: 1px solid var(--border); color: #656C84; font-size: 12.5px; font-weight: 600; }
+  .day-pill.active { background: rgba(20,207,207,0.1); border-color: rgba(20,207,207,0.4); color: var(--color-primary); }
+  .day-row-card { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 8px; }
+  .day-color-bar { width: 4px; align-self: stretch; border-radius: 3px; flex-shrink: 0; }
+  .day-time { font-family: var(--font-mono); font-size: 12px; color: #B0B8CF; width: 70px; flex-shrink: 0; line-height: 1.3; }
+  .day-info { flex: 1; min-width: 0; }
+  .day-name { font-size: 14px; font-weight: 600; color: var(--text); }
+  .day-meta { font-size: 11.5px; color: #656C84; margin-top: 2px; }
+  .day-price { font-family: var(--font-mono); font-size: 14px; font-weight: 700; color: var(--color-primary); flex-shrink: 0; }
+  .day-trash { width: 30px; height: 30px; border-radius: 8px; background: transparent; border: 1px solid var(--border); color: #656C84; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .day-trash:hover { background: rgba(255,107,125,0.1); border-color: rgba(255,107,125,0.3); color: #FF6B7D; }
+
+  /* ---------- month view ---------- */
+  .month-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; }
+  .month-head { text-align: center; font-family: var(--font-mono); font-size: 10.5px; color: #4B5168; padding-bottom: 4px; }
+  .month-cell { min-height: 62px; border-radius: 8px; background: #0E1322; padding: 6px; }
+  .month-cell.out { background: transparent; }
+  .month-cell.today { border: 1px solid rgba(20,207,207,0.5); background: rgba(20,207,207,0.06); }
+  .month-daynum { font-family: var(--font-mono); font-size: 12px; color: #888FA8; }
+  .month-cell.today .month-daynum { color: var(--color-primary); font-weight: 700; }
+  .month-dots { display: flex; gap: 3px; margin-top: 5px; flex-wrap: wrap; }
+  .month-dot { width: 6px; height: 6px; border-radius: 50%; background: #34E0A0; }
+
+  /* ---------- publish bar ---------- */
+  .publish-bar { display: flex; align-items: center; background: #0E1322; border: 1px solid var(--hair); border-radius: 12px; margin-top: 16px; padding: 13px 16px; gap: 10px; }
+  .publish-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .publish-text { font-size: 13px; font-weight: 500; }
+  .publish-btn { margin-left: auto; height: 36px; padding: 0 15px; border-radius: 9px; font-size: 12.5px; font-weight: 700; border: none; }
+
+  /* ---------- empty states ---------- */
+  .dashed-empty { background: var(--surface); border: 1px dashed var(--border); border-radius: 14px; padding: 56px 24px; text-align: center; }
+  .dashed-empty-icon { width: 48px; height: 48px; border-radius: 12px; background: rgba(20,207,207,0.1); border: 1px solid rgba(20,207,207,0.3); color: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 14px; }
+  .dashed-empty-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .dashed-empty-sub { font-size: 13px; color: #656C84; max-width: 380px; margin: 0 auto 18px; line-height: 1.5; }
+
+  /* ---------- modal ---------- */
+  #modal-scrim { position: fixed; inset: 0; background: rgba(5,7,15,0.7); backdrop-filter: blur(3px); z-index: 1400; display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+  #modal-scrim.open { opacity: 1; pointer-events: auto; }
+  .modal-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; width: 440px; max-width: 100%; padding: 22px; transform: scale(0.96); transition: transform 0.2s ease; }
+  #modal-scrim.open .modal-panel { transform: scale(1); }
+  .modal-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #07C8C8; }
+  .modal-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; color: var(--text); margin-top: 3px; }
+  .modal-close { position: absolute; top: 20px; right: 20px; }
+  .sheet-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .sheet-input { flex: 1; height: 40px; padding: 0 13px; background: #0E1322; border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-size: 13.5px; }
+  .sheet-count { font-family: var(--font-mono); font-size: 10.5px; color: #656C84; white-space: nowrap; flex-shrink: 0; }
+  .sheet-trash { width: 34px; height: 34px; border-radius: 8px; background: transparent; border: 1px solid var(--border); color: #656C84; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sheet-trash:disabled { opacity: 0.35; cursor: not-allowed; }
+  .add-sheet-btn { width: 100%; height: 40px; border-radius: 9px; background: transparent; border: 1px dashed var(--border); color: var(--color-primary); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 7px; margin-bottom: 18px; }
+  .modal-footer { display: flex; gap: 10px; }
+  .btn-cancel { flex: 1; height: 42px; border-radius: 9px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); font-size: 13.5px; font-weight: 600; }
+  .btn-save { flex: 1.6; height: 42px; border-radius: 9px; background: var(--color-primary); border: none; color: #06181A; font-size: 13.5px; font-weight: 700; }
+
+  /* ---------- drawer ---------- */
+  #drawer-scrim { position: fixed; inset: 0; background: rgba(5,7,15,0.55); backdrop-filter: blur(2px); z-index: 1300; opacity: 0; pointer-events: none; transition: opacity 0.25s ease; }
+  #drawer-scrim.open { opacity: 1; pointer-events: auto; }
+  #session-drawer { position: fixed; right: 0; top: 0; bottom: 0; width: 440px; background: var(--surface); border-left: 1px solid var(--border); box-shadow: -8px 0 40px rgba(0,0,0,0.55); z-index: 1301; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.3s ease; }
+  #session-drawer.open { transform: translateX(0); }
+  .drawer-head { display: flex; align-items: center; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--hair); flex-shrink: 0; }
+  .drawer-close { margin-left: auto; width: 34px; height: 34px; border-radius: 8px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 20px; }
+  .field-label { display: block; font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #656C84; margin-bottom: 7px; }
+  .field-input { width: 100%; height: 40px; padding: 0 13px; background: #0E1322; border: 1px solid var(--border); border-radius: 9px; color: var(--text); font-size: 13.5px; }
+  .type-chips { display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 18px; }
+  .type-chip { padding: 8px 13px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-muted); font-size: 12.5px; font-weight: 600; }
+  .lts-note { background: rgba(255,210,77,0.08); border: 1px solid rgba(255,210,77,0.3); border-radius: 9px; padding: 10px 12px; font-size: 12px; color: #FFD24D; margin-bottom: 16px; }
+  .field-grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 18px; }
+  .toggle-row { display: flex; align-items: center; gap: 10px; background: #0E1322; border: 1px solid var(--border); border-radius: 9px; padding: 12px 14px; margin-bottom: 18px; }
+  .toggle-track { width: 34px; height: 19px; border-radius: 10px; background: #2A3450; position: relative; flex-shrink: 0; transition: background 0.15s ease; }
+  .toggle-track.on { background: var(--color-primary); }
+  .toggle-knob { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: #fff; transition: left 0.15s ease; }
+  .toggle-track.on .toggle-knob { left: 17px; }
+  .drawer-footer { display: flex; gap: 10px; padding: 16px 20px; border-top: 1px solid var(--hair); flex-shrink: 0; background: #0E1322; }
+
+  /* ---------- programs ---------- */
+  .program-card { display: block; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: 13px; padding: 16px; margin-bottom: 10px; }
+  .program-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .program-card-name-row { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+  .program-card-name { font-family: var(--font-display); font-size: 15px; font-weight: 600; color: var(--text); }
+  .status-pill-inline { font-size: 9.5px; font-weight: 700; letter-spacing: 0.03em; border-radius: 12px; padding: 3px 9px; }
+  .program-card-sub { font-size: 11.5px; color: #656C84; margin-top: 4px; }
+  .program-card-price { font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--color-primary); flex-shrink: 0; }
+  .program-fill-track { height: 7px; background: var(--bg); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+  .program-fill-bar { height: 100%; border-radius: 4px; }
+  .program-fill-label { font-family: var(--font-mono); font-size: 11px; color: #656C84; }
+  .back-link { background: none; border: none; color: #656C84; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 5px; margin-bottom: 14px; }
+  .program-detail-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 16px; }
+  .program-detail-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .program-detail-name { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); }
+  .archive-banner { border-radius: 10px; padding: 11px 14px; font-size: 12.5px; margin-bottom: 16px; }
+  .program-stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 14px; }
+  .stat-card-mini { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+  .stat-mini-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.08em; color: #656C84; margin-bottom: 6px; }
+  .stat-mini-value { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--text); }
+  .payments-card { display: flex; align-items: center; gap: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; }
+  .payments-icon { width: 38px; height: 38px; border-radius: 10px; background: rgba(184,69,255,0.12); border: 1px solid rgba(184,69,255,0.35); color: #CB78FF; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .capacity-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .stepper-btn { width: 28px; height: 28px; border-radius: 8px; background: #0E1322; border: 1px solid var(--border); color: var(--text-muted); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .stepper-btn.plus { border-color: rgba(20,207,207,0.4); color: var(--color-primary); }
+  .stepper-value { font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: var(--text); min-width: 24px; text-align: center; }
+  .roster-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .roster-head { display: flex; align-items: center; gap: 14px; padding: 15px 16px; border-bottom: 1px solid var(--hair); }
+  .roster-action-link { background: none; border: none; color: var(--color-primary); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; margin-left: auto; }
+  .add-registrant-row { display: flex; gap: 8px; padding: 14px 16px; border-bottom: 1px solid var(--hair); }
+  .roster-row { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid #171F33; }
+  .roster-row:last-child { border-bottom: none; }
+  .roster-avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #06181A; flex-shrink: 0; }
+  .row-icon-btn { width: 28px; height: 28px; border-radius: 7px; background: transparent; border: 1px solid var(--border); color: #656C84; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .remind-chip { height: 26px; padding: 0 10px; border-radius: 20px; background: #FFD24D; border: none; color: #06181A; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+
+  /* ---------- announcements ---------- */
+  .composer-card { max-width: 680px; background: var(--surface); border: 1px solid rgba(20,207,207,0.35); border-radius: 13px; padding: 15px; }
+  .composer-textarea { width: 100%; background: transparent; border: none; color: var(--text); font-size: 14px; font-family: inherit; resize: vertical; outline: none; min-height: 44px; }
+  .composer-divider { border-top: 1px solid var(--hair); margin: 12px 0; }
+  .composer-footer { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .pin-toggle-btn { height: 34px; padding: 0 13px; border-radius: 8px; background: #0E1322; border: 1px solid var(--border); color: #B0B8CF; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .ann-feed-label { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #4B5168; margin: 20px 0 10px; }
+  .ann-card { border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; max-width: 680px; }
+  .ann-tag-row { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; }
+  .ann-tag { font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.03em; }
+  .ann-time { margin-left: auto; font-size: 11px; color: #656C84; flex-shrink: 0; }
+  .ann-body { font-size: 13px; line-height: 1.5; }
+  .ann-footer { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hair); flex-wrap: wrap; }
+  .ann-seen { font-size: 11.5px; color: #656C84; }
+  .ann-pushed { font-size: 11.5px; color: #34E0A0; font-weight: 600; }
+  .ann-actions { margin-left: auto; display: flex; gap: 8px; }
+  .ann-edit-btn { height: 30px; padding: 0 12px; border-radius: 7px; background: transparent; border: 1px solid var(--border); color: #B0B8CF; font-size: 12px; font-weight: 600; }
+  .ann-takedown-btn { height: 30px; padding: 0 12px; border-radius: 7px; background: rgba(255,107,125,0.12); border: 1px solid rgba(255,107,125,0.45); color: #FF6B7D; font-size: 12px; font-weight: 600; }
+  .ann-remove-btn { height: 30px; padding: 0 12px; border-radius: 7px; background: transparent; border: 1px solid var(--border); color: #656C84; font-size: 12px; font-weight: 600; }
+  .editing-note { max-width: 680px; display: flex; align-items: center; gap: 10px; font-size: 12px; color: #FFD24D; margin-bottom: 8px; }
+
+  /* ---------- toast ---------- */
+  #toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(20px); display: flex; align-items: center; gap: 9px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 11px; padding: 11px 18px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); z-index: 1500; opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .denied-wrap { max-width: 420px; margin: 80px auto; text-align: center; padding: 0 20px; }
+  .denied-wrap h1 { font-family: var(--font-display); font-size: 20px; margin-bottom: 10px; }
+  .denied-wrap p { color: var(--text-muted); font-size: 14px; line-height: 1.5; }
+
+  @media (max-width: 900px) {
+    #sidebar { position: fixed; top: 0; left: 0; height: 100vh; transform: translateX(-100%); transition: transform 0.28s ease; box-shadow: 8px 0 32px rgba(0,0,0,0.5); }
+    #sidebar.open { transform: translateX(0); }
+    #hamburger-btn { display: flex; align-items: center; justify-content: center; }
+    .field-grid-3 { grid-template-columns: 1fr; }
+    #session-drawer { width: 100vw; }
+    .modal-panel { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="sidebar-scrim"></div>
+  <aside id="sidebar">
+    <div class="sb-header">
+      <div class="sb-mark">
+        <svg width="19" height="19" viewBox="0 0 56 56" fill="none"><line x1="6" y1="47" x2="50" y2="47" stroke="#14CFCF" stroke-width="4" stroke-linecap="round"/><path d="M9 47 L9 25 L28 11 L47 25 L47 47" stroke="#14CFCF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><rect x="18" y="36.5" width="20" height="9.5" rx="4.75" fill="#FFC83D"/></svg>
+      </div>
+      <div style="min-width:0;">
+        <div class="sb-word" id="sb-rink-name">RinkCollective</div>
+        <div class="sb-eyebrow">Rink Manager</div>
+      </div>
+    </div>
+    <nav class="sb-nav" id="sb-nav-items"></nav>
+    <div class="sb-footer" id="sb-footer"></div>
+  </aside>
+
+  <div id="main">
+    <header id="topbar">
+      <button id="hamburger-btn" aria-label="Menu">
+        <span style="font-size:20px;color:#B0B8CF;display:flex;" id="hamburger-icon"></span>
+      </button>
+      <div style="min-width:0;">
+        <div class="page-title" id="page-title">Schedule</div>
+        <div class="page-subtitle" id="page-subtitle"></div>
+      </div>
+      <div id="status-pill-root"></div>
+    </header>
+    <main id="content"><div class="content-inner" id="content-inner"></div></main>
+  </div>
+
+  <div id="modal-scrim"><div class="modal-panel" id="modal-panel" style="position:relative;"></div></div>
+  <div id="drawer-scrim"></div>
+  <aside id="session-drawer"></aside>
+  <div id="toast"></div>
+</div>
+
+<script>
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DAYS_FULL = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const SESSION_TYPES = ['Stick & Puck', 'Drop-In', 'Public Skate', 'Learn to Skate', 'Hockey League'];
+const TYPE_META = {
+  'Stick & Puck': { code: 'S&P', color: '#14CFCF' },
+  'Drop-In': { code: 'Drop', color: '#CB78FF' },
+  'Public Skate': { code: 'Pub', color: '#34E0A0' },
+  'Learn to Skate': { code: 'LTS', color: '#FFD24D' },
+  'Hockey League': { code: 'League', color: '#4FB8FF' },
+};
+const NAV_ITEMS = [
+  { id: 'schedule', label: 'Schedule', icon: 'calendar' },
+  { id: 'programs', label: 'Programs', icon: 'grad' },
+  { id: 'announcements', label: 'Announcements', icon: 'megaphone' },
+];
+const PAGE_META = {
+  schedule: ['Schedule', 'Set the ice-time skaters see this week'],
+  programs: ['Programs', 'Lessons, camps & clinics — with rosters and payments'],
+  announcements: ['Announcements', 'Post rink news, alerts and events'],
+};
+const ICONS = {
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  grad: '<path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c0 1.66 2.69 3 6 3s6-1.34 6-3v-4.5"/>',
+  megaphone: '<path d="M3 11l18-6v14l-18-6v-2z"/><path d="M8 15v4a2 2 0 0 0 2 2h1"/>',
+  image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+  star: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87L18.18 21 12 17.77 5.82 21 7 14.14l-5-4.87 6.91-1.01L12 2z"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  check: '<path d="M20 6L9 17l-5-5"/>',
+  'chevron-left': '<path d="M15 18l-6-6 6-6"/>',
+  'chevron-right': '<path d="M9 18l6-6-6-6"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  trash: '<path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
+  eye: '<path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/>',
+  menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
+  logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',
+  'alert-triangle': '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><path d="M12 9v4M12 17h.01"/>',
+  ticket: '<path d="M2 9a3 3 0 0 1 0 6v3a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-3a3 3 0 0 1 0-6V6a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1z"/><path d="M13 5v2M13 17v2M13 11v2"/>',
+  pin: '<path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>',
+  edit: '<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>',
+  message: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  'credit-card': '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+};
+function icon(name, sw) {
+  return `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw||2}" stroke-linecap="round" stroke-linejoin="round" style="display:block;">${ICONS[name]||''}</svg>`;
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : s; return d.innerHTML; }
+function initials(name) { return (name||'?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase(); }
+const AV_COLORS = ['#14CFCF', '#CB78FF', '#34E0A0', '#FFD24D', '#FF6B7D', '#4FB8FF'];
+function seedOf(str) { let h = 0; for (const c of String(str)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; }
+function avColor(str) { return AV_COLORS[seedOf(str) % AV_COLORS.length]; }
+const PROGRAM_STATUS_META = {
+  draft: { label: 'DRAFT', color: '#888FA8' },
+  open: { label: 'OPEN', color: '#34E0A0' },
+  waitlist: { label: 'WAITLIST', color: '#FFD24D' },
+  closed: { label: 'CLOSED', color: '#888FA8' },
+  past: { label: 'COMPLETED', color: '#888FA8' },
+  cancelled: { label: 'CANCELLED', color: '#FF6B7D' },
+};
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+function programSubtitle(p) {
+  const parts = [];
+  if (p.startDate) parts.push(p.endDate && p.endDate !== p.startDate ? `${fmtDate(p.startDate)}-${fmtDate(p.endDate)}` : fmtDate(p.startDate));
+  if (p.scheduleNote) parts.push(p.scheduleNote);
+  if (p.ageRange) parts.push(`ages ${p.ageRange}`);
+  return parts.join(' · ');
+}
+
+function isoDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate()+n); return r; }
+function mondayOf(d) { const day = d.getDay(); const diff = day === 0 ? -6 : 1 - day; return addDays(d, diff); }
+function fmtWeekRange(monday) {
+  const sunday = addDays(monday, 6);
+  const mStr = monday.toLocaleDateString('en-US', { month: 'short' });
+  if (monday.getMonth() === sunday.getMonth()) return `${mStr} ${monday.getDate()}–${sunday.getDate()}`;
+  const sStr = sunday.toLocaleDateString('en-US', { month: 'short' });
+  return `${mStr} ${monday.getDate()} – ${sStr} ${sunday.getDate()}`;
+}
+function periodFromStart(start) {
+  const m = /^\s*(\d{1,2})(?::\d{2})?\s*([ap])/i.exec(start || '');
+  if (!m) return 'PM';
+  const hour = parseInt(m[1], 10);
+  if (m[2].toLowerCase() === 'a') return 'AM';
+  return (hour >= 6 && hour <= 11) ? 'EVE' : 'PM';
+}
+function timeSortKey(t) {
+  const m = /^\s*(\d{1,2})(?::(\d{2}))?\s*([ap])/i.exec(t || '');
+  if (!m) return 0;
+  let h = parseInt(m[1], 10) % 12;
+  const min = m[2] ? parseInt(m[2], 10) : 0;
+  if (m[3].toLowerCase() === 'p') h += 12;
+  return h * 60 + min;
+}
+function sessionMatchesDate(s, dateObj, dayIdx) {
+  return s.repeatWeekly ? s.dayOfWeek === dayIdx : s.date === isoDate(dateObj);
+}
+function relTime(iso) {
+  if (!iso) return '';
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.round(diffMs / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.round(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+const ANNOUNCEMENT_TYPE_META = {
+  alert: { label: 'Alert', color: '#FF6B7D', icon: 'alert-triangle' },
+  update: { label: 'Update', color: '#14CFCF', icon: 'info' },
+  event: { label: 'Event', color: '#FFD24D', icon: 'ticket' },
+};
+const ANNOUNCEMENT_AUDIENCES = [['everyone', 'Everyone'], ['league', 'League players'], ['program_families', 'Program families']];
+function audienceLabel(aud) { return (ANNOUNCEMENT_AUDIENCES.find(a => a[0] === aud) || ['', aud])[1].toUpperCase(); }
+function nextSheetName(draft) {
+  const idx = draft.length;
+  return idx < 26 ? `Rink ${String.fromCharCode(65 + idx)}` : `Rink ${idx + 1}`;
+}
+
+class RinkOwner {
+  constructor() {
+    this.state = {
+      ready: false, denied: null, currentUser: null,
+      view: 'schedule', isNarrow: window.matchMedia('(max-width: 900px)').matches, drawerOpen: false,
+
+      myRinks: [], rinkId: null, rinkName: '',
+
+      sheets: [], sheetId: null, sessions: [],
+      schedView: 'week', weekStart: isoDate(mondayOf(new Date())), selectedDayIdx: (mondayOf(new Date()).getDay() === 1 ? new Date().getDay() - 1 : 0),
+      dirty: 0,
+
+      sheetModalOpen: false, sheetDraft: [],
+      addOpen: false, addMode: 'session', addDraft: null,
+
+      programs: [], programsLoaded: false, programTab: 'active',
+      selectedProgramId: null, programDetail: null,
+
+      announcements: [], announcementsLoaded: false,
+      composerText: '', composerType: 'update', composerAudience: 'everyone',
+      composerPush: false, composerPin: false, editingAnnouncementId: null,
+
+      toast: null,
+    };
+    this.init();
+  }
+
+  setState(partial) { Object.assign(this.state, partial); this.render(); }
+
+  async api(path, opts) {
+    const res = await fetch(path, opts);
+    if (res.status === 401 || res.status === 403) {
+      this.state.denied = res.status;
+      this.render();
+      throw new Error('denied');
+    }
+    return res;
+  }
+
+  async init() {
+    const meRes = await fetch('/api/auth/me');
+    const me = await meRes.json();
+    this.state.currentUser = me.user;
+    if (!me.user) { location.href = '/rinks?auth=login'; return; }
+
+    const params = new URLSearchParams(location.search);
+    const queryRinkId = Number(params.get('rink'));
+
+    try {
+      const rinksRes = await this.api('/api/rink-admin/rinks');
+      const myRinks = await rinksRes.json();
+      this.state.myRinks = myRinks;
+
+      let rinkId = queryRinkId || (myRinks[0] && myRinks[0].id);
+      if (!rinkId) { this.state.ready = true; this.render(); return; }
+
+      const known = myRinks.find(r => r.id === rinkId);
+      if (known) {
+        this.state.rinkId = rinkId;
+        this.state.rinkName = known.name;
+      } else {
+        const allRes = await fetch('/api/rinks');
+        const all = await allRes.json();
+        const rink = all.find(r => r.id === rinkId);
+        this.state.rinkId = rinkId;
+        this.state.rinkName = rink ? rink.name : 'Rink';
+      }
+
+      await this.loadSheets();
+      await this.loadSessions();
+      await this.loadPrograms();
+    } catch (e) {
+      if (e.message !== 'denied') throw e;
+      return;
+    }
+
+    this.state.ready = true;
+    window.addEventListener('resize', () => {
+      const narrow = window.matchMedia('(max-width: 900px)').matches;
+      if (narrow !== this.state.isNarrow) this.setState({ isNarrow: narrow, drawerOpen: false });
+    });
+    this.render();
+  }
+
+  // ---------- data ----------
+  async loadSheets() {
+    const res = await this.api(`/api/rink-admin/${this.state.rinkId}/sheets`);
+    const sheets = await res.json();
+    const sheetId = sheets.find(s => s.id === this.state.sheetId) ? this.state.sheetId : (sheets[0] && sheets[0].id) || null;
+    this.state.sheets = sheets;
+    this.state.sheetId = sheetId;
+  }
+
+  async loadSessions() {
+    const res = await this.api(`/api/rink-admin/${this.state.rinkId}/sessions`);
+    this.state.sessions = await res.json();
+  }
+
+  // ---------- nav ----------
+  setView(view) {
+    this.setState({ view, drawerOpen: false });
+    if (view === 'announcements' && !this.state.announcementsLoaded) this.loadAnnouncements();
+    if (view === 'programs' && !this.state.programsLoaded) this.loadPrograms();
+  }
+  toggleDrawer() { this.setState({ drawerOpen: !this.state.drawerOpen }); }
+
+  async switchRink(rinkId) {
+    const known = this.state.myRinks.find(r => r.id === rinkId);
+    this.setState({
+      rinkId, rinkName: known ? known.name : this.state.rinkName, sheetId: null, sheets: [], sessions: [], dirty: 0,
+      announcements: [], announcementsLoaded: false,
+      programs: [], programsLoaded: false, selectedProgramId: null, programDetail: null,
+    });
+    await this.loadSheets();
+    await this.loadSessions();
+    await this.loadPrograms();
+    if (this.state.view === 'announcements') await this.loadAnnouncements();
+    this.render();
+  }
+
+  async logout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    location.href = '/';
+  }
+
+  showToast(text, color, iconName) {
+    this.setState({ toast: { text, color, icon: iconName } });
+    clearTimeout(this._toastTimer);
+    this._toastTimer = setTimeout(() => this.setState({ toast: null }), 2600);
+  }
+
+  // ---------- schedule: sheets/tabs ----------
+  selectSheet(id) { this.setState({ sheetId: id }); }
+  setSchedView(view) { this.setState({ schedView: view }); }
+  navWeek(delta) {
+    const d = addDays(new Date(this.state.weekStart + 'T00:00:00'), delta * 7);
+    this.setState({ weekStart: isoDate(d) });
+  }
+  selectDay(idx) { this.setState({ selectedDayIdx: idx }); }
+
+  openSheetModal() {
+    let draft = this.state.sheets.map(s => ({ id: s.id, name: s.name, sessionCount: s.sessionCount }));
+    if (!draft.length) draft = [{ id: null, name: 'Rink A', sessionCount: 0 }];
+    this.setState({ sheetModalOpen: true, sheetDraft: draft });
+  }
+  closeSheetModal() { this.setState({ sheetModalOpen: false, sheetDraft: [] }); }
+  updateSheetDraftName(idx, name) { this.state.sheetDraft[idx].name = name; this.render(); }
+  addSheetDraftRow() {
+    this.state.sheetDraft.push({ id: null, name: nextSheetName(this.state.sheetDraft), sessionCount: 0 });
+    this.render();
+  }
+  removeSheetDraftRow(idx) {
+    if (this.state.sheetDraft.length <= 1) return;
+    this.state.sheetDraft.splice(idx, 1);
+    this.render();
+  }
+  async saveSheets() {
+    const body = { sheets: this.state.sheetDraft.map(d => ({ id: d.id, name: d.name })) };
+    const res = await this.api(`/api/rink-admin/${this.state.rinkId}/sheets`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const sheets = await res.json();
+    const sheetId = sheets.find(s => s.id === this.state.sheetId) ? this.state.sheetId : (sheets[0] && sheets[0].id);
+    this.state.sheets = sheets;
+    this.state.sheetId = sheetId;
+    this.state.dirty += 1;
+    this.closeSheetModal();
+    await this.loadSessions();
+    this.showToast('Ice sheets saved', '#14CFCF', 'check');
+  }
+
+  // ---------- schedule: sessions ----------
+  openAddSession(preset) {
+    this.setState({
+      addOpen: true, addMode: 'session',
+      addDraft: Object.assign({
+        type: 'Stick & Puck', dayIdx: 0, start: '6:00p', end: '8:00p',
+        price: 0, cap: 0, ages: 'All', repeatWeekly: true,
+      }, preset || {}),
+    });
+  }
+  closeAddSession() { this.setState({ addOpen: false, addMode: 'session', addDraft: null }); }
+  updateAddDraft(field, value) { this.state.addDraft[field] = value; this.render(); }
+
+  async submitAddSession() {
+    const d = this.state.addDraft;
+    const body = {
+      sheetId: this.state.sheetId, type: d.type, start: d.start, end: d.end,
+      price: Number(d.price) || 0, cap: Number(d.cap) || 0, ages: d.ages, repeatWeekly: d.repeatWeekly,
+    };
+    if (d.repeatWeekly) { body.dayOfWeek = d.dayIdx; body.date = null; }
+    else { body.dayOfWeek = null; body.date = isoDate(addDays(new Date(this.state.weekStart + 'T00:00:00'), d.dayIdx)); }
+
+    const res = await this.api(`/api/rink-admin/${this.state.rinkId}/sessions`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const sess = await res.json();
+    this.state.sessions.push(sess);
+    this.state.dirty += 1;
+    this.state.addOpen = false;
+    this.state.addDraft = null;
+    this.state.schedView = 'day';
+    this.state.selectedDayIdx = d.dayIdx;
+    this.render();
+    this.showToast(d.type === 'Learn to Skate' ? 'Session added + program synced' : 'Session added to calendar', '#14CFCF', 'check');
+  }
+
+  async removeSession(id) {
+    await this.api(`/api/rink-admin/${this.state.rinkId}/sessions/${id}`, { method: 'DELETE' });
+    this.state.sessions = this.state.sessions.filter(s => s.id !== id);
+    this.state.dirty += 1;
+    this.render();
+    this.showToast('Session removed', '#FF6B7D', 'x');
+  }
+
+  async copyLastWeek() {
+    const res = await this.api(`/api/rink-admin/${this.state.rinkId}/sessions/copy-last-week`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ weekStart: this.state.weekStart }),
+    });
+    const created = await res.json();
+    this.state.sessions.push(...created);
+    this.state.dirty += 1;
+    this.render();
+    this.showToast(created.length ? `Copied ${created.length} session${created.length === 1 ? '' : 's'} from last week` : 'No one-time sessions to copy from last week', '#14CFCF', 'copy');
+  }
+
+  publishChanges() {
+    this.setState({ dirty: 0 });
+    this.showToast('Changes published', '#34E0A0', 'check');
+  }
+
+  // ---------- announcements ----------
+  async loadAnnouncements() {
+    const res = await this.api(`/api/rink-admin/${this.state.rinkId}/announcements`);
+    const rows = await res.json();
+    this.setState({ announcements: rows, announcementsLoaded: true });
+  }
+
+  resortAnnouncements() {
+    this.state.announcements.sort((a, b) => (b.pinned - a.pinned) || (new Date(b.createdAt) - new Date(a.createdAt)));
+  }
+
+  resetComposer() {
+    Object.assign(this.state, {
+      composerText: '', composerType: 'update', composerAudience: 'everyone',
+      composerPush: false, composerPin: false, editingAnnouncementId: null,
+    });
+  }
+
+  setComposerType(type) { this.state.composerType = type; this.render(); }
+  setComposerAudience(aud) { this.state.composerAudience = aud; this.render(); }
+  toggleComposerPush() { this.state.composerPush = !this.state.composerPush; this.render(); }
+  toggleComposerPin() { this.state.composerPin = !this.state.composerPin; this.render(); }
+
+  editAnnouncement(id) {
+    const a = this.state.announcements.find(x => x.id === id);
+    if (!a) return;
+    Object.assign(this.state, {
+      composerText: a.text, composerType: a.type, composerAudience: a.audience,
+      composerPush: a.pushNotify, composerPin: a.pinned, editingAnnouncementId: id,
+    });
+    this.render();
+  }
+
+  async postAnnouncement() {
+    const s = this.state;
+    const text = s.composerText.trim();
+    if (!text) return;
+    const body = { text, type: s.composerType, audience: s.composerAudience, pinned: s.composerPin, pushNotify: s.composerPush };
+    if (s.editingAnnouncementId) {
+      const res = await this.api(`/api/rink-admin/${s.rinkId}/announcements/${s.editingAnnouncementId}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+      const updated = await res.json();
+      this.state.announcements = this.state.announcements.map(a => a.id === updated.id ? updated : a);
+      this.resortAnnouncements();
+      this.resetComposer();
+      this.render();
+      this.showToast('Announcement updated', '#14CFCF', 'check');
+    } else {
+      const res = await this.api(`/api/rink-admin/${s.rinkId}/announcements`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+      const created = await res.json();
+      this.state.announcements.unshift(created);
+      this.resortAnnouncements();
+      this.resetComposer();
+      this.render();
+      this.showToast(body.pushNotify ? 'Posted + pushed to skaters' : 'Posted to your rink page', '#14CFCF', 'check');
+    }
+  }
+
+  async removeAnnouncement(id) {
+    await this.api(`/api/rink-admin/${this.state.rinkId}/announcements/${id}`, { method: 'DELETE' });
+    this.state.announcements = this.state.announcements.filter(a => a.id !== id);
+    if (this.state.editingAnnouncementId === id) this.resetComposer();
+    this.render();
+    this.showToast('Announcement removed', '#FF6B7D', 'x');
+  }
+
+  // ---------- programs ----------
+  async loadPrograms() {
+    const res = await this.api(`/api/rink-admin/${this.state.rinkId}/programs`);
+    this.state.programs = await res.json();
+    this.state.programsLoaded = true;
+  }
+
+  setProgramTab(tab) { this.setState({ programTab: tab }); }
+
+  async selectProgram(id) {
+    const res = await this.api(`/api/rink-admin/${this.state.rinkId}/programs/${id}`);
+    const detail = await res.json();
+    this.setState({ selectedProgramId: id, programDetail: detail });
+  }
+
+  async refreshProgramDetail() {
+    const res = await this.api(`/api/rink-admin/${this.state.rinkId}/programs/${this.state.selectedProgramId}`);
+    this.state.programDetail = await res.json();
+  }
+
+  backToProgramList() {
+    this.setState({ selectedProgramId: null, programDetail: null });
+    this.loadPrograms().then(() => this.render());
+  }
+
+  openAddProgram() {
+    this.setState({
+      addOpen: true, addMode: 'program',
+      addDraft: {
+        name: '', type: SESSION_TYPES[0], startDate: isoDate(new Date()), endDate: isoDate(new Date()),
+        ageRange: 'All', scheduleNote: '', price: 0, cap: 0,
+      },
+    });
+  }
+
+  openEditProgram() {
+    const p = this.state.programDetail;
+    this.setState({
+      addOpen: true, addMode: 'program-edit',
+      addDraft: {
+        name: p.name, type: p.type || SESSION_TYPES[0], startDate: p.startDate || isoDate(new Date()),
+        endDate: p.endDate || isoDate(new Date()), ageRange: p.ageRange, scheduleNote: p.scheduleNote,
+        price: p.price, cap: p.cap,
+      },
+    });
+  }
+
+  async submitAddProgram() {
+    const d = this.state.addDraft;
+    const body = {
+      name: d.name, type: d.type, startDate: d.startDate, endDate: d.endDate,
+      ageRange: d.ageRange, scheduleNote: d.scheduleNote, price: Number(d.price) || 0, cap: Number(d.cap) || 0,
+    };
+    const editing = this.state.addMode === 'program-edit';
+    const url = editing
+      ? `/api/rink-admin/${this.state.rinkId}/programs/${this.state.selectedProgramId}`
+      : `/api/rink-admin/${this.state.rinkId}/programs`;
+    const res = await this.api(url, {
+      method: editing ? 'PATCH' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const program = await res.json();
+    this.state.addOpen = false;
+    this.state.addDraft = null;
+    if (editing) {
+      this.state.programDetail = program;
+      this.render();
+      this.showToast('Program details saved', '#14CFCF', 'check');
+    } else {
+      await this.loadPrograms();
+      await this.selectProgram(program.id);
+      this.render();
+      this.showToast('Program created', '#14CFCF', 'check');
+    }
+  }
+
+  async setProgramStatus(status) {
+    const res = await this.api(`/api/rink-admin/${this.state.rinkId}/programs/${this.state.selectedProgramId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
+    });
+    this.state.programDetail = await res.json();
+    if (status === 'cancelled') {
+      this.setState({ selectedProgramId: null, programDetail: null, programTab: 'previous' });
+      await this.loadPrograms();
+      this.render();
+      this.showToast('Program cancelled — registrants were refunded', '#FF6B7D', 'x');
+    } else {
+      this.render();
+      this.showToast(status === 'closed' ? 'Signups closed' : 'Signups reopened', '#14CFCF', 'check');
+    }
+  }
+
+  async stepCapacity(delta) {
+    const p = this.state.programDetail;
+    const newCap = p.cap + delta;
+    if (newCap < p.enrolledCount || newCap < 0) return;
+    const res = await this.api(`/api/rink-admin/${this.state.rinkId}/programs/${p.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ cap: newCap }),
+    });
+    this.state.programDetail = await res.json();
+    this.render();
+  }
+
+  async addRegistrant() {
+    const nameInput = document.getElementById('registrant-name-input');
+    const ageInput = document.getElementById('registrant-age-input');
+    const name = nameInput.value.trim();
+    if (!name) return;
+    const age = ageInput.value ? Number(ageInput.value) : null;
+    await this.api(`/api/rink-admin/${this.state.rinkId}/programs/${this.state.selectedProgramId}/roster`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, age }),
+    });
+    await this.refreshProgramDetail();
+    this.render();
+    this.showToast('Registrant added', '#14CFCF', 'check');
+  }
+
+  async remindRegistrant(id) {
+    await this.api(`/api/rink-admin/${this.state.rinkId}/programs/${this.state.selectedProgramId}/roster/${id}/remind`, { method: 'POST' });
+    this.showToast('Reminder sent', '#FFD24D', 'check');
+  }
+
+  async messageRegistrant(id) {
+    await this.api(`/api/rink-admin/${this.state.rinkId}/programs/${this.state.selectedProgramId}/roster/${id}/message`, { method: 'POST' });
+    this.showToast('Message sent', '#14CFCF', 'check');
+  }
+
+  async removeRegistrant(id) {
+    await this.api(`/api/rink-admin/${this.state.rinkId}/programs/${this.state.selectedProgramId}/roster/${id}`, { method: 'DELETE' });
+    await this.refreshProgramDetail();
+    this.render();
+    this.showToast('Registrant cancelled & refunded', '#FF6B7D', 'x');
+  }
+
+  messageAllRegistrants() { this.showToast('Message sent to all registrants', '#14CFCF', 'check'); }
+  exportRoster() { this.showToast('Roster exported to CSV', '#656C84', 'check'); }
+  managePayments() { this.showToast('Stripe payout settings coming soon', '#CB78FF', 'check'); }
+
+  // ================= RENDER =================
+  render() {
+    if (!this.state.ready) { if (this.state.denied) this.renderDenied(); return; }
+    if (this.state.denied) { this.renderDenied(); return; }
+    if (!this.state.rinkId) { this.renderNoRinks(); return; }
+
+    this.renderSidebar();
+    this.renderTopbar();
+    this.renderContent();
+    this.renderSheetModal();
+    this.renderAddSessionDrawer();
+    this.renderToast();
+
+    document.getElementById('sidebar').classList.toggle('open', this.state.isNarrow && this.state.drawerOpen);
+    document.getElementById('sidebar-scrim').classList.toggle('open', this.state.isNarrow && this.state.drawerOpen);
+    document.getElementById('hamburger-icon').innerHTML = icon('menu');
+    document.getElementById('sidebar-scrim').onclick = () => this.setState({ drawerOpen: false });
+  }
+
+  renderDenied() {
+    document.getElementById('app').innerHTML = `
+      <div class="denied-wrap">
+        <h1>${this.state.denied === 403 ? "You don't manage this rink" : 'Sign in required'}</h1>
+        <p>${this.state.denied === 403
+          ? "You're signed in, but this account doesn't have Rink Admin access to this rink."
+          : 'You need to be signed in to view this page.'}
+        </p>
+        <p style="margin-top:14px;"><a href="/">Go to RinkCollective →</a></p>
+      </div>`;
+  }
+
+  renderNoRinks() {
+    document.getElementById('app').innerHTML = `
+      <div class="denied-wrap">
+        <h1>You don't manage any rinks yet</h1>
+        <p>Ask RinkCollective to grant your account Rink Admin access to your rink's page.</p>
+        <p style="margin-top:14px;"><a href="/">Go to RinkCollective →</a></p>
+      </div>`;
+  }
+
+  renderSidebar() {
+    const s = this.state;
+    const waitlistCount = s.programs.filter(p => p.effectiveStatus === 'waitlist').length;
+    const navHtml = NAV_ITEMS.map(item => {
+      const active = s.view === item.id;
+      const badge = item.id === 'programs' && waitlistCount > 0 ? `<span class="nav-badge">${waitlistCount}</span>` : '';
+      return `<button class="nav-item ${active ? 'active' : ''}" data-nav="${item.id}"><span class="ic">${icon(item.icon)}</span><span style="flex:1;text-align:left;">${item.label}</span>${badge}</button>`;
+    }).join('');
+    document.getElementById('sb-nav-items').innerHTML = `
+      <div class="sb-label">Your rink page</div>
+      ${navHtml}
+      <div class="sb-label" style="padding-top:16px;">Also on your page</div>
+      <div class="muted-row" title="Shown to skaters — edited elsewhere">
+        <span class="ic" style="font-size:18px;color:#656C84;display:flex;">${icon('image')}</span>
+        <span style="font-size:13.5px;color:#888FA8;">Photos & gallery</span>
+      </div>
+      <div class="muted-row" title="Shown to skaters — edited elsewhere">
+        <span class="ic" style="font-size:18px;color:#656C84;display:flex;">${icon('star')}</span>
+        <span style="font-size:13.5px;color:#888FA8;">Reviews & ratings</span>
+      </div>
+      <div class="muted-row" title="Shown to skaters — edited elsewhere">
+        <span class="ic" style="font-size:18px;color:#656C84;display:flex;">${icon('info')}</span>
+        <span style="font-size:13.5px;color:#888FA8;">Hours & contact</span>
+      </div>`;
+    document.querySelectorAll('[data-nav]').forEach(btn => btn.addEventListener('click', () => this.setView(btn.dataset.nav)));
+
+    document.getElementById('sb-rink-name').textContent = s.rinkName || 'RinkCollective';
+
+    const user = s.currentUser || {};
+    const switcher = s.myRinks.length > 1
+      ? `<select id="rink-switcher" style="width:100%;height:32px;margin-bottom:10px;background:#0E1322;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:0 8px;">
+          ${s.myRinks.map(r => `<option value="${r.id}" ${r.id === s.rinkId ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}
+        </select>`
+      : '';
+    document.getElementById('sb-footer').innerHTML = `
+      ${switcher}
+      <a class="view-public-btn" href="/rinks?rink=${s.rinkId}" target="_blank" rel="noopener">${icon('eye')} View public page</a>
+      ${user.isAdmin ? `<a class="admin-console-link" href="/admin">Admin Console →</a>` : ''}
+      <div class="sb-user-row">
+        <div class="sb-avatar">${initials(user.displayName)}</div>
+        <div style="flex:1;min-width:0;line-height:1.2;">
+          <div style="font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(user.displayName || '')}</div>
+          <div style="font-family:var(--font-mono);font-size:9.5px;letter-spacing:0.06em;text-transform:uppercase;color:#FFD24D;">Rink Admin</div>
+        </div>
+        <button class="sb-logout" id="logout-btn" aria-label="Log out" title="Log out">${icon('logout')}</button>
+      </div>`;
+    document.getElementById('logout-btn').addEventListener('click', () => this.logout());
+    const switcherEl = document.getElementById('rink-switcher');
+    if (switcherEl) switcherEl.addEventListener('change', (e) => this.switchRink(Number(e.target.value)));
+    document.getElementById('hamburger-btn').onclick = () => this.toggleDrawer();
+  }
+
+  renderTopbar() {
+    const [title, subtitle] = PAGE_META[this.state.view];
+    document.getElementById('page-title').textContent = title;
+    document.getElementById('page-subtitle').textContent = subtitle;
+    const unpublished = this.state.view === 'schedule' && this.state.dirty > 0;
+    document.getElementById('status-pill-root').innerHTML = unpublished
+      ? `<div class="status-pill unpublished"><span class="status-dot"></span>UNPUBLISHED</div>`
+      : `<div class="status-pill live"><span class="status-dot"></span>LIVE</div>`;
+  }
+
+  renderContent() {
+    const root = document.getElementById('content-inner');
+    if (this.state.view === 'schedule') root.innerHTML = this.renderScheduleView();
+    else if (this.state.view === 'programs') root.innerHTML = this.renderProgramsView();
+    else root.innerHTML = this.renderAnnouncementsView();
+    this.bindContentEvents();
+  }
+
+  renderComingSoon(label, iconName, sub) {
+    return `<div class="dashed-empty">
+      <div class="dashed-empty-icon">${icon(iconName)}</div>
+      <div class="dashed-empty-title">${label} module coming soon</div>
+      <div class="dashed-empty-sub">${esc(sub)}</div>
+    </div>`;
+  }
+
+  // ---------- schedule view ----------
+  renderScheduleView() {
+    const s = this.state;
+    const sheetTabs = s.sheets.map(sh => `<button class="seg-btn ${sh.id === s.sheetId ? 'active-cyan' : ''}" data-sheet-tab="${sh.id}">${esc(sh.name)}</button>`).join('');
+    const toolbar = `
+      <div class="toolbar">
+        <div class="seg">${sheetTabs}<button class="gear-btn" id="sheet-gear-btn" aria-label="Manage ice sheets">${icon('gear')}</button></div>
+        ${s.sheets.length ? `
+        <div class="seg">
+          <button class="seg-btn ${s.schedView === 'day' ? 'active-neutral' : ''}" data-sched-view="day">Day</button>
+          <button class="seg-btn ${s.schedView === 'week' ? 'active-neutral' : ''}" data-sched-view="week">Week</button>
+          <button class="seg-btn ${s.schedView === 'month' ? 'active-neutral' : ''}" data-sched-view="month">Month</button>
+        </div>
+        <button class="icon-nav-btn" id="week-prev-btn">${icon('chevron-left')}</button>
+        <span class="week-label">${fmtWeekRange(new Date(s.weekStart + 'T00:00:00'))}</span>
+        <button class="icon-nav-btn" id="week-next-btn">${icon('chevron-right')}</button>
+        <button class="toolbar-btn" id="copy-last-week-btn">${icon('copy')} Copy last week</button>` : ''}
+        <button class="btn-primary" id="add-session-btn">${icon('plus')} Add session</button>
+      </div>`;
+
+    if (!s.sheets.length) {
+      return toolbar + `<div class="dashed-empty">
+        <div class="dashed-empty-icon">${icon('calendar')}</div>
+        <div class="dashed-empty-title">No ice sheets yet</div>
+        <div class="dashed-empty-sub">Add the ice surfaces at your rink (e.g. "Rink A") before scheduling ice time.</div>
+        <button class="btn-primary" style="margin:0;" id="empty-add-sheet-btn">${icon('plus')} Add an ice sheet</button>
+      </div>`;
+    }
+
+    const currentSheet = s.sheets.find(sh => sh.id === s.sheetId);
+    const sheetHasSessions = s.sessions.some(sess => sess.sheetId === s.sheetId);
+    if (!sheetHasSessions) {
+      return toolbar + `<div class="dashed-empty">
+        <div class="dashed-empty-icon">${icon('calendar')}</div>
+        <div class="dashed-empty-title">${esc(currentSheet ? currentSheet.name : 'This sheet')} has no ice time yet</div>
+        <div class="dashed-empty-sub">Add your first session to start filling out this week's schedule.</div>
+        <button class="btn-primary" style="margin:0;" id="empty-add-session-btn">${icon('plus')} Add first session</button>
+      </div>`;
+    }
+
+    let body;
+    if (s.schedView === 'day') body = this.renderDayView();
+    else if (s.schedView === 'month') body = this.renderMonthView();
+    else body = this.renderWeekGrid();
+
+    return toolbar + body + this.renderPublishBar();
+  }
+
+  renderWeekGrid() {
+    const s = this.state;
+    const monday = new Date(s.weekStart + 'T00:00:00');
+    const dates = [...Array(7)].map((_, i) => addDays(monday, i));
+    const sheetSessions = s.sessions.filter(sess => sess.sheetId === s.sheetId);
+    const headCells = DAYS.map((d, i) => `<div class="sched-daycol-head ${i >= 5 ? 'weekend' : ''}">${d[0]}</div>`).join('');
+    const periods = ['AM', 'PM', 'EVE'];
+    const rows = periods.map(period => {
+      const cells = dates.map((d, dayIdx) => {
+        const matches = sheetSessions.filter(sess => sessionMatchesDate(sess, d, dayIdx) && periodFromStart(sess.start) === period);
+        if (!matches.length) return `<button class="sched-cell empty" data-empty-cell="${dayIdx}"><span>+</span></button>`;
+        const primary = matches[0];
+        const meta = TYPE_META[primary.type] || TYPE_META['Stick & Puck'];
+        const extra = matches.length > 1 ? `<div class="sched-extra">+${matches.length - 1} more</div>` : '';
+        return `<button class="sched-cell filled" data-filled-cell="${dayIdx}" style="border-color:${meta.color}73;background:${meta.color}24;color:${meta.color};">
+          <div class="sched-code">${esc(meta.code)}</div><div class="sched-time">${esc(primary.start)}</div>${extra}
+        </button>`;
+      }).join('');
+      return `<div class="sched-period-label">${period}</div>${cells}`;
+    }).join('');
+    return `<div class="sched-card"><div class="sched-grid" style="grid-template-columns:44px repeat(7,1fr);"><div></div>${headCells}${rows}</div></div>`;
+  }
+
+  renderDayView() {
+    const s = this.state;
+    const monday = new Date(s.weekStart + 'T00:00:00');
+    const dayIdx = s.selectedDayIdx;
+    const dayDate = addDays(monday, dayIdx);
+    const pills = DAYS.map((d, i) => `<button class="day-pill ${i === dayIdx ? 'active' : ''}" data-day-pill="${i}">${d}</button>`).join('');
+    const sessions = s.sessions
+      .filter(sess => sess.sheetId === s.sheetId && sessionMatchesDate(sess, dayDate, dayIdx))
+      .sort((a, b) => timeSortKey(a.start) - timeSortKey(b.start));
+    const rows = sessions.length ? sessions.map(sess => {
+      const meta = TYPE_META[sess.type] || TYPE_META['Stick & Puck'];
+      return `<div class="day-row-card">
+        <div class="day-color-bar" style="background:${meta.color};"></div>
+        <div class="day-time">${esc(sess.start)}–${esc(sess.end)}</div>
+        <div class="day-info"><div class="day-name">${esc(sess.type)}</div><div class="day-meta">${esc(sess.ages || 'All')} · cap ${sess.cap || 0}</div></div>
+        <div class="day-price">$${Math.round(sess.price || 0)}</div>
+        <button class="day-trash" data-remove-session="${sess.id}">${icon('trash')}</button>
+      </div>`;
+    }).join('') : `<div class="dashed-empty" style="padding:30px 20px;">No ice time scheduled for ${DAYS_FULL[dayIdx]} yet.</div>`;
+    return `<div class="sched-card"><div class="day-pill-row">${pills}</div>${rows}</div>`;
+  }
+
+  renderMonthView() {
+    const s = this.state;
+    const ref = new Date(s.weekStart + 'T00:00:00');
+    const year = ref.getFullYear(), month = ref.getMonth();
+    const firstOfMonth = new Date(year, month, 1);
+    const startOffset = (firstOfMonth.getDay() + 6) % 7;
+    const gridStart = addDays(firstOfMonth, -startOffset);
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const sheetSessions = s.sessions.filter(sess => sess.sheetId === s.sheetId);
+
+    let total = 42;
+    while (total > 35) {
+      const weekDates = [...Array(7)].map((_, i) => addDays(gridStart, total - 7 + i));
+      if (weekDates.every(d => d.getMonth() !== month)) total -= 7; else break;
+    }
+
+    const heads = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map(h => `<div class="month-head">${h}</div>`).join('');
+    const cells = [];
+    for (let i = 0; i < total; i++) {
+      const d = addDays(gridStart, i);
+      if (d.getMonth() !== month) { cells.push(`<div class="month-cell out"></div>`); continue; }
+      const dayIdx = (d.getDay() + 6) % 7;
+      const count = sheetSessions.filter(sess => sessionMatchesDate(sess, d, dayIdx)).length;
+      const isToday = isoDate(d) === isoDate(today);
+      const dots = Array.from({ length: Math.min(count, 4) }).map(() => `<span class="month-dot"></span>`).join('');
+      cells.push(`<div class="month-cell ${isToday ? 'today' : ''}"><div class="month-daynum">${d.getDate()}</div><div class="month-dots">${dots}</div></div>`);
+    }
+    return `<div class="sched-card"><div class="month-grid">${heads}${cells.join('')}</div></div>`;
+  }
+
+  renderPublishBar() {
+    const dirty = this.state.dirty;
+    const dotColor = dirty > 0 ? '#FFD24D' : '#34E0A0';
+    const text = dirty > 0 ? `${dirty} unpublished change${dirty === 1 ? '' : 's'}` : 'All changes published';
+    return `<div class="publish-bar">
+      <span class="publish-dot" style="background:${dotColor};"></span>
+      <span class="publish-text" style="color:${dotColor};">${text}</span>
+      <button class="publish-btn" id="publish-btn" ${dirty === 0 ? 'disabled' : ''} style="${dirty === 0 ? 'background:#1C2540;color:#656C84;' : 'background:var(--color-primary);color:#06181A;'}">Publish changes</button>
+    </div>`;
+  }
+
+  // ---------- programs view ----------
+  renderProgramsView() {
+    const s = this.state;
+    if (s.selectedProgramId) return this.renderProgramDetail();
+
+    const activeStatuses = ['draft', 'open', 'waitlist', 'closed'];
+    const list = s.programs.filter(p => s.programTab === 'active' ? activeStatuses.includes(p.effectiveStatus) : ['past', 'cancelled'].includes(p.effectiveStatus));
+    const countLabel = s.programTab === 'active' ? `${list.length} active` : `${list.length} past`;
+
+    const toolbar = `
+      <div class="toolbar">
+        <div class="seg">
+          <button class="seg-btn ${s.programTab === 'active' ? 'active-neutral' : ''}" data-program-tab="active">Active</button>
+          <button class="seg-btn ${s.programTab === 'previous' ? 'active-neutral' : ''}" data-program-tab="previous">Previous</button>
+        </div>
+        <span class="week-label" style="min-width:auto;">${countLabel}</span>
+        <button class="btn-primary" id="new-program-btn">${icon('plus')} New program</button>
+      </div>`;
+
+    if (!list.length) {
+      const msg = s.programTab === 'active' ? 'No active programs yet. Create your first lesson, camp or clinic.' : 'No past programs yet.';
+      return toolbar + `<div class="dashed-empty">
+        <div class="dashed-empty-icon">${icon('grad')}</div>
+        <div class="dashed-empty-title">Nothing here yet</div>
+        <div class="dashed-empty-sub">${msg}</div>
+      </div>`;
+    }
+
+    return toolbar + list.map(p => this.programCardHtml(p)).join('');
+  }
+
+  programCardHtml(p) {
+    const meta = PROGRAM_STATUS_META[p.effectiveStatus] || PROGRAM_STATUS_META.draft;
+    const pct = p.cap > 0 ? Math.min(100, Math.round((p.enrolledCount / p.cap) * 100)) : 0;
+    const fillLabel = p.effectiveStatus === 'draft' ? '—' : (p.effectiveStatus === 'waitlist' ? `${p.cap}/${p.cap} · waitlisted` : `${p.enrolledCount}/${p.cap}`);
+    return `<button class="program-card" data-program-card="${p.id}">
+      <div class="program-card-top">
+        <div style="min-width:0;">
+          <div class="program-card-name-row">
+            <span class="program-card-name">${esc(p.name)}</span>
+            <span class="status-pill-inline" style="background:${meta.color}1F;border:1px solid ${meta.color}59;color:${meta.color};">${meta.label}</span>
+          </div>
+          <div class="program-card-sub">${esc(programSubtitle(p))}</div>
+        </div>
+        <div class="program-card-price">$${Math.round(p.price)}</div>
+      </div>
+      <div class="program-fill-track"><div class="program-fill-bar" style="width:${pct}%;background:${meta.color};"></div></div>
+      <div class="program-fill-label">${esc(fillLabel)}</div>
+    </button>`;
+  }
+
+  renderProgramDetail() {
+    const p = this.state.programDetail;
+    if (!p) return `<div class="dashed-empty">Loading…</div>`;
+    const meta = PROGRAM_STATUS_META[p.effectiveStatus] || PROGRAM_STATUS_META.draft;
+    const isArchived = p.effectiveStatus === 'past' || p.effectiveStatus === 'cancelled';
+
+    const archiveBanner = p.effectiveStatus === 'cancelled'
+      ? `<div class="archive-banner" style="background:rgba(255,107,125,0.08);border:1px solid rgba(255,107,125,0.35);color:#FF6B7D;">This program was cancelled — registrants were refunded.</div>`
+      : p.effectiveStatus === 'past'
+      ? `<div class="archive-banner" style="background:rgba(136,143,168,0.08);border:1px solid rgba(136,143,168,0.3);color:#888FA8;">This program is completed and archived in Previous.</div>`
+      : '';
+
+    const closeReopenBtn = !isArchived
+      ? (p.status === 'open'
+          ? `<button class="toolbar-btn" id="program-close-btn">Close signups</button>`
+          : `<button class="toolbar-btn" id="program-reopen-btn">Reopen signups</button>`)
+      : '';
+    const cancelBtn = !isArchived
+      ? `<button class="toolbar-btn" id="program-cancel-btn" style="background:rgba(255,107,125,0.08);border-color:rgba(255,107,125,0.4);color:#FF6B7D;">Cancel</button>`
+      : '';
+
+    const roster = p.roster || [];
+    const rosterRows = roster.length
+      ? roster.map(r => this.rosterRowHtml(r)).join('')
+      : `<div style="padding:24px;text-align:center;color:#656C84;font-size:13px;">No one enrolled yet.</div>`;
+    const capPct = p.cap > 0 ? Math.min(100, Math.round((p.enrolledCount / p.cap) * 100)) : 0;
+
+    return `
+      <button class="back-link" id="program-back-btn">${icon('chevron-left')} All programs</button>
+      <div class="program-detail-head">
+        <div>
+          <div class="program-detail-name-row">
+            <span class="program-detail-name">${esc(p.name)}</span>
+            <span class="status-pill-inline" style="background:${meta.color}1F;border:1px solid ${meta.color}59;color:${meta.color};">${meta.label}</span>
+          </div>
+          <div class="program-card-sub">${esc(programSubtitle(p))}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="toolbar-btn" id="program-edit-btn">${icon('edit')} Edit details</button>
+          ${closeReopenBtn}
+          ${cancelBtn}
+        </div>
+      </div>
+      ${archiveBanner}
+      <div class="program-stats-row">
+        <div class="stat-card-mini"><div class="stat-mini-label">ENROLLED</div><div class="stat-mini-value">${p.enrolledCount}<span style="color:#4B5168;font-size:16px;">/${p.cap}</span></div></div>
+        <div class="stat-card-mini"><div class="stat-mini-label">REVENUE</div><div class="stat-mini-value" style="color:#34E0A0;font-family:var(--font-mono);">$${Math.round(p.revenue)}</div></div>
+        <div class="stat-card-mini"><div class="stat-mini-label">WAITLIST</div><div class="stat-mini-value" style="color:#FFD24D;">${p.waitlistCount}</div></div>
+      </div>
+      <div class="payments-card">
+        <div class="payments-icon">${icon('credit-card')}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13.5px;font-weight:600;color:var(--text);">Payments · Stripe <span style="color:#34E0A0;font-size:12px;">● connected</span></div>
+          <div style="font-size:12px;color:#656C84;margin-top:2px;">$${Math.round(p.revenue)} collected · next payout Fri → ••4321</div>
+        </div>
+        <button class="toolbar-btn" id="payments-manage-btn">Manage</button>
+      </div>
+      <div class="capacity-card">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+          <span style="font-size:13px;font-weight:600;color:var(--text);">Capacity</span>
+          <button class="stepper-btn" id="cap-minus-btn">−</button>
+          <span class="stepper-value">${p.cap}</span>
+          <button class="stepper-btn plus" id="cap-plus-btn">+</button>
+        </div>
+        <div class="program-fill-track" style="margin-bottom:0;"><div class="program-fill-bar" style="width:${capPct}%;background:var(--color-primary);"></div></div>
+      </div>
+      <div class="roster-card">
+        <div class="roster-head">
+          <span style="font-family:var(--font-display);font-size:15px;font-weight:600;color:var(--text);">Roster · ${roster.length}</span>
+          <button class="roster-action-link" id="message-all-btn">${icon('message')} Message all</button>
+          <button class="roster-action-link" id="export-roster-btn" style="color:#656C84;margin-left:14px;">Export</button>
+        </div>
+        <div class="add-registrant-row">
+          <input class="field-input" id="registrant-name-input" placeholder="Name" style="flex:2;">
+          <input class="field-input" id="registrant-age-input" placeholder="Age" style="flex:1;" type="number">
+          <button class="btn-primary" id="add-registrant-btn" style="margin:0;">Add</button>
+        </div>
+        ${rosterRows}
+      </div>`;
+  }
+
+  rosterRowHtml(r) {
+    const color = avColor(r.name);
+    const payPill = r.payStatus === 'paid'
+      ? `<span style="font-family:var(--font-mono);font-size:10px;color:#34E0A0;">paid</span>`
+      : `<span style="font-family:var(--font-mono);font-size:10px;color:#FFD24D;">due</span>`;
+    const payAction = r.payStatus === 'paid'
+      ? `<button class="row-icon-btn" data-message-registrant="${r.id}">${icon('message')}</button>`
+      : `<button class="remind-chip" data-remind-registrant="${r.id}">Remind</button>`;
+    return `<div class="roster-row">
+      <div class="roster-avatar" style="background:${color};">${initials(r.name)}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:var(--text);">${esc(r.name)}${r.waitlisted ? ` <span style="color:#FFD24D;font-size:11px;">(waitlist)</span>` : ''}</div>
+      </div>
+      <span style="font-size:12px;color:#656C84;">${r.age != null ? 'age ' + r.age : ''}</span>
+      ${payPill}
+      ${payAction}
+      <button class="row-icon-btn" data-remove-registrant="${r.id}">${icon('x')}</button>
+    </div>`;
+  }
+
+  // ---------- announcements view ----------
+  renderAnnouncementsView() {
+    const s = this.state;
+    const typeChips = Object.entries(ANNOUNCEMENT_TYPE_META).map(([key, meta]) => {
+      const active = s.composerType === key;
+      const style = active ? `border-color:${meta.color};background:${meta.color}1F;color:${meta.color};` : '';
+      return `<button class="type-chip" data-composer-type="${key}" style="${style}">${meta.label}</button>`;
+    }).join('');
+    const audChips = ANNOUNCEMENT_AUDIENCES.map(([key, label]) => {
+      const active = s.composerAudience === key;
+      const style = active ? `background:var(--color-primary);border-color:var(--color-primary);color:#06181A;` : '';
+      return `<button class="type-chip" data-composer-aud="${key}" style="${style}">${label}</button>`;
+    }).join('');
+    const canPost = s.composerText.trim().length > 0;
+
+    const editingNote = s.editingAnnouncementId
+      ? `<div class="editing-note">${icon('edit')} Editing a posted announcement <button id="cancel-edit-btn" style="background:none;border:none;color:#656C84;text-decoration:underline;font-size:12px;">Cancel</button></div>`
+      : '';
+
+    const composer = `
+      ${editingNote}
+      <div class="composer-card">
+        <textarea class="composer-textarea" id="composer-textarea" rows="2" placeholder="What's happening at the rink? Ice conditions, closures, events…">${esc(s.composerText)}</textarea>
+        <div class="composer-divider"></div>
+        <div class="field-label">Type</div>
+        <div class="type-chips">${typeChips}</div>
+        <div class="field-label">Send to</div>
+        <div class="type-chips">${audChips}</div>
+        <div class="composer-footer">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="toggle-track ${s.composerPush ? 'on' : ''}" id="composer-push-toggle"><div class="toggle-knob"></div></div>
+            <span style="font-size:12.5px;color:#B0B8CF;">Push notify</span>
+          </div>
+          <button class="pin-toggle-btn" id="composer-pin-btn" style="${s.composerPin ? 'background:rgba(255,210,77,0.12);border-color:rgba(255,210,77,0.4);color:#FFD24D;' : ''}">${icon('pin')} Pin to top</button>
+          <button class="btn-primary" id="composer-post-btn" style="margin:0 0 0 auto;${canPost ? '' : 'background:#1C2540;color:#656C84;'}" ${canPost ? '' : 'disabled'}>${s.editingAnnouncementId ? 'Save changes' : 'Post now'}</button>
+        </div>
+      </div>`;
+
+    const feed = s.announcements.length ? s.announcements.map(a => {
+      const meta = ANNOUNCEMENT_TYPE_META[a.type] || ANNOUNCEMENT_TYPE_META.update;
+      const tinted = a.type === 'alert' || a.pinned;
+      const cardStyle = tinted
+        ? `background:${meta.color}0F;border:1px solid ${meta.color}59;`
+        : `background:var(--surface);border:1px solid var(--border);`;
+      const tags = [meta.label.toUpperCase(), a.pinned ? 'PINNED' : null, audienceLabel(a.audience)].filter(Boolean).join(' · ');
+      const bodyStyle = a.type === 'alert' ? 'color:var(--text);font-weight:500;' : 'color:#B0B8CF;font-weight:400;';
+      const takedownBtn = (a.type === 'alert' || a.pinned)
+        ? `<button class="ann-takedown-btn" data-remove-ann="${a.id}">Take down</button>`
+        : `<button class="ann-remove-btn" data-remove-ann="${a.id}">Remove</button>`;
+      return `<div class="ann-card" style="${cardStyle}">
+        <div class="ann-tag-row">
+          <span style="color:${meta.color};display:flex;">${icon(meta.icon)}</span>
+          <span class="ann-tag" style="color:${meta.color};">${esc(tags)}</span>
+          <span class="ann-time">${relTime(a.createdAt)}</span>
+        </div>
+        <div class="ann-body" style="${bodyStyle}">${esc(a.text)}</div>
+        <div class="ann-footer">
+          <span class="ann-seen">👁 ${a.seenCount} seen</span>
+          ${a.pushNotify ? `<span class="ann-pushed">pushed</span>` : ''}
+          <div class="ann-actions">
+            <button class="ann-edit-btn" data-edit-ann="${a.id}">Edit</button>
+            ${takedownBtn}
+          </div>
+        </div>
+      </div>`;
+    }).join('') : `<div class="dashed-empty" style="max-width:680px;padding:40px 20px;">No announcements posted yet.</div>`;
+
+    return `${composer}<div class="ann-feed-label">Posted</div>${feed}`;
+  }
+
+  bindContentEvents() {
+    const s = this.state;
+    if (s.view === 'programs') {
+      if (s.selectedProgramId) {
+        document.getElementById('program-back-btn').addEventListener('click', () => this.backToProgramList());
+        document.getElementById('program-edit-btn').addEventListener('click', () => this.openEditProgram());
+        const closeBtn = document.getElementById('program-close-btn');
+        if (closeBtn) closeBtn.addEventListener('click', () => this.setProgramStatus('closed'));
+        const reopenBtn = document.getElementById('program-reopen-btn');
+        if (reopenBtn) reopenBtn.addEventListener('click', () => this.setProgramStatus('open'));
+        const cancelBtn = document.getElementById('program-cancel-btn');
+        if (cancelBtn) cancelBtn.addEventListener('click', () => this.setProgramStatus('cancelled'));
+        document.getElementById('payments-manage-btn').addEventListener('click', () => this.managePayments());
+        document.getElementById('cap-minus-btn').addEventListener('click', () => this.stepCapacity(-1));
+        document.getElementById('cap-plus-btn').addEventListener('click', () => this.stepCapacity(1));
+        document.getElementById('message-all-btn').addEventListener('click', () => this.messageAllRegistrants());
+        document.getElementById('export-roster-btn').addEventListener('click', () => this.exportRoster());
+        document.getElementById('add-registrant-btn').addEventListener('click', () => this.addRegistrant());
+        document.querySelectorAll('[data-remind-registrant]').forEach(b => b.addEventListener('click', () => this.remindRegistrant(Number(b.dataset.remindRegistrant))));
+        document.querySelectorAll('[data-message-registrant]').forEach(b => b.addEventListener('click', () => this.messageRegistrant(Number(b.dataset.messageRegistrant))));
+        document.querySelectorAll('[data-remove-registrant]').forEach(b => b.addEventListener('click', () => this.removeRegistrant(Number(b.dataset.removeRegistrant))));
+      } else {
+        document.querySelectorAll('[data-program-tab]').forEach(b => b.addEventListener('click', () => this.setProgramTab(b.dataset.programTab)));
+        document.getElementById('new-program-btn').addEventListener('click', () => this.openAddProgram());
+        document.querySelectorAll('[data-program-card]').forEach(b => b.addEventListener('click', () => this.selectProgram(Number(b.dataset.programCard))));
+      }
+      return;
+    }
+    if (s.view === 'announcements') {
+      const textarea = document.getElementById('composer-textarea');
+      const postBtn = document.getElementById('composer-post-btn');
+      // Sync state.composerText on input without a full re-render (which
+      // would rebuild the textarea via innerHTML and drop focus/cursor
+      // position, same reasoning as index.html's review composer) — just
+      // toggle the Post button's enabled look directly.
+      textarea.addEventListener('input', (e) => {
+        this.state.composerText = e.target.value;
+        const has = e.target.value.trim().length > 0;
+        postBtn.disabled = !has;
+        postBtn.style.background = has ? '' : '#1C2540';
+        postBtn.style.color = has ? '' : '#656C84';
+      });
+      document.querySelectorAll('[data-composer-type]').forEach(b => b.addEventListener('click', () => this.setComposerType(b.dataset.composerType)));
+      document.querySelectorAll('[data-composer-aud]').forEach(b => b.addEventListener('click', () => this.setComposerAudience(b.dataset.composerAud)));
+      document.getElementById('composer-push-toggle').addEventListener('click', () => this.toggleComposerPush());
+      document.getElementById('composer-pin-btn').addEventListener('click', () => this.toggleComposerPin());
+      postBtn.addEventListener('click', () => this.postAnnouncement());
+      const cancelEditBtn = document.getElementById('cancel-edit-btn');
+      if (cancelEditBtn) cancelEditBtn.addEventListener('click', () => { this.resetComposer(); this.render(); });
+      document.querySelectorAll('[data-edit-ann]').forEach(b => b.addEventListener('click', () => this.editAnnouncement(Number(b.dataset.editAnn))));
+      document.querySelectorAll('[data-remove-ann]').forEach(b => b.addEventListener('click', () => this.removeAnnouncement(Number(b.dataset.removeAnn))));
+      return;
+    }
+    if (s.view !== 'schedule') return;
+
+    document.querySelectorAll('[data-sheet-tab]').forEach(b => b.addEventListener('click', () => this.selectSheet(Number(b.dataset.sheetTab))));
+    const gearBtn = document.getElementById('sheet-gear-btn');
+    if (gearBtn) gearBtn.addEventListener('click', () => this.openSheetModal());
+    const emptyAddSheetBtn = document.getElementById('empty-add-sheet-btn');
+    if (emptyAddSheetBtn) emptyAddSheetBtn.addEventListener('click', () => this.openSheetModal());
+
+    document.querySelectorAll('[data-sched-view]').forEach(b => b.addEventListener('click', () => this.setSchedView(b.dataset.schedView)));
+    const prevBtn = document.getElementById('week-prev-btn');
+    if (prevBtn) prevBtn.addEventListener('click', () => this.navWeek(-1));
+    const nextBtn = document.getElementById('week-next-btn');
+    if (nextBtn) nextBtn.addEventListener('click', () => this.navWeek(1));
+    const copyBtn = document.getElementById('copy-last-week-btn');
+    if (copyBtn) copyBtn.addEventListener('click', () => this.copyLastWeek());
+
+    const addBtn = document.getElementById('add-session-btn');
+    if (addBtn) addBtn.addEventListener('click', () => this.openAddSession({ dayIdx: s.schedView === 'day' ? s.selectedDayIdx : 0 }));
+    const emptyAddSessionBtn = document.getElementById('empty-add-session-btn');
+    if (emptyAddSessionBtn) emptyAddSessionBtn.addEventListener('click', () => this.openAddSession({ dayIdx: 0 }));
+
+    document.querySelectorAll('[data-empty-cell]').forEach(b => b.addEventListener('click', () => this.openAddSession({ dayIdx: Number(b.dataset.emptyCell) })));
+    document.querySelectorAll('[data-filled-cell]').forEach(b => b.addEventListener('click', () => this.setState({ schedView: 'day', selectedDayIdx: Number(b.dataset.filledCell) })));
+    document.querySelectorAll('[data-day-pill]').forEach(b => b.addEventListener('click', () => this.selectDay(Number(b.dataset.dayPill))));
+    document.querySelectorAll('[data-remove-session]').forEach(b => b.addEventListener('click', () => this.removeSession(Number(b.dataset.removeSession))));
+
+    const publishBtn = document.getElementById('publish-btn');
+    if (publishBtn && !publishBtn.disabled) publishBtn.addEventListener('click', () => this.publishChanges());
+  }
+
+  // ---------- manage ice sheets modal ----------
+  renderSheetModal() {
+    const scrim = document.getElementById('modal-scrim');
+    const panel = document.getElementById('modal-panel');
+    const open = this.state.sheetModalOpen;
+    scrim.classList.toggle('open', open);
+    if (!open) { panel.innerHTML = ''; return; }
+
+    const rows = this.state.sheetDraft.map((d, idx) => `
+      <div class="sheet-row">
+        <input class="sheet-input" data-sheet-draft-name="${idx}" value="${esc(d.name)}">
+        <span class="sheet-count">${d.sessionCount} sessions</span>
+        <button class="sheet-trash" data-sheet-draft-remove="${idx}" ${this.state.sheetDraft.length <= 1 ? 'disabled' : ''}>${icon('trash')}</button>
+      </div>`).join('');
+
+    panel.innerHTML = `
+      <button class="drawer-close modal-close" id="sheet-modal-close">${icon('x')}</button>
+      <div class="modal-eyebrow">ICE SHEETS</div>
+      <div class="modal-title" style="margin-bottom:16px;">Manage ice sheets</div>
+      <p style="font-size:12.5px;color:#656C84;line-height:1.5;margin-bottom:16px;">Name each rink surface the way your skaters know it. Removing a sheet deletes its scheduled sessions.</p>
+      ${rows}
+      <button class="add-sheet-btn" id="add-sheet-row-btn">${icon('plus')} Add ice sheet</button>
+      <div class="modal-footer">
+        <button class="btn-cancel" id="sheet-modal-cancel">Cancel</button>
+        <button class="btn-save" id="sheet-modal-save">Save sheets</button>
+      </div>`;
+
+    document.getElementById('sheet-modal-close').addEventListener('click', () => this.closeSheetModal());
+    document.getElementById('sheet-modal-cancel').addEventListener('click', () => this.closeSheetModal());
+    scrim.onclick = (e) => { if (e.target.id === 'modal-scrim') this.closeSheetModal(); };
+    document.getElementById('add-sheet-row-btn').addEventListener('click', () => this.addSheetDraftRow());
+    document.getElementById('sheet-modal-save').addEventListener('click', () => this.saveSheets());
+    document.querySelectorAll('[data-sheet-draft-name]').forEach(inp => inp.addEventListener('input', (e) => this.updateSheetDraftName(Number(inp.dataset.sheetDraftName), e.target.value)));
+    document.querySelectorAll('[data-sheet-draft-remove]').forEach(b => b.addEventListener('click', () => this.removeSheetDraftRow(Number(b.dataset.sheetDraftRemove))));
+  }
+
+  // ---------- add-session drawer ----------
+  renderAddSessionDrawer() {
+    const scrim = document.getElementById('drawer-scrim');
+    const drawer = document.getElementById('session-drawer');
+    const open = this.state.addOpen && this.state.addDraft;
+    scrim.classList.toggle('open', open);
+    drawer.classList.toggle('open', open);
+    if (!open) { drawer.innerHTML = ''; return; }
+
+    if (this.state.addMode === 'program' || this.state.addMode === 'program-edit') {
+      this.renderProgramDrawerBody(drawer, scrim);
+    } else {
+      this.renderSessionDrawerBody(drawer, scrim);
+    }
+  }
+
+  renderSessionDrawerBody(drawer, scrim) {
+    const d = this.state.addDraft;
+    const sheet = this.state.sheets.find(sh => sh.id === this.state.sheetId);
+    const chips = SESSION_TYPES.map(t => {
+      const meta = TYPE_META[t];
+      const active = d.type === t;
+      const style = active ? `border-color:${meta.color};background:${meta.color}1F;color:${meta.color};` : '';
+      return `<button class="type-chip" data-type-chip="${t}" style="${style}">${t}</button>`;
+    }).join('');
+    const dayOptions = DAYS.map((day, i) => `<option value="${i}" ${d.dayIdx === i ? 'selected' : ''}>${day}</option>`).join('');
+
+    drawer.innerHTML = `
+      <div class="drawer-head">
+        <div>
+          <div class="modal-eyebrow">NEW SESSION</div>
+          <div class="modal-title">Add to ${esc(sheet ? sheet.name : 'sheet')}</div>
+        </div>
+        <button class="drawer-close" id="add-drawer-close">${icon('x')}</button>
+      </div>
+      <div class="drawer-body">
+        <div class="field-label">Session type</div>
+        <div class="type-chips">${chips}</div>
+        ${d.type === 'Learn to Skate' ? `<div class="lts-note">Creates a linked program in the Program Manager.</div>` : ''}
+        <div class="field-grid-3">
+          <div><label class="field-label">Day</label><select class="field-input" id="add-day-select">${dayOptions}</select></div>
+          <div><label class="field-label">Start</label><input class="field-input" id="add-start-input" value="${esc(d.start)}"></div>
+          <div><label class="field-label">End</label><input class="field-input" id="add-end-input" value="${esc(d.end)}"></div>
+        </div>
+        <div class="field-grid-3">
+          <div><label class="field-label">Price</label><input class="field-input" id="add-price-input" value="${esc(String(d.price))}"></div>
+          <div><label class="field-label">Cap</label><input class="field-input" id="add-cap-input" value="${esc(String(d.cap))}"></div>
+          <div><label class="field-label">Ages</label><input class="field-input" id="add-ages-input" value="${esc(d.ages)}"></div>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-track ${d.repeatWeekly ? 'on' : ''}" id="repeat-toggle"><div class="toggle-knob"></div></div>
+          <span style="flex:1;font-size:13px;font-weight:500;">Repeat weekly</span>
+          <span style="font-family:var(--font-mono);font-size:11px;color:#656C84;">${d.repeatWeekly ? `every ${DAYS[d.dayIdx]}` : 'one-time'}</span>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <button class="btn-cancel" id="add-drawer-cancel">Cancel</button>
+        <button class="btn-save" id="add-drawer-submit">${d.type === 'Learn to Skate' ? 'Create program' : 'Add to calendar'}</button>
+      </div>`;
+
+    document.getElementById('add-drawer-close').addEventListener('click', () => this.closeAddSession());
+    document.getElementById('add-drawer-cancel').addEventListener('click', () => this.closeAddSession());
+    scrim.onclick = (e) => { if (e.target.id === 'drawer-scrim') this.closeAddSession(); };
+    document.getElementById('add-drawer-submit').addEventListener('click', () => this.submitAddSession());
+    document.querySelectorAll('[data-type-chip]').forEach(b => b.addEventListener('click', () => this.updateAddDraft('type', b.dataset.typeChip)));
+    document.getElementById('add-day-select').addEventListener('change', (e) => this.updateAddDraft('dayIdx', Number(e.target.value)));
+    document.getElementById('add-start-input').addEventListener('input', (e) => this.updateAddDraft('start', e.target.value));
+    document.getElementById('add-end-input').addEventListener('input', (e) => this.updateAddDraft('end', e.target.value));
+    document.getElementById('add-price-input').addEventListener('input', (e) => this.updateAddDraft('price', e.target.value));
+    document.getElementById('add-cap-input').addEventListener('input', (e) => this.updateAddDraft('cap', e.target.value));
+    document.getElementById('add-ages-input').addEventListener('input', (e) => this.updateAddDraft('ages', e.target.value));
+    document.getElementById('repeat-toggle').addEventListener('click', () => this.updateAddDraft('repeatWeekly', !this.state.addDraft.repeatWeekly));
+  }
+
+  renderProgramDrawerBody(drawer, scrim) {
+    const d = this.state.addDraft;
+    const editing = this.state.addMode === 'program-edit';
+    const chips = SESSION_TYPES.map(t => {
+      const meta = TYPE_META[t];
+      const active = d.type === t;
+      const style = active ? `border-color:${meta.color};background:${meta.color}1F;color:${meta.color};` : '';
+      return `<button class="type-chip" data-type-chip="${t}" style="${style}">${t}</button>`;
+    }).join('');
+
+    drawer.innerHTML = `
+      <div class="drawer-head">
+        <div>
+          <div class="modal-eyebrow">${editing ? 'EDIT PROGRAM' : 'NEW PROGRAM'}</div>
+          <div class="modal-title">${editing ? 'Edit program details' : 'Create program'}</div>
+        </div>
+        <button class="drawer-close" id="add-drawer-close">${icon('x')}</button>
+      </div>
+      <div class="drawer-body">
+        <label class="field-label">Program name</label>
+        <input class="field-input" id="add-name-input" value="${esc(d.name)}" placeholder="Summer Hockey Camp" style="margin-bottom:18px;">
+        <div class="field-label">Program type</div>
+        <div class="type-chips">${chips}</div>
+        <div class="field-grid-3">
+          <div><label class="field-label">Start date</label><input class="field-input" type="date" id="add-start-date-input" value="${esc(d.startDate || '')}"></div>
+          <div><label class="field-label">End date</label><input class="field-input" type="date" id="add-end-date-input" value="${esc(d.endDate || '')}"></div>
+          <div><label class="field-label">Schedule</label><input class="field-input" id="add-schedule-note-input" value="${esc(d.scheduleNote)}" placeholder="full day"></div>
+        </div>
+        <div class="field-grid-3">
+          <div><label class="field-label">Price</label><input class="field-input" id="add-price-input" value="${esc(String(d.price))}"></div>
+          <div><label class="field-label">Cap</label><input class="field-input" id="add-cap-input" value="${esc(String(d.cap))}"></div>
+          <div><label class="field-label">Ages</label><input class="field-input" id="add-ages-range-input" value="${esc(d.ageRange)}" placeholder="8-14"></div>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <button class="btn-cancel" id="add-drawer-cancel">Cancel</button>
+        <button class="btn-save" id="add-drawer-submit">${editing ? 'Save changes' : 'Create program'}</button>
+      </div>`;
+
+    document.getElementById('add-drawer-close').addEventListener('click', () => this.closeAddSession());
+    document.getElementById('add-drawer-cancel').addEventListener('click', () => this.closeAddSession());
+    scrim.onclick = (e) => { if (e.target.id === 'drawer-scrim') this.closeAddSession(); };
+    document.getElementById('add-drawer-submit').addEventListener('click', () => this.submitAddProgram());
+    document.querySelectorAll('[data-type-chip]').forEach(b => b.addEventListener('click', () => this.updateAddDraft('type', b.dataset.typeChip)));
+    document.getElementById('add-name-input').addEventListener('input', (e) => this.updateAddDraft('name', e.target.value));
+    document.getElementById('add-start-date-input').addEventListener('input', (e) => this.updateAddDraft('startDate', e.target.value));
+    document.getElementById('add-end-date-input').addEventListener('input', (e) => this.updateAddDraft('endDate', e.target.value));
+    document.getElementById('add-schedule-note-input').addEventListener('input', (e) => this.updateAddDraft('scheduleNote', e.target.value));
+    document.getElementById('add-price-input').addEventListener('input', (e) => this.updateAddDraft('price', e.target.value));
+    document.getElementById('add-cap-input').addEventListener('input', (e) => this.updateAddDraft('cap', e.target.value));
+    document.getElementById('add-ages-range-input').addEventListener('input', (e) => this.updateAddDraft('ageRange', e.target.value));
+  }
+
+  renderToast() {
+    const el = document.getElementById('toast');
+    const t = this.state.toast;
+    if (!t) { el.classList.remove('show'); return; }
+    el.innerHTML = `<span style="color:${t.color};display:flex;">${icon(t.icon)}</span><span style="font-size:13px;color:var(--text);">${esc(t.text)}</span>`;
+    el.classList.add('show');
+  }
+}
+
+window.app = new RinkOwner();
+</script>
+</body>
+</html>

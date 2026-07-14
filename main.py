@@ -1,7 +1,7 @@
 import json
 import os
 import pathlib
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 
 import bcrypt
@@ -164,6 +164,94 @@ class User(SQLModel, table=True):
     loginCount: int = Field(default=0, sa_column_kwargs={"server_default": "0"})
 
 
+class RinkAdmin(SQLModel, table=True):
+    # Grants a User "Rink Owner Console" access scoped to one rink. A rink
+    # can have multiple admins and a user can admin multiple rinks. Granted
+    # by a superadmin (ADMIN_EMAILS) from the Rink Editor drawer in the
+    # existing Admin Console — see require_rink_admin() below.
+    id: Optional[int] = Field(default=None, primary_key=True)
+    userId: int
+    rinkId: int
+    createdAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class IceSheet(SQLModel, table=True):
+    # One ice surface at a rink (e.g. "Rink A"), owned/named by the rink's
+    # RinkAdmin(s) via the Rink Owner Console's Schedule module.
+    id: Optional[int] = Field(default=None, primary_key=True)
+    rinkId: int
+    name: str
+    sortOrder: int = 0
+
+
+class IceSession(SQLModel, table=True):
+    # A recurring weekly ice-time slot (dayOfWeek set, repeatWeekly=True) or
+    # a single one-off slot (date set, repeatWeekly=False) on one IceSheet.
+    # type == "Learn to Skate" also creates a linked Program (linkedProgramId).
+    id: Optional[int] = Field(default=None, primary_key=True)
+    rinkId: int
+    sheetId: int
+    type: str
+    dayOfWeek: Optional[int] = None
+    date: Optional[str] = None
+    start: str
+    end: str
+    price: float = 0
+    cap: int = 0
+    ages: str = ""
+    repeatWeekly: bool = True
+    linkedProgramId: Optional[int] = None
+    createdAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class Program(SQLModel, table=True):
+    # A lesson/camp/clinic run by a rink, managed via the Programs module of
+    # the Rink Owner Console. scheduleNote/ageRange are free text (real
+    # program schedules/age ranges don't fit a rigid picker — same rationale
+    # as Rink hours/amenities in the existing Admin Console).
+    id: Optional[int] = Field(default=None, primary_key=True)
+    rinkId: int
+    name: str
+    type: str = ""
+    startDate: Optional[str] = None
+    endDate: Optional[str] = None
+    ageRange: str = ""
+    scheduleNote: str = ""
+    price: float = 0
+    cap: int = 0
+    status: str = "draft"
+    linkedSessionId: Optional[int] = None
+    createdAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class ProgramRegistrant(SQLModel, table=True):
+    # One roster row on a Program. No userId — rosters are owner-managed
+    # (kids typically don't have their own RinkCollective accounts); message
+    # /remind/cancel-refund actions are all owner-side.
+    id: Optional[int] = Field(default=None, primary_key=True)
+    programId: int
+    name: str
+    age: Optional[int] = None
+    payStatus: str = "due"
+    waitlisted: bool = False
+    createdAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class Announcement(SQLModel, table=True):
+    # A rink news/alert/event post from the Announcements module. Take-down
+    # hard-deletes the row, same convention as RinkPhoto reject.
+    id: Optional[int] = Field(default=None, primary_key=True)
+    rinkId: int
+    authorId: int
+    type: str = "update"
+    text: str
+    audience: str = "everyone"
+    pinned: bool = False
+    pushNotify: bool = False
+    seenCount: int = 0
+    createdAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
 class AdminActivity(SQLModel, table=True):
     # Server-generated audit trail behind the Admin Console's Overview
     # "recent activity" card and the Activity Log section. kind drives icon
@@ -212,6 +300,25 @@ def require_admin(request: Request, session: Session) -> User:
     return user
 
 
+def require_rink_admin(request: Request, session: Session, rink_id: int) -> User:
+    # Global admins (ADMIN_EMAILS) can access any rink's Owner Console for
+    # support/testing; everyone else needs a matching RinkAdmin grant.
+    user_id = request.session.get("user_id")
+    if user_id is None:
+        raise HTTPException(401, "Sign in required")
+    user = session.get(User, user_id)
+    if user is None:
+        raise HTTPException(401, "Sign in required")
+    if user.email in ADMIN_EMAILS:
+        return user
+    grant = session.exec(
+        select(RinkAdmin).where(RinkAdmin.userId == user_id, RinkAdmin.rinkId == rink_id)
+    ).first()
+    if grant is None:
+        raise HTTPException(403, "You don't manage this rink")
+    return user
+
+
 def ensure_new_columns():
     # create_all() only creates missing tables, not missing columns on tables
     # that already exist in production — this adds any model column the live
@@ -227,6 +334,12 @@ def ensure_new_columns():
         ("guideprogress", GuideProgress),
         ("user", User),
         ("adminactivity", AdminActivity),
+        ("rinkadmin", RinkAdmin),
+        ("icesheet", IceSheet),
+        ("icesession", IceSession),
+        ("program", Program),
+        ("programregistrant", ProgramRegistrant),
+        ("announcement", Announcement),
     ):
         if table_name not in existing_tables:
             continue
@@ -309,6 +422,11 @@ def equipment_page():
 @app.get("/guides")
 def guides_page():
     return FileResponse("static/guides.html")
+
+
+@app.get("/rink-admin")
+def rink_owner_console_page():
+    return FileResponse("static/rink-admin.html")
 
 
 @app.get("/api/rinks")
@@ -654,6 +772,584 @@ async def update_admin_rink(rink_id: int, request: Request):
         session.commit()
         session.refresh(rink)
         return rink.model_dump()
+
+
+@app.get("/api/admin/rinks/{rink_id}/admins")
+def list_rink_admins(rink_id: int, request: Request):
+    with Session(engine) as session:
+        require_admin(request, session)
+        grants = session.exec(select(RinkAdmin).where(RinkAdmin.rinkId == rink_id)).all()
+        items = []
+        for g in grants:
+            user = session.get(User, g.userId)
+            items.append({
+                "id": g.id, "userId": g.userId,
+                "name": user.displayName if user else "(deleted user)",
+                "email": user.email if user else "",
+                "grantedAt": g.createdAt,
+            })
+        return items
+
+
+@app.post("/api/admin/rinks/{rink_id}/admins")
+async def add_rink_admin(rink_id: int, request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        rink = session.get(Rink, rink_id)
+        if rink is None:
+            raise HTTPException(404, "Rink not found")
+        body = await request.json()
+        email = body.get("email", "").strip().lower()
+        target = session.exec(select(User).where(User.email == email)).first()
+        if target is None:
+            raise HTTPException(404, "No RinkCollective account with that email — they need to sign up first")
+        existing = session.exec(
+            select(RinkAdmin).where(RinkAdmin.userId == target.id, RinkAdmin.rinkId == rink_id)
+        ).first()
+        if existing is not None:
+            raise HTTPException(409, "That user already manages this rink")
+        grant = RinkAdmin(userId=target.id, rinkId=rink_id)
+        session.add(grant)
+        log_activity(session, "rink", f"{admin.displayName} granted {target.displayName} Rink Admin access to {rink.name}", admin)
+        session.commit()
+        session.refresh(grant)
+        return {"id": grant.id, "userId": target.id, "name": target.displayName, "email": target.email, "grantedAt": grant.createdAt}
+
+
+@app.delete("/api/admin/rinks/{rink_id}/admins/{admin_id}")
+def remove_rink_admin(rink_id: int, admin_id: int, request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        grant = session.get(RinkAdmin, admin_id)
+        if grant is None or grant.rinkId != rink_id:
+            raise HTTPException(404, "Rink admin grant not found")
+        rink = session.get(Rink, rink_id)
+        target = session.get(User, grant.userId)
+        session.delete(grant)
+        log_activity(session, "rink", f"{admin.displayName} removed {target.displayName if target else 'a user'}'s Rink Admin access to {rink.name if rink else 'a rink'}", admin)
+        session.commit()
+    return {"status": "removed"}
+
+
+SESSION_TYPES = {"Stick & Puck", "Drop-In", "Public Skate", "Learn to Skate", "Hockey League"}
+
+
+@app.get("/api/rink-admin/rinks")
+def list_my_rink_admin_rinks(request: Request):
+    user_id = request.session.get("user_id")
+    if user_id is None:
+        raise HTTPException(401, "Sign in required")
+    with Session(engine) as session:
+        grants = session.exec(select(RinkAdmin).where(RinkAdmin.userId == user_id)).all()
+        rinks = [session.get(Rink, g.rinkId) for g in grants]
+        return [{"id": r.id, "name": r.name} for r in rinks if r]
+
+
+def serialize_ice_sheet(sheet: IceSheet, session: Session) -> dict:
+    count = session.exec(
+        select(func.count(IceSession.id)).where(IceSession.sheetId == sheet.id)
+    ).one()
+    return {"id": sheet.id, "name": sheet.name, "sortOrder": sheet.sortOrder, "sessionCount": count}
+
+
+@app.get("/api/rink-admin/{rink_id}/sheets")
+def list_ice_sheets(rink_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        sheets = session.exec(
+            select(IceSheet).where(IceSheet.rinkId == rink_id).order_by(IceSheet.sortOrder)
+        ).all()
+        return [serialize_ice_sheet(sh, session) for sh in sheets]
+
+
+@app.put("/api/rink-admin/{rink_id}/sheets")
+async def save_ice_sheets(rink_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        body = await request.json()
+        items = body.get("sheets", [])
+        if not items:
+            raise HTTPException(400, "At least one ice sheet is required")
+
+        existing = {
+            sh.id: sh for sh in session.exec(select(IceSheet).where(IceSheet.rinkId == rink_id)).all()
+        }
+        keep_ids = {item["id"] for item in items if item.get("id")}
+        for stale_id, sheet in existing.items():
+            if stale_id not in keep_ids:
+                for s in session.exec(select(IceSession).where(IceSession.sheetId == stale_id)).all():
+                    session.delete(s)
+                session.delete(sheet)
+
+        result = []
+        for idx, item in enumerate(items):
+            sid = item.get("id")
+            if sid and sid in existing and sid in keep_ids:
+                sheet = existing[sid]
+                sheet.name = item["name"]
+                sheet.sortOrder = idx
+            else:
+                sheet = IceSheet(rinkId=rink_id, name=item["name"], sortOrder=idx)
+            session.add(sheet)
+            result.append(sheet)
+        session.commit()
+        for sheet in result:
+            session.refresh(sheet)
+        return [serialize_ice_sheet(sh, session) for sh in result]
+
+
+@app.get("/api/rink-admin/{rink_id}/sessions")
+def list_ice_sessions(rink_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        sessions = session.exec(select(IceSession).where(IceSession.rinkId == rink_id)).all()
+        return [s.model_dump() for s in sessions]
+
+
+@app.post("/api/rink-admin/{rink_id}/sessions")
+async def create_ice_session(rink_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        body = await request.json()
+        sheet = session.get(IceSheet, body.get("sheetId"))
+        if sheet is None or sheet.rinkId != rink_id:
+            raise HTTPException(404, "Ice sheet not found")
+        session_type = body.get("type")
+        if session_type not in SESSION_TYPES:
+            raise HTTPException(400, "Invalid session type")
+
+        sess = IceSession(
+            rinkId=rink_id,
+            sheetId=sheet.id,
+            type=session_type,
+            dayOfWeek=body.get("dayOfWeek"),
+            date=body.get("date"),
+            start=body.get("start", ""),
+            end=body.get("end", ""),
+            price=body.get("price", 0),
+            cap=body.get("cap", 0),
+            ages=body.get("ages", ""),
+            repeatWeekly=body.get("repeatWeekly", True),
+        )
+        session.add(sess)
+        session.commit()
+        session.refresh(sess)
+
+        if session_type == "Learn to Skate":
+            program = Program(
+                rinkId=rink_id,
+                name=f"Learn to Skate — {sheet.name}",
+                type=session_type,
+                price=sess.price,
+                cap=sess.cap,
+                ageRange=sess.ages,
+                status="draft",
+                linkedSessionId=sess.id,
+            )
+            session.add(program)
+            session.commit()
+            session.refresh(program)
+            sess.linkedProgramId = program.id
+            session.add(sess)
+            session.commit()
+            session.refresh(sess)
+
+        return sess.model_dump()
+
+
+@app.delete("/api/rink-admin/{rink_id}/sessions/{session_id}")
+def delete_ice_session(rink_id: int, session_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        sess = session.get(IceSession, session_id)
+        if sess is None or sess.rinkId != rink_id:
+            raise HTTPException(404, "Session not found")
+        session.delete(sess)
+        session.commit()
+    return {"status": "removed"}
+
+
+@app.post("/api/rink-admin/{rink_id}/sessions/copy-last-week")
+async def copy_last_week(rink_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        body = await request.json()
+        try:
+            target_monday = date.fromisoformat(body.get("weekStart", ""))
+        except ValueError:
+            raise HTTPException(400, "weekStart must be an ISO date (the Monday of the week being copied into)")
+        source_monday = target_monday - timedelta(days=7)
+
+        one_time = session.exec(
+            select(IceSession).where(IceSession.rinkId == rink_id, IceSession.repeatWeekly.is_(False))
+        ).all()
+        created = []
+        for s in one_time:
+            if not s.date:
+                continue
+            s_date = date.fromisoformat(s.date)
+            if source_monday <= s_date <= source_monday + timedelta(days=6):
+                new_date = target_monday + timedelta(days=(s_date - source_monday).days)
+                new_sess = IceSession(
+                    rinkId=rink_id, sheetId=s.sheetId, type=s.type, date=new_date.isoformat(),
+                    start=s.start, end=s.end, price=s.price, cap=s.cap, ages=s.ages, repeatWeekly=False,
+                )
+                session.add(new_sess)
+                created.append(new_sess)
+        session.commit()
+        for c in created:
+            session.refresh(c)
+        return [c.model_dump() for c in created]
+
+
+ANNOUNCEMENT_TYPES = {"alert", "update", "event"}
+ANNOUNCEMENT_AUDIENCES = {"everyone", "league", "program_families"}
+
+
+@app.get("/api/rink-admin/{rink_id}/announcements")
+def list_rink_admin_announcements(rink_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        rows = session.exec(
+            select(Announcement).where(Announcement.rinkId == rink_id)
+            .order_by(Announcement.pinned.desc(), Announcement.createdAt.desc())
+        ).all()
+        return [r.model_dump() for r in rows]
+
+
+@app.post("/api/rink-admin/{rink_id}/announcements")
+async def create_announcement(rink_id: int, request: Request):
+    with Session(engine) as session:
+        admin = require_rink_admin(request, session, rink_id)
+        body = await request.json()
+        text = body.get("text", "").strip()
+        if not text:
+            raise HTTPException(400, "Announcement text is required")
+        ann_type = body.get("type", "update")
+        audience = body.get("audience", "everyone")
+        if ann_type not in ANNOUNCEMENT_TYPES or audience not in ANNOUNCEMENT_AUDIENCES:
+            raise HTTPException(400, "Invalid type or audience")
+        ann = Announcement(
+            rinkId=rink_id, authorId=admin.id, type=ann_type, text=text, audience=audience,
+            pinned=bool(body.get("pinned", False)), pushNotify=bool(body.get("pushNotify", False)),
+        )
+        session.add(ann)
+        session.commit()
+        session.refresh(ann)
+        return ann.model_dump()
+
+
+@app.patch("/api/rink-admin/{rink_id}/announcements/{announcement_id}")
+async def update_announcement(rink_id: int, announcement_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        ann = session.get(Announcement, announcement_id)
+        if ann is None or ann.rinkId != rink_id:
+            raise HTTPException(404, "Announcement not found")
+        body = await request.json()
+        text = body.get("text", ann.text).strip()
+        ann_type = body.get("type", ann.type)
+        audience = body.get("audience", ann.audience)
+        if not text:
+            raise HTTPException(400, "Announcement text is required")
+        if ann_type not in ANNOUNCEMENT_TYPES or audience not in ANNOUNCEMENT_AUDIENCES:
+            raise HTTPException(400, "Invalid type or audience")
+        ann.text = text
+        ann.type = ann_type
+        ann.audience = audience
+        ann.pinned = bool(body.get("pinned", ann.pinned))
+        ann.pushNotify = bool(body.get("pushNotify", ann.pushNotify))
+        session.add(ann)
+        session.commit()
+        session.refresh(ann)
+        return ann.model_dump()
+
+
+@app.delete("/api/rink-admin/{rink_id}/announcements/{announcement_id}")
+def delete_announcement(rink_id: int, announcement_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        ann = session.get(Announcement, announcement_id)
+        if ann is None or ann.rinkId != rink_id:
+            raise HTTPException(404, "Announcement not found")
+        session.delete(ann)
+        session.commit()
+    return {"status": "removed"}
+
+
+@app.get("/api/rinks/{rink_id}/announcements")
+def public_rink_announcements(rink_id: int):
+    with Session(engine) as session:
+        rows = session.exec(
+            select(Announcement).where(Announcement.rinkId == rink_id)
+            .order_by(Announcement.pinned.desc(), Announcement.createdAt.desc())
+        ).all()
+        for r in rows:
+            # Approximate "seen" counter, same rigor as the existing
+            # checkins/reviewCount fields — not unique-visitor tracked.
+            r.seenCount += 1
+            session.add(r)
+        session.commit()
+        for r in rows:
+            session.refresh(r)
+        return [r.model_dump() for r in rows]
+
+
+def effective_program_status(program: Program) -> str:
+    # "past" and "waitlist" are never stored — they're derived so an owner
+    # never has to manually flip a program when its end date passes or its
+    # roster fills up. Only draft/open/closed/cancelled are real DB states.
+    if program.status == "cancelled":
+        return "cancelled"
+    if program.endDate:
+        try:
+            if date.fromisoformat(program.endDate) < date.today():
+                return "past"
+        except ValueError:
+            pass
+    return program.status
+
+
+def serialize_program(program: Program, session: Session, include_roster: bool = False) -> dict:
+    registrants = session.exec(
+        select(ProgramRegistrant).where(ProgramRegistrant.programId == program.id)
+    ).all()
+    enrolled = [r for r in registrants if not r.waitlisted]
+    waitlisted = [r for r in registrants if r.waitlisted]
+    revenue = sum(program.price for r in enrolled if r.payStatus == "paid")
+
+    data = program.model_dump()
+    eff = effective_program_status(program)
+    if eff == "open" and program.cap > 0 and len(enrolled) >= program.cap:
+        eff = "waitlist"
+    data["effectiveStatus"] = eff
+    data["enrolledCount"] = len(enrolled)
+    data["waitlistCount"] = len(waitlisted)
+    data["revenue"] = revenue
+    if include_roster:
+        data["roster"] = [r.model_dump() for r in registrants]
+    return data
+
+
+def promote_waitlisted_registrants(program: Program, session: Session):
+    # Moves the oldest waitlisted registrants into enrolled slots as
+    # capacity frees up (a registrant cancels, or cap is raised).
+    registrants = session.exec(
+        select(ProgramRegistrant).where(ProgramRegistrant.programId == program.id)
+        .order_by(ProgramRegistrant.createdAt)
+    ).all()
+    enrolled_count = sum(1 for r in registrants if not r.waitlisted)
+    for r in registrants:
+        if enrolled_count >= program.cap:
+            break
+        if r.waitlisted:
+            r.waitlisted = False
+            session.add(r)
+            enrolled_count += 1
+
+
+@app.get("/api/rink-admin/{rink_id}/programs")
+def list_rink_admin_programs(rink_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        programs = session.exec(
+            select(Program).where(Program.rinkId == rink_id).order_by(Program.createdAt.desc())
+        ).all()
+        return [serialize_program(p, session) for p in programs]
+
+
+@app.post("/api/rink-admin/{rink_id}/programs")
+async def create_program(rink_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        body = await request.json()
+        name = body.get("name", "").strip()
+        if not name:
+            raise HTTPException(400, "Program name is required")
+        program_type = body.get("type", "")
+        if program_type and program_type not in SESSION_TYPES:
+            raise HTTPException(400, "Invalid program type")
+        program = Program(
+            rinkId=rink_id, name=name, type=program_type,
+            startDate=body.get("startDate"), endDate=body.get("endDate"),
+            ageRange=body.get("ageRange", ""), scheduleNote=body.get("scheduleNote", ""),
+            price=body.get("price", 0), cap=body.get("cap", 0), status="draft",
+        )
+        session.add(program)
+        session.commit()
+        session.refresh(program)
+        return serialize_program(program, session)
+
+
+def get_owned_program(session: Session, rink_id: int, program_id: int) -> Program:
+    program = session.get(Program, program_id)
+    if program is None or program.rinkId != rink_id:
+        raise HTTPException(404, "Program not found")
+    return program
+
+
+@app.get("/api/rink-admin/{rink_id}/programs/{program_id}")
+def get_rink_admin_program(rink_id: int, program_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        program = get_owned_program(session, rink_id, program_id)
+        return serialize_program(program, session, include_roster=True)
+
+
+@app.patch("/api/rink-admin/{rink_id}/programs/{program_id}")
+async def update_program(rink_id: int, program_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        program = get_owned_program(session, rink_id, program_id)
+        body = await request.json()
+
+        if "name" in body:
+            name = body["name"].strip()
+            if not name:
+                raise HTTPException(400, "Program name is required")
+            program.name = name
+        if "type" in body:
+            if body["type"] and body["type"] not in SESSION_TYPES:
+                raise HTTPException(400, "Invalid program type")
+            program.type = body["type"]
+        if "startDate" in body:
+            program.startDate = body["startDate"]
+        if "endDate" in body:
+            program.endDate = body["endDate"]
+        if "ageRange" in body:
+            program.ageRange = body["ageRange"]
+        if "scheduleNote" in body:
+            program.scheduleNote = body["scheduleNote"]
+        if "price" in body:
+            program.price = body["price"]
+
+        cap_increased = False
+        if "cap" in body:
+            new_cap = int(body["cap"])
+            enrolled_count = session.exec(
+                select(func.count(ProgramRegistrant.id)).where(
+                    ProgramRegistrant.programId == program_id, ProgramRegistrant.waitlisted.is_(False)
+                )
+            ).one()
+            if new_cap < enrolled_count:
+                raise HTTPException(400, "Capacity can't drop below the current enrolled count")
+            cap_increased = new_cap > program.cap
+            program.cap = new_cap
+
+        if "status" in body:
+            if body["status"] not in {"draft", "open", "closed", "cancelled"}:
+                raise HTTPException(400, "Invalid status")
+            program.status = body["status"]
+
+        session.add(program)
+        session.commit()
+        session.refresh(program)
+
+        if cap_increased:
+            promote_waitlisted_registrants(program, session)
+            session.commit()
+            session.refresh(program)
+
+        return serialize_program(program, session, include_roster=True)
+
+
+@app.post("/api/rink-admin/{rink_id}/programs/{program_id}/roster")
+async def add_program_registrant(rink_id: int, program_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        program = get_owned_program(session, rink_id, program_id)
+        body = await request.json()
+        name = body.get("name", "").strip()
+        if not name:
+            raise HTTPException(400, "Registrant name is required")
+        enrolled_count = session.exec(
+            select(func.count(ProgramRegistrant.id)).where(
+                ProgramRegistrant.programId == program_id, ProgramRegistrant.waitlisted.is_(False)
+            )
+        ).one()
+        registrant = ProgramRegistrant(
+            programId=program_id, name=name, age=body.get("age"),
+            payStatus=body.get("payStatus", "due"),
+            waitlisted=program.cap > 0 and enrolled_count >= program.cap,
+        )
+        session.add(registrant)
+        session.commit()
+        session.refresh(registrant)
+        return registrant.model_dump()
+
+
+def get_owned_registrant(session: Session, rink_id: int, program_id: int, registrant_id: int) -> ProgramRegistrant:
+    get_owned_program(session, rink_id, program_id)
+    registrant = session.get(ProgramRegistrant, registrant_id)
+    if registrant is None or registrant.programId != program_id:
+        raise HTTPException(404, "Registrant not found")
+    return registrant
+
+
+@app.post("/api/rink-admin/{rink_id}/programs/{program_id}/roster/{registrant_id}/remind")
+def remind_registrant(rink_id: int, program_id: int, registrant_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        get_owned_registrant(session, rink_id, program_id, registrant_id)
+    # No real SMS/email infra exists yet — this is a UI-only acknowledgement,
+    # same stub treatment as the Payments card and pushNotify on Announcements.
+    return {"status": "reminded"}
+
+
+@app.post("/api/rink-admin/{rink_id}/programs/{program_id}/roster/{registrant_id}/message")
+def message_registrant(rink_id: int, program_id: int, registrant_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        get_owned_registrant(session, rink_id, program_id, registrant_id)
+    return {"status": "messaged"}
+
+
+@app.delete("/api/rink-admin/{rink_id}/programs/{program_id}/roster/{registrant_id}")
+def remove_registrant(rink_id: int, program_id: int, registrant_id: int, request: Request):
+    with Session(engine) as session:
+        require_rink_admin(request, session, rink_id)
+        program = get_owned_program(session, rink_id, program_id)
+        registrant = get_owned_registrant(session, rink_id, program_id, registrant_id)
+        session.delete(registrant)
+        session.commit()
+        promote_waitlisted_registrants(program, session)
+        session.commit()
+    return {"status": "removed"}
+
+
+def serialize_program_public(program: Program, session: Session) -> dict:
+    data = serialize_program(program, session)
+    return {
+        "id": data["id"], "name": data["name"], "type": data["type"],
+        "startDate": data["startDate"], "endDate": data["endDate"],
+        "ageRange": data["ageRange"], "scheduleNote": data["scheduleNote"],
+        "price": data["price"], "cap": data["cap"],
+        "effectiveStatus": data["effectiveStatus"],
+        "enrolledCount": data["enrolledCount"], "waitlistCount": data["waitlistCount"],
+    }
+
+
+@app.get("/api/rinks/{rink_id}/programs")
+def public_rink_programs(rink_id: int):
+    with Session(engine) as session:
+        programs = session.exec(select(Program).where(Program.rinkId == rink_id)).all()
+        return [
+            serialize_program_public(p, session) for p in programs
+            if effective_program_status(p) not in ("draft", "cancelled")
+        ]
+
+
+@app.get("/api/rinks/{rink_id}/schedule")
+def public_rink_schedule(rink_id: int):
+    with Session(engine) as session:
+        sheets = session.exec(
+            select(IceSheet).where(IceSheet.rinkId == rink_id).order_by(IceSheet.sortOrder)
+        ).all()
+        sessions = session.exec(select(IceSession).where(IceSession.rinkId == rink_id)).all()
+        return {
+            "sheets": [{"id": sh.id, "name": sh.name} for sh in sheets],
+            "sessions": [s.model_dump() for s in sessions],
+        }
 
 
 @app.get("/api/admin/activity")
