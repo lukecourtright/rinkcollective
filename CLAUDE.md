@@ -22,6 +22,8 @@ pip install -r requirements.txt
 
 Live at `https://rinkcollective.com` (also resolves at `https://www.rinkcollective.com` and the underlying `https://rinkcollective-production.up.railway.app`). GitHub repo: `github.com/lukecourtright/rinkcollective`. Deploys to Railway via `railway.toml`, auto-deploying on push to `main`. The Postgres addon is linked to the web service.
 
+`railway.toml`'s `startCommand` runs uvicorn with `--proxy-headers --forwarded-allow-ips='*'` — required because Railway terminates TLS at its own edge and forwards plain HTTP to the container, so without this, uvicorn (which by default only trusts `X-Forwarded-Proto`/`X-Forwarded-For` from a loopback peer) sees every request as `http`, not `https`. This didn't matter until the app needed to build an absolute callback URL for Google Sign-In (`request.base_url` — see Account & Onboarding section below): without the flag, that URL came out as `http://rinkcollective.com/api/auth/google/callback`, which doesn't match the `https://` redirect URI registered in Google Cloud Console and fails with `redirect_uri_mismatch`. `*` (rather than a specific IP) is safe here since the container is only reachable via Railway's own routing, never directly from the internet.
+
 `DATABASE_URL` — Postgres connection string, auto-injected by the Railway Postgres addon. Not required locally: if unset, the app falls back to a local `dev.db` SQLite file (gitignored).
 
 `SECRET_KEY` — signs the session cookie used for login, set as a Railway env var. Not required locally: falls back to an insecure dev default if unset.
