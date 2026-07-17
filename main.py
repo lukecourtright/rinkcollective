@@ -163,6 +163,22 @@ class User(SQLModel, table=True):
     # a table that already has rows (as production's user table did).
     loginCount: int = Field(default=0, sa_column_kwargs={"server_default": "0"})
 
+    # Private — collected at signup, never returned by any public-facing
+    # surface. Only user_public() reads these, and it's called exclusively
+    # by signup/login/me, i.e. it always describes the caller to themselves,
+    # never another user (public surfaces read .displayName off the ORM
+    # object directly instead). All nullable so ensure_new_columns() can
+    # ALTER TABLE these onto existing rows with no backfill needed.
+    firstName: Optional[str] = None
+    lastName: Optional[str] = None
+    avatarUrl: Optional[str] = None  # placeholder column — no upload UI yet
+
+    # Onboarding, collected progressively via PATCH /api/auth/onboarding.
+    homeRinkId: Optional[int] = None
+    skillLevel: Optional[str] = None  # "new" | "rec" | "comp" | "coach" — validated in the endpoint, not DB-enforced
+    interests: Optional[list] = Field(default=None, sa_column=Column(JSON))
+    onboardingCompletedAt: Optional[str] = None
+
 
 class RinkAdmin(SQLModel, table=True):
     # Grants a User "Rink Owner Console" access scoped to one rink. A rink
@@ -286,6 +302,13 @@ def user_public(user: User) -> dict:
         "id": user.id,
         "email": user.email,
         "displayName": user.displayName,
+        "firstName": user.firstName,
+        "lastName": user.lastName,
+        "avatarUrl": user.avatarUrl,
+        "homeRinkId": user.homeRinkId,
+        "skillLevel": user.skillLevel,
+        "interests": user.interests or [],
+        "onboardingCompletedAt": user.onboardingCompletedAt,
         "isAdmin": user.email in ADMIN_EMAILS,
     }
 
@@ -1420,13 +1443,23 @@ async def signup(request: Request):
     body = await request.json()
     email = body.get("email", "").strip().lower()
     password = body.get("password", "")
+    firstName = body.get("firstName", "").strip()
+    lastName = body.get("lastName", "").strip()
     displayName = body.get("displayName", "").strip()
-    if not email or not displayName or len(password) < 8:
-        raise HTTPException(400, "Email, display name, and a password of at least 8 characters are required")
+    if not displayName and firstName:
+        # Defensive fallback only — the client live-suggests "First L." as
+        # the user types and lets them edit it; this just covers a
+        # JS-disabled/failed client still submitting the form.
+        displayName = f"{firstName} {lastName[0]}." if lastName else firstName
+    if not email or not firstName or not displayName or len(password) < 8:
+        raise HTTPException(400, "First name, email, display name, and a password of at least 8 characters are required")
     with Session(engine) as session:
         if session.exec(select(User).where(User.email == email)).first():
             raise HTTPException(409, "Email already registered")
-        user = User(email=email, passwordHash=hash_password(password), displayName=displayName, loginCount=1)
+        user = User(
+            email=email, passwordHash=hash_password(password), displayName=displayName,
+            firstName=firstName, lastName=lastName or None, loginCount=1,
+        )
         session.add(user)
         session.commit()
         session.refresh(user)
@@ -1466,6 +1499,45 @@ def me(request: Request):
     with Session(engine) as session:
         user = session.get(User, user_id)
         return {"user": user_public(user) if user else None}
+
+
+ONBOARDING_SKILL_LEVELS = {"new", "rec", "comp", "coach"}
+
+
+@app.patch("/api/auth/onboarding")
+async def update_onboarding(request: Request):
+    # Session-scoped like GET /api/auth/me — always the caller's own
+    # account, no id in the path. Called twice from the onboarding wizard
+    # (step 1: homeRinkId/skillLevel, step 2: interests+completed) and once
+    # from "Skip for now" (completed alone), so fields are only touched when
+    # their key is present in the body — same presence-check convention as
+    # PATCH /api/admin/rinks/{rink_id}.
+    user_id = request.session.get("user_id")
+    if user_id is None:
+        raise HTTPException(401, "Sign in required")
+    body = await request.json()
+    with Session(engine) as session:
+        user = session.get(User, user_id)
+        if user is None:
+            raise HTTPException(401, "Sign in required")
+        if "homeRinkId" in body:
+            user.homeRinkId = body["homeRinkId"]
+        if "skillLevel" in body:
+            level = body["skillLevel"]
+            if level is not None and level not in ONBOARDING_SKILL_LEVELS:
+                raise HTTPException(400, "Invalid skill level")
+            user.skillLevel = level
+        if "interests" in body:
+            interests = body["interests"]
+            if not isinstance(interests, list):
+                raise HTTPException(400, "interests must be a list")
+            user.interests = interests
+        if body.get("completed"):
+            user.onboardingCompletedAt = datetime.now(timezone.utc).isoformat()
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        return user_public(user)
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")

@@ -338,6 +338,14 @@
     <div id="auth-title" style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">Sign In</div>
     <div id="auth-subtitle" style="font-size:13px;color:var(--text-faint);margin-bottom:20px;">Welcome back to RinkCollective</div>
     <form id="auth-form" style="display:flex;flex-direction:column;gap:12px;margin-bottom:8px;">
+      <div id="auth-firstname-field" style="display:none;">
+        <label style="font-size:10px;font-weight:600;color:var(--neutral-700);text-transform:uppercase;letter-spacing:0.09em;display:block;margin-bottom:5px;">First Name</label>
+        <input name="firstName" type="text" placeholder="e.g. Maya" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;outline:none;">
+      </div>
+      <div id="auth-lastname-field" style="display:none;">
+        <label style="font-size:10px;font-weight:600;color:var(--neutral-700);text-transform:uppercase;letter-spacing:0.09em;display:block;margin-bottom:5px;">Last Name</label>
+        <input name="lastName" type="text" placeholder="e.g. Torres" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;outline:none;">
+      </div>
       <div id="auth-displayname-field" style="display:none;">
         <label style="font-size:10px;font-weight:600;color:var(--neutral-700);text-transform:uppercase;letter-spacing:0.09em;display:block;margin-bottom:5px;">Display Name</label>
         <input name="displayName" type="text" placeholder="e.g. Jamie" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;outline:none;">
@@ -360,6 +368,14 @@
   </div>
 </div>
 
+<!-- ONBOARDING MODAL -->
+<div id="modal-onboarding" style="display:none;" class="modal-overlay">
+  <div class="modal-card" style="max-width:420px;">
+    <div id="onboarding-dynamic"></div>
+  </div>
+</div>
+<div id="toast-onboarding" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:900;padding:12px 18px;background:rgba(52,224,160,0.07);border:1px solid rgba(52,224,160,0.35);border-radius:10px;color:#34E0A0;font-size:13px;font-weight:600;box-shadow:0 12px 32px rgba(0,0,0,0.4);">You're all set — welcome to RinkCollective!</div>
+
 <script>
 class RinkFinder {
   BRAND_INK = 'Rink';
@@ -376,6 +392,20 @@ class RinkFinder {
     { name: 'Amber',  line: '255,210,77',  dot: '#FFD24D' },
     { name: 'Coral',  line: '255,107,125', dot: '#FF6B7D' },
   ];
+  // Onboarding taxonomies — hardcoded like guides.html's TOPICS constant,
+  // not DB-backed. Placeholder content, easy to rename later.
+  SKILL_LEVELS = [
+    { id: 'new',   label: 'Brand New',    desc: 'Never played, or just getting started' },
+    { id: 'rec',   label: 'Recreational', desc: 'Play for fun — pickup, beer league, stick & puck' },
+    { id: 'comp',  label: 'Competitive',  desc: 'League or club play, working on real skill' },
+    { id: 'coach', label: 'Coach',        desc: 'I coach or instruct' },
+  ];
+  INTEREST_TAGS = ['Pickup Hockey', 'Youth Leagues', 'Adult Leagues', 'Figure Skating', 'Public Skate', 'Coaching'];
+  AUTH_CONTEXT_COPY = {
+    photo: 'Sign in to share a photo of the ice',
+    review: 'Sign in to leave a review',
+    register: 'Sign in to register for a program',
+  };
 
   state = {
     search: '',
@@ -406,6 +436,15 @@ class RinkFinder {
     showAuth: false,
     authMode: 'login',
     authError: '',
+    authContext: null,
+    showOnboarding: false,
+    onboardingStep: 1,
+    onboardingHomeRinkId: null,
+    onboardingSkillLevel: null,
+    onboardingInterests: [],
+    onboardingSaving: false,
+    onboardingError: '',
+    onboardingToast: false,
     showAddPhoto: false,
     photoDraftFile: null,
     photoPreviewUrl: null,
@@ -454,6 +493,26 @@ class RinkFinder {
   }
 
   bindEvents() {
+    // Auth: live "First L." display-name suggestion, until the user edits
+    // the display-name field themselves (authDisplayNameEdited is reset in
+    // showAuth()/toggleAuthMode(), not routed through state — this modal's
+    // internals are handled by targeted DOM listeners, same convention as
+    // the search input below).
+    this.authDisplayNameEdited = false;
+    const authForm = document.getElementById('auth-form');
+    const fnInput = authForm.querySelector('[name=firstName]');
+    const lnInput = authForm.querySelector('[name=lastName]');
+    const dnInput = authForm.querySelector('[name=displayName]');
+    dnInput.addEventListener('input', () => { this.authDisplayNameEdited = true; });
+    const suggestDisplayName = () => {
+      if (this.authDisplayNameEdited) return;
+      const first = fnInput.value.trim();
+      const lastInitial = lnInput.value.trim().charAt(0);
+      dnInput.value = lastInitial ? `${first} ${lastInitial}.` : first;
+    };
+    fnInput.addEventListener('input', suggestDisplayName);
+    lnInput.addEventListener('input', suggestDisplayName);
+
     // Search
     document.getElementById('search-input').addEventListener('input', e => {
       this.setState({ search: e.target.value });
@@ -727,15 +786,32 @@ class RinkFinder {
       document.getElementById('add-photo-dynamic').innerHTML = this.renderAddPhotoModal();
     }
 
+    document.getElementById('modal-onboarding').style.display = s.showOnboarding ? 'flex' : 'none';
+    document.getElementById('toast-onboarding').style.display = s.onboardingToast ? 'block' : 'none';
+    if (s.showOnboarding && (
+      prev.onboardingStep !== s.onboardingStep ||
+      prev.onboardingHomeRinkId !== s.onboardingHomeRinkId ||
+      prev.onboardingSkillLevel !== s.onboardingSkillLevel ||
+      prev.onboardingInterests !== s.onboardingInterests ||
+      prev.onboardingSaving !== s.onboardingSaving ||
+      prev.onboardingError !== s.onboardingError ||
+      !prev.showOnboarding
+    )) {
+      document.getElementById('onboarding-dynamic').innerHTML = this.renderOnboardingModal();
+    }
+
     this.updateAuthUI();
   }
 
   updateAuthUI() {
     const s = this.state;
     document.getElementById('auth-title').textContent = s.authMode === 'signup' ? 'Create Account' : 'Sign In';
-    document.getElementById('auth-subtitle').textContent = s.authMode === 'signup'
+    const contextCopy = s.authContext && this.AUTH_CONTEXT_COPY[s.authContext];
+    document.getElementById('auth-subtitle').textContent = contextCopy || (s.authMode === 'signup'
       ? 'Join RinkCollective to check in and leave reviews'
-      : 'Welcome back to RinkCollective';
+      : 'Welcome back to RinkCollective');
+    document.getElementById('auth-firstname-field').style.display = s.authMode === 'signup' ? 'block' : 'none';
+    document.getElementById('auth-lastname-field').style.display = s.authMode === 'signup' ? 'block' : 'none';
     document.getElementById('auth-displayname-field').style.display = s.authMode === 'signup' ? 'block' : 'none';
     const toggle = document.getElementById('auth-toggle');
     toggle.textContent = s.authMode === 'signup' ? 'Already have an account? Sign in' : 'Need an account? Sign up';
@@ -1017,6 +1093,119 @@ class RinkFinder {
         <button onclick="app.hideAddPhotoModal()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:14px;font-family:inherit;cursor:pointer;">Cancel</button>
         <button onclick="app.submitAddPhoto()" ${hasDraft ? '' : 'disabled'} style="flex:1;padding:10px;background:${hasDraft ? 'var(--color-primary)' : 'var(--surface-2)'};border:none;border-radius:8px;color:${hasDraft ? '#06181A' : 'var(--text-faint)'};font-size:14px;font-weight:700;font-family:inherit;cursor:${hasDraft ? 'pointer' : 'default'};">Add Photo</button>
       </div>`;
+  }
+
+  renderOnboardingModal() {
+    const s = this.state;
+    const errorHTML = s.onboardingError
+      ? `<div style="font-size:12px;color:#F16A6A;margin-top:10px;">${this.esc(s.onboardingError)}</div>`
+      : '';
+    const header = `<div style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--text);margin-bottom:4px;">${s.onboardingStep === 1 ? "Tell us about yourself" : 'One more thing'}</div>
+      <div style="font-size:13px;color:var(--text-faint);margin-bottom:20px;">Step ${s.onboardingStep} of 2 — everything here is optional and you can change it later.</div>`;
+
+    if (s.onboardingStep === 1) {
+      const selectedRink = this.rinks.find(r => r.id === s.onboardingHomeRinkId);
+      const skillCards = this.SKILL_LEVELS.map(lvl => `
+        <div onclick="app.selectOnboardingSkillLevel('${lvl.id}')" style="padding:11px 12px;border-radius:10px;border:1px solid ${s.onboardingSkillLevel === lvl.id ? 'var(--color-primary)' : 'var(--border)'};background:${s.onboardingSkillLevel === lvl.id ? 'rgba(20,207,207,0.08)' : 'transparent'};cursor:pointer;">
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${lvl.label}</div>
+          <div style="font-size:11.5px;color:var(--text-faint);line-height:1.4;">${lvl.desc}</div>
+        </div>`).join('');
+      // The search box is deliberately NOT mirrored into state on every
+      // keystroke (see the Reviews composer precedent in CLAUDE.md) — that
+      // would re-render this whole modal via innerHTML on each character
+      // and drop focus/cursor position. filterOnboardingRinks() below does
+      // a targeted update of #onboarding-rink-results instead.
+      return `${header}
+        <label style="font-size:10px;font-weight:600;color:var(--neutral-700);text-transform:uppercase;letter-spacing:0.09em;display:block;margin-bottom:5px;">Home Rink</label>
+        <input id="onboarding-rink-search" type="text" value="${selectedRink ? this.esc(selectedRink.name) : ''}" oninput="app.filterOnboardingRinks(this.value)" placeholder="Search by rink or city" style="width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:inherit;outline:none;margin-bottom:6px;">
+        ${selectedRink ? `<div style="font-size:12px;color:var(--color-primary);margin-bottom:6px;">✓ ${this.esc(selectedRink.name)} selected</div>` : ''}
+        <div id="onboarding-rink-results" style="max-height:140px;overflow-y:auto;margin-bottom:16px;"></div>
+        <label style="font-size:10px;font-weight:600;color:var(--neutral-700);text-transform:uppercase;letter-spacing:0.09em;display:block;margin-bottom:8px;">Skill Level</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:8px;">${skillCards}</div>
+        ${errorHTML}
+        <div style="display:flex;gap:8px;margin-top:20px;">
+          <button onclick="app.skipOnboarding()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:14px;font-family:inherit;cursor:pointer;">Skip for now</button>
+          <button onclick="app.saveOnboardingStep1()" ${s.onboardingSaving ? 'disabled' : ''} style="flex:1;padding:10px;background:var(--color-primary);border:none;border-radius:8px;color:#06181A;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">Continue</button>
+        </div>`;
+    }
+
+    const interestChips = this.INTEREST_TAGS.map(tag => {
+      const active = s.onboardingInterests.includes(tag);
+      return `<span onclick="app.toggleOnboardingInterest('${this.esc(tag)}')" style="padding:8px 14px;border-radius:20px;border:1px solid ${active ? 'var(--color-primary)' : 'var(--border)'};background:${active ? 'rgba(20,207,207,0.12)' : 'transparent'};color:${active ? 'var(--color-primary)' : 'var(--text-muted)'};font-size:12.5px;font-weight:500;cursor:pointer;">${this.esc(tag)}</span>`;
+    }).join('');
+    return `${header}
+      <label style="font-size:10px;font-weight:600;color:var(--neutral-700);text-transform:uppercase;letter-spacing:0.09em;display:block;margin-bottom:8px;">What are you into?</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">${interestChips}</div>
+      ${errorHTML}
+      <div style="display:flex;gap:8px;margin-top:20px;">
+        <button onclick="app.skipOnboarding()" style="flex:1;padding:10px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-size:14px;font-family:inherit;cursor:pointer;">Skip for now</button>
+        <button onclick="app.finishOnboarding()" ${s.onboardingSaving ? 'disabled' : ''} style="flex:1;padding:10px;background:var(--color-primary);border:none;border-radius:8px;color:#06181A;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">Finish</button>
+      </div>`;
+  }
+
+  filterOnboardingRinks(query) {
+    const q = query.trim().toLowerCase();
+    const matches = q
+      ? this.rinks.filter(r => r.name.toLowerCase().includes(q) || r.city.toLowerCase().includes(q)).slice(0, 6)
+      : [];
+    document.getElementById('onboarding-rink-results').innerHTML = matches.map(r => `
+      <div onclick="app.selectOnboardingHomeRink(${r.id})" style="padding:9px 12px;border-radius:8px;cursor:pointer;">
+        <div style="font-size:13px;font-weight:600;color:var(--text);">${this.esc(r.name)}</div>
+        <div style="font-size:11.5px;color:var(--text-faint);">${this.esc(r.city)}, ${this.esc(r.state)}</div>
+      </div>`).join('');
+  }
+
+  selectOnboardingHomeRink(rinkId) {
+    this.setState({ onboardingHomeRinkId: rinkId });
+  }
+
+  selectOnboardingSkillLevel(id) { this.setState({ onboardingSkillLevel: id }); }
+
+  toggleOnboardingInterest(tag) {
+    const s = this.state;
+    const interests = s.onboardingInterests.includes(tag)
+      ? s.onboardingInterests.filter(t => t !== tag)
+      : [...s.onboardingInterests, tag];
+    this.setState({ onboardingInterests: interests });
+  }
+
+  async saveOnboardingStep1() {
+    this.setState({ onboardingSaving: true, onboardingError: '' });
+    const res = await fetch('/api/auth/onboarding', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ homeRinkId: this.state.onboardingHomeRinkId, skillLevel: this.state.onboardingSkillLevel }),
+    }).catch(() => null);
+    if (!res || !res.ok) {
+      this.setState({ onboardingSaving: false, onboardingError: 'Something went wrong — try again.' });
+      return;
+    }
+    this.setState({ onboardingSaving: false, onboardingStep: 2 });
+  }
+
+  async finishOnboarding() {
+    this.setState({ onboardingSaving: true, onboardingError: '' });
+    const res = await fetch('/api/auth/onboarding', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ interests: this.state.onboardingInterests, completed: true }),
+    }).catch(() => null);
+    if (!res || !res.ok) {
+      this.setState({ onboardingSaving: false, onboardingError: 'Something went wrong — try again.' });
+      return;
+    }
+    const user = await res.json();
+    this.setState({ currentUser: user, onboardingSaving: false, showOnboarding: false, onboardingToast: true });
+    setTimeout(() => this.setState({ onboardingToast: false }), 3000);
+  }
+
+  skipOnboarding() {
+    fetch('/api/auth/onboarding', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completed: true }),
+    }).catch(() => {});
+    this.setState({ showOnboarding: false });
   }
 
   renderPhotosTab(photos, heroIdx) {
@@ -1345,7 +1534,7 @@ class RinkFinder {
 
   openAddPhotoModal() {
     if (!this.state.selectedRinkId) return;
-    if (!this.state.currentUser) { this.showAuth('login'); return; }
+    if (!this.state.currentUser) { this.showAuth('login', 'photo'); return; }
     this.setState({ showAddPhoto: true, photoDraftFile: null, photoPreviewUrl: null, photoUploadError: '' });
   }
 
@@ -1409,7 +1598,10 @@ class RinkFinder {
 
   // ── Reviews composer ─────────────────────────────────────────────────────
 
-  openReview() { this.setState({ reviewOpen: true, reviewRating: 0 }); }
+  openReview() {
+    if (!this.state.currentUser) { this.showAuth('login', 'review'); return; }
+    this.setState({ reviewOpen: true, reviewRating: 0 });
+  }
   cancelReview() { this.setState({ reviewOpen: false, reviewRating: 0 }); }
   setReviewRating(n) { this.setState({ reviewRating: n }); }
 
@@ -1474,19 +1666,21 @@ class RinkFinder {
     }
   }
 
-  showAuth(mode) { this.setState({ showAuth: true, authMode: mode, authError: '' }); }
+  showAuth(mode, context = null) { this.authDisplayNameEdited = false; this.setState({ showAuth: true, authMode: mode, authError: '', authContext: context }); }
   hideAuth() {
-    this.setState({ showAuth: false, authError: '' });
+    this.setState({ showAuth: false, authError: '', authContext: null });
     document.getElementById('auth-form').reset();
   }
   toggleAuthMode() {
+    this.authDisplayNameEdited = false;
     this.setState({ authMode: this.state.authMode === 'login' ? 'signup' : 'login', authError: '' });
   }
 
   async submitAuth() {
     const form = document.getElementById('auth-form');
     const data = Object.fromEntries(new FormData(form));
-    const endpoint = this.state.authMode === 'signup' ? '/api/auth/signup' : '/api/auth/login';
+    const isSignup = this.state.authMode === 'signup';
+    const endpoint = isSignup ? '/api/auth/signup' : '/api/auth/login';
     const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1499,7 +1693,16 @@ class RinkFinder {
     }
     const user = await res.json();
     form.reset();
-    this.setState({ currentUser: user, showAuth: false, authError: '' });
+    if (isSignup) {
+      // Onboarding runs once, right after a new signup — not on login.
+      this.setState({
+        currentUser: user, showAuth: false, authError: '', authContext: null,
+        showOnboarding: true, onboardingStep: 1,
+        onboardingHomeRinkId: null, onboardingSkillLevel: null, onboardingInterests: [], onboardingError: '',
+      });
+    } else {
+      this.setState({ currentUser: user, showAuth: false, authError: '', authContext: null });
+    }
   }
 
   async logout() {
