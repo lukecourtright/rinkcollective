@@ -66,7 +66,7 @@ class Rink(SQLModel, table=True):
     photos: list = Field(default_factory=list, sa_column=Column(JSON))
     googlePlaceId: Optional[str] = None
     adminEditedAt: Optional[str] = None
-    adminOnly: bool = False
+    adminOnly: Optional[bool] = None
 
 
 class Equipment(SQLModel, table=True):
