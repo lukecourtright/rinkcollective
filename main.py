@@ -66,6 +66,7 @@ class Rink(SQLModel, table=True):
     photos: list = Field(default_factory=list, sa_column=Column(JSON))
     googlePlaceId: Optional[str] = None
     adminEditedAt: Optional[str] = None
+    adminOnly: bool = False
 
 
 class Equipment(SQLModel, table=True):
@@ -484,9 +485,14 @@ def rink_owner_console_page():
 
 
 @app.get("/api/rinks")
-def get_rinks():
+def get_rinks(request: Request):
     with Session(engine) as session:
         rinks = session.exec(select(Rink)).all()
+        user_id = request.session.get("user_id")
+        user = session.get(User, user_id) if user_id else None
+        is_admin = bool(user and user.email in ADMIN_EMAILS)
+        if not is_admin:
+            rinks = [r for r in rinks if not r.adminOnly]
         return [rink.model_dump() for rink in rinks]
 
 
