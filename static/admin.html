@@ -176,6 +176,93 @@
   .denied-wrap h1 { font-family: var(--font-display); font-size: 20px; margin-bottom: 10px; }
   .denied-wrap p { color: var(--text-muted); font-size: 14px; line-height: 1.5; }
 
+  /* ---------- campaigns: list ---------- */
+  .camp-back-btn { width: 34px; height: 34px; border-radius: 9px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .btn-primary { height: 40px; padding: 0 16px; border-radius: 9px; background: var(--color-primary); border: none; color: #06181A; font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+  #campaigns-table .table-head, #campaigns-table .table-row { grid-template-columns: 2.2fr 1.2fr 1fr 0.7fr 0.7fr; }
+  .camp-name-cell { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .camp-type-well { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .badge-auto { border: 1px solid rgba(52,224,160,0.4); color: #34E0A0; font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.06em; text-transform: uppercase; border-radius: 20px; padding: 1px 7px; margin-left: 7px; }
+  .camp-sub { font-family: var(--font-mono); font-size: 11px; color: #656C84; margin-top: 2px; }
+  .camp-status-pill { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+  .camp-mono-right { font-family: var(--font-mono); font-size: 12.5px; text-align: right; }
+
+  /* ---------- campaigns: series ---------- */
+  .camp-header-row { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+  .camp-toggle-wrap { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .camp-toggle { width: 46px; height: 26px; border-radius: 20px; background: var(--border); border: none; position: relative; flex-shrink: 0; transition: background 0.2s ease; }
+  .camp-toggle.on { background: #34E0A0; }
+  .camp-toggle .knob { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.2s ease; }
+  .camp-toggle.on .knob { transform: translateX(20px); }
+  .camp-toggle-label { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.06em; color: #656C84; }
+  .flow-wrap { display: flex; align-items: center; gap: 0; overflow-x: auto; padding: 10px 4px 16px; transition: opacity 0.25s ease; }
+  .trigger-node { width: 150px; flex-shrink: 0; border: 1px dashed rgba(52,224,160,0.45); background: rgba(52,224,160,0.07); border-radius: 12px; padding: 14px; text-align: center; }
+  .step-connector { width: 74px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 0 4px; }
+  .step-connector-track { width: 100%; height: 2px; background: var(--border); position: relative; }
+  .step-card { width: 190px; flex-shrink: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; border-top: 4px solid; text-align: left; }
+  .step-card:hover { border-color: #3A4560; }
+  .step-card-stats { display: flex; gap: 14px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--hair); }
+  .add-step-btn { border: 1px dashed var(--border); background: transparent; color: #656C84; border-radius: 12px; padding: 14px 18px; font-size: 12.5px; font-weight: 600; flex-shrink: 0; margin-left: 12px; }
+
+  /* ---------- campaigns: report ---------- */
+  .funnel-row { padding: 12px 18px; border-bottom: 1px solid #171F33; }
+  .funnel-row:last-child { border-bottom: none; }
+  .funnel-top { display: flex; justify-content: space-between; font-size: 12.5px; margin-bottom: 7px; }
+  .funnel-track { height: 9px; border-radius: 5px; background: #0E1322; overflow: hidden; }
+  .funnel-fill { height: 100%; border-radius: 5px; }
+  .toplink-row { display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-bottom: 1px solid #171F33; }
+  .toplink-row:last-child { border-bottom: none; }
+  .toplink-url { flex: 1; min-width: 0; font-size: 12.5px; color: #D0D6E6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* ---------- campaigns: compose ---------- */
+  .compose-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; align-items: stretch; }
+  .compose-col-left { padding: 22px 24px; border-right: 1px solid var(--hair); min-width: 0; }
+  .compose-col-right { background: #0B0F1B; padding: 18px; min-width: 0; }
+  .compose-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #4B5168; margin: 0 0 10px; }
+  .compose-eyebrow.first { margin-top: 0; }
+  .audience-card { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+  .audience-section { padding: 14px 16px; border-bottom: 1px solid var(--hair); }
+  .audience-section:last-child { border-bottom: none; }
+  .audience-section-head { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 10px; }
+  .activity-seg { display: flex; background: #080B14; border-radius: 9px; padding: 3px; gap: 3px; margin-left: auto; }
+  .activity-seg-opt { padding: 6px 12px; border-radius: 7px; border: none; background: transparent; color: #656C84; font-size: 12px; font-weight: 600; }
+  .activity-seg-opt.active { background: var(--color-primary); color: #06181A; }
+  .reach-banner { display: flex; align-items: center; gap: 9px; background: rgba(20,207,207,0.09); border: 1px solid rgba(20,207,207,0.25); border-radius: 10px; padding: 11px 14px; font-size: 13px; color: #D0D6E6; margin-bottom: 18px; }
+  .editor-toolbar { display: flex; align-items: center; gap: 2px; border: 1px solid var(--border); border-bottom: none; border-radius: 10px 10px 0 0; background: #0E1322; padding: 5px; flex-wrap: wrap; }
+  .toolbar-btn { width: 30px; height: 30px; border-radius: 6px; background: transparent; border: none; color: #B0B8CF; display: flex; align-items: center; justify-content: center; font-size: 13.5px; font-weight: 700; }
+  .toolbar-btn:hover { background: #1A2338; }
+  .toolbar-note { margin-left: auto; font-family: var(--font-mono); font-size: 10.5px; color: #4B5168; padding: 0 8px; white-space: nowrap; }
+  .body-editable { min-height: 150px; border: 1px solid var(--border); border-radius: 0 0 10px 10px; padding: 14px; background: #0E1322; color: #D0D6E6; font-size: 13.5px; line-height: 1.6; }
+  .body-editable:focus { outline: none; }
+  .compliance-note { display: flex; gap: 8px; font-size: 12px; color: #656C84; margin-top: 14px; line-height: 1.5; }
+  .device-tabs { display: flex; justify-content: center; gap: 6px; padding: 8px; margin-bottom: 14px; }
+  .device-tab { padding: 6px 16px; border-radius: 8px; border: 1px solid transparent; background: transparent; color: #656C84; font-size: 12.5px; font-weight: 600; }
+  .device-tab.active { background: rgba(20,207,207,0.12); border-color: rgba(20,207,207,0.3); color: var(--color-primary); }
+  .email-preview-wrap { display: flex; justify-content: center; }
+  .email-preview { width: 100%; max-width: 100%; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); transition: max-width 0.3s ease; }
+  .email-preview.mobile { max-width: 340px; }
+  .email-preview-header { background: #0A0E1A; padding: 18px 22px; }
+  .email-preview-body { padding: 26px 22px; color: #3A4155; font-size: 13.5px; line-height: 1.6; }
+  .email-preview-body h1 { font-family: var(--font-display); font-size: 18px; font-weight: 700; color: #0A0E1A; margin-bottom: 10px; }
+  .email-preview-footer { background: #F1F3F8; padding: 16px 22px; color: #888; font-size: 10.5px; line-height: 1.6; }
+
+  /* ---------- campaigns: overlays ---------- */
+  .pick-cards { display: flex; gap: 14px; margin-top: 18px; }
+  .pick-card { flex: 1; border: 1px solid var(--border); border-radius: 12px; padding: 18px; text-align: left; background: var(--surface-2); }
+  .pick-card:hover { border-color: rgba(20,207,207,0.4); background: #17203D; }
+  .pick-card-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 12px; }
+  .pick-card-title { font-family: var(--font-display); font-size: 14.5px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+  .pick-card-desc { font-size: 12px; color: #888FA8; line-height: 1.5; }
+  .send-confirm-modal { background: var(--bg); border: 1px solid var(--border); border-radius: 16px; width: 440px; max-width: 100%; padding: 24px; text-align: center; }
+
+  @media (max-width: 900px) {
+    #campaigns-table .table-head, #campaigns-table .table-row { grid-template-columns: 1.6fr 0.9fr auto; }
+    #campaigns-table .col-audience, #campaigns-table .col-opens, #campaigns-table .col-clicks { display: none; }
+    .compose-grid { grid-template-columns: 1fr; }
+    .compose-col-left { border-right: none; border-bottom: 1px solid var(--hair); }
+    .pick-cards { flex-direction: column; }
+  }
+
   @media (max-width: 900px) {
     #sidebar { position: fixed; top: 0; left: 0; height: 100vh; transform: translateX(-100%); transition: transform 0.28s ease; box-shadow: 8px 0 32px rgba(0,0,0,0.5); }
     #sidebar.open { transform: translateX(0); }
@@ -242,13 +329,15 @@ const ACTIVITY_STYLE = {
   photo: { icon: 'check', color: '#34E0A0', bg: 'rgba(52,224,160,0.12)', border: 'rgba(52,224,160,0.3)' },
   reject: { icon: 'x', color: '#FF6B7D', bg: 'rgba(255,107,125,0.1)', border: 'rgba(255,107,125,0.28)' },
   rink: { icon: 'edit', color: '#CB78FF', bg: 'rgba(203,120,255,0.12)', border: 'rgba(203,120,255,0.3)' },
+  campaign: { icon: 'send', color: '#14CFCF', bg: 'rgba(20,207,207,0.12)', border: 'rgba(20,207,207,0.3)' },
 };
 const NAV_ITEMS = [
-  { id: 'overview', label: 'Overview', icon: 'grid' },
-  { id: 'photos', label: 'Photo Queue', icon: 'image' },
-  { id: 'users', label: 'Users', icon: 'users' },
-  { id: 'rinks', label: 'Rinks', icon: 'rink' },
-  { id: 'activity', label: 'Activity Log', icon: 'activity' },
+  { id: 'overview', label: 'Overview', icon: 'grid', group: 'Manage' },
+  { id: 'photos', label: 'Photo Queue', icon: 'image', group: 'Manage' },
+  { id: 'users', label: 'Users', icon: 'users', group: 'Manage' },
+  { id: 'rinks', label: 'Rinks', icon: 'rink', group: 'Manage' },
+  { id: 'activity', label: 'Activity Log', icon: 'activity', group: 'Manage' },
+  { id: 'campaigns', label: 'Campaigns', icon: 'zap', group: 'Grow' },
 ];
 const PAGE_META = {
   overview: ['Overview', 'Day-to-day snapshot of the site'],
@@ -256,8 +345,17 @@ const PAGE_META = {
   users: ['Users', 'Search the member directory'],
   rinks: ['Rinks', 'Search and edit rink listings'],
   activity: ['Activity Log', 'A running record of admin actions'],
+  campaigns: ['Campaigns', 'Automations & broadcasts in one place'],
 };
 const REASON_CHIPS = ['Blurry / low quality', 'Not this rink', 'Duplicate', 'Inappropriate'];
+const CAMPAIGN_STATUS_STYLE = {
+  active: { label: 'Active', bg: 'rgba(52,224,160,0.12)', color: '#34E0A0' },
+  paused: { label: 'Paused', bg: 'rgba(136,143,168,0.12)', color: '#888FA8' },
+  sent: { label: 'Sent', bg: 'rgba(20,207,207,0.12)', color: '#14CFCF' },
+  scheduled: { label: 'Scheduled', bg: 'rgba(79,184,255,0.12)', color: '#4FB8FF' },
+  draft: { label: 'Draft', bg: 'rgba(136,143,168,0.12)', color: '#888FA8' },
+};
+const ACTIVITY_LABELS = { active: 'Active (90d)', inactive: 'Inactive', all: 'All members' };
 const ICONS = {
   grid: '<path d="M4 4h6v6H4zM14 4h6v6h-6zM14 14h6v6h-6zM4 14h6v6H4z"/>',
   image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
@@ -272,7 +370,24 @@ const ICONS = {
   menu: '<path d="M3 6h18M3 12h18M3 18h18"/>',
   shield: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>',
   logout: '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/>',
+  zap: '<path d="M13 2 3 14h7l-1 8 10-12h-7z"/>',
+  send: '<path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/>',
+  clock: '<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+  userPlus: '<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6M23 11h-6"/>',
+  beaker: '<path d="M9 3h6M10 3v6l-5.5 9.5A2 2 0 0 0 6.2 21h11.6a2 2 0 0 0 1.7-2.5L14 9V3"/>',
+  arrowLeft: '<path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  link: '<path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11.5 4.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L12.5 19.5"/>',
+  desktop: '<rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  mobile: '<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
 };
+function shortDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+function pct(n) { return n == null ? '—' : `${n}%`; }
 function icon(name, sw) {
   return `<svg width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${sw||2}" stroke-linecap="round" stroke-linejoin="round" style="display:block;">${ICONS[name]||''}</svg>`;
 }
@@ -312,6 +427,13 @@ class Admin {
       rinkAdmins: [], rinkAdminEmailInput: '', rinkAdminError: '',
 
       activity: [],
+
+      campaignsFilter: 'all', campaignsList: [],
+      campaignsView: 'list', campaignsSelId: null,
+      campaignDetail: null, campaignReport: null,
+      composeTarget: null, broadcastDraft: null, stepDraft: null,
+      campaignModal: null, campaignDevice: 'desktop', campaignReach: null,
+      campaignScheduleAt: '',
 
       toast: null,
     };
@@ -370,6 +492,7 @@ class Admin {
         if (this.state.photoModalId != null) this.closePhotoModal();
         else if (this.state.rejectForId != null) this.closeReject();
         else if (this.state.editRinkId != null) this.closeEditor();
+        else if (this.state.campaignModal != null) this.closeCampaignModal();
         else if (this.state.drawerOpen) this.setState({ drawerOpen: false });
       }
     });
@@ -389,6 +512,13 @@ class Admin {
     if (view === 'users') return this.loadUsers();
     if (view === 'rinks') return this.loadRinks();
     if (view === 'activity') return this.loadActivity();
+    if (view === 'campaigns') {
+      this.state.campaignsView = 'list';
+      this.state.campaignsSelId = null;
+      this.state.campaignDetail = null;
+      this.state.campaignReport = null;
+      return this.loadCampaigns();
+    }
   }
 
   async loadOverview() {
@@ -423,6 +553,292 @@ class Admin {
   async loadActivity() {
     const res = await this.api('/api/admin/activity?limit=50');
     this.state.activity = await res.json();
+  }
+
+  // ---------- campaigns ----------
+  async loadCampaigns() {
+    const res = await this.api('/api/admin/campaigns');
+    this.state.campaignsList = await res.json();
+  }
+
+  openCampaignRow(row) {
+    if (row.kind === 'automation') return this.openSeries(row.id);
+    if (row.status === 'sent') return this.openReport(row.id);
+    return this.openCompose(row.id);
+  }
+
+  async openSeries(id) {
+    const res = await this.api('/api/admin/automations/welcome-series');
+    const detail = await res.json();
+    this.setState({ campaignsView: 'series', campaignsSelId: detail.id, campaignDetail: detail, campaignModal: null });
+  }
+
+  async openReport(id) {
+    const res = await this.api(`/api/admin/campaigns/${id}/report`);
+    const data = await res.json();
+    this.setState({ campaignsView: 'report', campaignsSelId: id, campaignDetail: data.campaign, campaignReport: data.report });
+  }
+
+  async openCompose(id) {
+    const res = await this.api(`/api/admin/campaigns/${id}`);
+    const campaign = await res.json();
+    this.setState({
+      campaignsView: 'compose', campaignsSelId: id, campaignModal: null,
+      composeTarget: { type: 'broadcast', id }, broadcastDraft: JSON.parse(JSON.stringify(campaign)),
+      campaignDevice: 'desktop', campaignReach: campaign.reach,
+    });
+  }
+
+  openStepEditor(step) {
+    this.setState({
+      campaignsView: 'compose', composeTarget: { type: 'step', id: step.id },
+      stepDraft: JSON.parse(JSON.stringify(step)), campaignDevice: 'desktop',
+    });
+  }
+
+  async backToList() {
+    this.setState({ campaignsView: 'list', campaignsSelId: null, campaignDetail: null, campaignReport: null, composeTarget: null });
+    await this.loadCampaigns();
+    this.render();
+  }
+
+  async backToSeries() {
+    await this.openSeries(this.state.campaignDetail ? this.state.campaignDetail.id : null);
+  }
+
+  async toggleAutomation() {
+    const next = !this.state.campaignDetail.active;
+    await this.api('/api/admin/automations/welcome-series', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: next }),
+    });
+    await this.openSeries();
+  }
+
+  async fetchReach(activity) {
+    const res = await this.api(`/api/admin/campaigns/audience-count?activity=${activity}`);
+    const data = await res.json();
+    this.state.campaignReach = data.reach;
+    const el = document.getElementById('reach-count');
+    if (el) el.textContent = data.reach.toLocaleString();
+    const warn = document.getElementById('reach-warn');
+    if (warn) warn.style.display = data.reach === 0 ? 'inline' : 'none';
+    const sendBtn = document.getElementById('send-now-btn');
+    if (sendBtn) sendBtn.innerHTML = `${icon('send')}Send to ${data.reach.toLocaleString()}`;
+  }
+
+  async setActivitySegment(activity) {
+    this.state.broadcastDraft.audienceActivity = activity;
+    this.render();
+    await this.fetchReach(activity);
+    this.queueDraftSave();
+  }
+
+  updateDraftField(field, value) {
+    this.state.broadcastDraft[field] = value;
+    this.queueDraftSave();
+  }
+
+  queueDraftSave() {
+    clearTimeout(this._draftSaveTimer);
+    this._draftSaveTimer = setTimeout(() => this.saveDraftNow(), 500);
+  }
+
+  async saveDraftNow() {
+    const d = this.state.broadcastDraft;
+    if (!d || d.status !== 'draft') return;
+    await this.api(`/api/admin/campaigns/${d.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: d.name, subject: d.subject, bodyHtml: d.bodyHtml, ctaUrl: d.ctaUrl, audienceActivity: d.audienceActivity }),
+    });
+    const el = document.getElementById('compose-saved-label');
+    if (el) el.textContent = 'Draft · saved just now';
+  }
+
+  async saveStep() {
+    const d = this.state.stepDraft;
+    await this.api(`/api/admin/automations/welcome-series/steps/${d.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject: d.subject, bodyHtml: d.bodyHtml }),
+    });
+    this.showToast('Step saved', '#34E0A0', 'check');
+    await this.openSeries();
+  }
+
+  async sendTestEmail() {
+    const target = this.state.composeTarget;
+    if (target.type !== 'broadcast') return;
+    await this.saveDraftNow();
+    const res = await fetch(`/api/admin/campaigns/${target.id}/send-test`, { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      this.showToast(err.detail || 'Could not send test', '#FF6B7D', 'x');
+      return;
+    }
+    const data = await res.json();
+    this.showToast(`Test email queued to ${data.to}`, '#34E0A0', 'check');
+  }
+
+  async sendSeriesTest() {
+    const firstStep = this.state.campaignDetail.steps[0];
+    const res = await fetch(`/api/admin/automations/welcome-series/steps/${firstStep.id}/send-test`, { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      this.showToast(err.detail || 'Could not send test', '#FF6B7D', 'x');
+      return;
+    }
+    const data = await res.json();
+    this.showToast(`Test email queued to ${data.to}`, '#34E0A0', 'check');
+  }
+
+  async sendStepTest(stepId) {
+    const res = await fetch(`/api/admin/automations/welcome-series/steps/${stepId}/send-test`, { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      this.showToast(err.detail || 'Could not send test', '#FF6B7D', 'x');
+      return;
+    }
+    const data = await res.json();
+    this.showToast(`Test email queued to ${data.to}`, '#34E0A0', 'check');
+  }
+
+  openScheduleModal() { this.setState({ campaignModal: 'schedule', campaignScheduleAt: '' }); }
+
+  async confirmSchedule() {
+    if (!this.state.campaignScheduleAt) return;
+    await this.saveDraftNow();
+    const iso = new Date(this.state.campaignScheduleAt).toISOString();
+    const res = await fetch(`/api/admin/campaigns/${this.state.broadcastDraft.id}/schedule`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scheduledAt: iso }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      this.showToast(err.detail || 'Could not schedule', '#FF6B7D', 'x');
+      return;
+    }
+    this.setState({ campaignModal: null });
+    await this.backToList();
+    this.showToast('Broadcast scheduled', '#4FB8FF', 'check');
+  }
+
+  openSendConfirm() { this.setState({ campaignModal: 'send' }); }
+
+  async confirmSend() {
+    await this.saveDraftNow();
+    const id = this.state.broadcastDraft.id;
+    const res = await fetch(`/api/admin/campaigns/${id}/send`, { method: 'POST' });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      this.setState({ campaignModal: null });
+      this.showToast(err.detail || 'Could not send', '#FF6B7D', 'x');
+      return;
+    }
+    this.setState({ campaignModal: null });
+    await this.openReport(id);
+  }
+
+  setDevice(device) {
+    this.state.campaignDevice = device;
+    const frame = document.getElementById('email-preview-frame');
+    if (frame) frame.classList.toggle('mobile', device === 'mobile');
+    document.querySelectorAll('[data-device]').forEach(b => b.classList.toggle('active', b.dataset.device === device));
+  }
+
+  openNewCampaignModal() { this.setState({ campaignModal: 'new' }); }
+  closeCampaignModal() { this.setState({ campaignModal: null }); }
+
+  async pickBroadcast() {
+    const res = await this.api('/api/admin/campaigns', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Untitled broadcast' }) });
+    const campaign = await res.json();
+    await this.openCompose(campaign.id);
+  }
+
+  async pickAutomation() {
+    const automation = this.state.campaignsList.find(c => c.kind === 'automation');
+    if (automation) await this.openSeries(automation.id);
+    else this.setState({ campaignModal: null });
+  }
+
+  execToolbar(cmd) {
+    const el = document.getElementById('body-editable');
+    if (!el) return;
+    el.focus();
+    if (cmd === 'bold' || cmd === 'italic') { document.execCommand(cmd); }
+    else if (cmd === 'quote') { document.execCommand('formatBlock', false, 'blockquote'); }
+    else if (cmd === 'list') { document.execCommand('insertUnorderedList'); }
+    else if (cmd === 'link') {
+      const url = window.prompt('Link URL:', 'https://');
+      if (url) document.execCommand('createLink', false, url);
+    }
+    this.onBodyInput(el);
+  }
+
+  insertMergeTag() {
+    const el = document.getElementById('body-editable');
+    if (!el) return;
+    el.focus();
+    document.execCommand('insertText', false, '[first_name]');
+    this.onBodyInput(el);
+  }
+
+  insertCtaButton() {
+    const el = document.getElementById('body-editable');
+    if (!el) return;
+    const label = window.prompt('Button label:', 'Find sessions near you');
+    if (!label) return;
+    const url = window.prompt('Button link (URL):', 'https://rinkcollective.com/rinks');
+    if (!url) return;
+    el.focus();
+    document.execCommand('insertHTML', false, `<a href="${url}" style="display:inline-block;margin:14px 0;padding:11px 20px;background:#14CFCF;color:#06181A;font-weight:700;border-radius:8px;text-decoration:none;">${label}</a>`);
+    if (this.state.composeTarget.type === 'broadcast') this.state.broadcastDraft.ctaUrl = url;
+    this.onBodyInput(el);
+  }
+
+  onBodyInput(el) {
+    const target = this.state.composeTarget;
+    if (target.type === 'step') {
+      this.state.stepDraft.bodyHtml = el.innerHTML;
+    } else {
+      this.state.broadcastDraft.bodyHtml = el.innerHTML;
+      this.queueDraftSave();
+    }
+    const preview = document.getElementById('email-preview-body-content');
+    if (preview) preview.innerHTML = el.innerHTML;
+  }
+
+  onSubjectInput(value) {
+    const target = this.state.composeTarget;
+    if (target.type === 'step') {
+      this.state.stepDraft.subject = value;
+    } else {
+      this.state.broadcastDraft.subject = value;
+      this.queueDraftSave();
+    }
+    const headline = document.getElementById('email-preview-headline');
+    if (headline) headline.textContent = value;
+  }
+
+  async duplicateCampaign() {
+    const c = this.state.campaignDetail;
+    const res = await this.api('/api/admin/campaigns', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: `${c.name} (copy)` }),
+    });
+    const draft = await res.json();
+    await this.api(`/api/admin/campaigns/${draft.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject: c.subject, bodyHtml: c.bodyHtml, ctaUrl: c.ctaUrl, audienceActivity: c.audienceActivity }),
+    });
+    await this.openCompose(draft.id);
+  }
+
+  async addStep() {
+    const subject = window.prompt('Subject for the new step:');
+    if (!subject) return;
+    const waitDays = Number(window.prompt('Days after signup to send (0 = instant):', '7')) || 0;
+    await this.api('/api/admin/automations/welcome-series/steps', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ subject, waitDays }),
+    });
+    await this.openSeries();
   }
 
   showToast(text, color, iconName) {
@@ -586,15 +1002,21 @@ class Admin {
 
   renderSidebar() {
     const s = this.state;
-    const navHtml = NAV_ITEMS.map(item => {
+    const renderItem = (item) => {
       const active = s.view === item.id;
       const badge = item.id === 'photos' && s.photoCounts.pending > 0
         ? `<span class="nav-badge">${s.photoCounts.pending}</span>` : '';
       return `<button class="nav-item ${active ? 'active' : ''}" data-nav="${item.id}"><span class="ic">${icon(item.icon)}</span><span style="flex:1;text-align:left;">${item.label}</span>${badge}</button>`;
-    }).join('');
-    document.getElementById('sb-nav-items').innerHTML = `
-      <div class="sb-label">Manage</div>
-      ${navHtml}`;
+    };
+    const groups = [];
+    NAV_ITEMS.forEach(item => {
+      let group = groups.find(g => g.name === item.group);
+      if (!group) { group = { name: item.group, items: [] }; groups.push(group); }
+      group.items.push(item);
+    });
+    document.getElementById('sb-nav-items').innerHTML = groups.map(g => `
+      <div class="sb-label">${g.name}</div>
+      ${g.items.map(renderItem).join('')}`).join('');
     document.querySelectorAll('[data-nav]').forEach(btn => {
       btn.addEventListener('click', () => this.setView(btn.dataset.nav));
     });
@@ -624,6 +1046,7 @@ class Admin {
     else if (v === 'users') el.innerHTML = this.viewUsers();
     else if (v === 'rinks') el.innerHTML = this.viewRinks();
     else if (v === 'activity') el.innerHTML = this.viewActivity();
+    else if (v === 'campaigns') el.innerHTML = this.viewCampaigns();
     this.bindContentEvents();
   }
 
@@ -651,6 +1074,66 @@ class Admin {
       const prev = document.getElementById('rinks-prev'), next = document.getElementById('rinks-next');
       if (prev) prev.addEventListener('click', () => this.goRinksPage(-1));
       if (next) next.addEventListener('click', () => this.goRinksPage(1));
+    }
+    if (v === 'campaigns') this.bindCampaignEvents();
+  }
+
+  bindCampaignEvents() {
+    const cv = this.state.campaignsView;
+    const newBtn = document.getElementById('new-campaign-btn');
+    if (newBtn) newBtn.addEventListener('click', () => this.openNewCampaignModal());
+
+    if (cv === 'list') {
+      document.querySelectorAll('[data-camp-filter]').forEach(b => b.addEventListener('click', () => {
+        this.setState({ campaignsFilter: b.dataset.campFilter });
+      }));
+      document.querySelectorAll('[data-camp-row]').forEach(row => row.addEventListener('click', () => {
+        const c = this.state.campaignsList.find(x => x.id === Number(row.dataset.campRow));
+        if (c) this.openCampaignRow(c);
+      }));
+    }
+
+    if (cv === 'series') {
+      document.getElementById('camp-back-btn').addEventListener('click', () => this.backToList());
+      document.getElementById('automation-toggle').addEventListener('click', () => this.toggleAutomation());
+      document.getElementById('add-step-btn').addEventListener('click', () => this.addStep());
+      document.getElementById('send-test-series-btn').addEventListener('click', () => this.sendSeriesTest());
+      document.querySelectorAll('[data-step-id]').forEach(card => card.addEventListener('click', () => {
+        const step = this.state.campaignDetail.steps.find(s => s.id === Number(card.dataset.stepId));
+        if (step) this.openStepEditor(step);
+      }));
+    }
+
+    if (cv === 'report') {
+      document.getElementById('camp-back-btn').addEventListener('click', () => this.backToList());
+      document.getElementById('duplicate-btn').addEventListener('click', () => this.duplicateCampaign());
+    }
+
+    if (cv === 'compose') {
+      const target = this.state.composeTarget;
+      document.getElementById('camp-back-btn').addEventListener('click', () => {
+        if (target.type === 'step') this.backToSeries(); else this.backToList();
+      });
+      const subjectInput = document.getElementById('subject-input');
+      if (subjectInput) subjectInput.addEventListener('input', (e) => this.onSubjectInput(e.target.value));
+      const bodyEl = document.getElementById('body-editable');
+      if (bodyEl) bodyEl.addEventListener('input', () => this.onBodyInput(bodyEl));
+      document.querySelectorAll('[data-tb]').forEach(b => b.addEventListener('click', () => this.execToolbar(b.dataset.tb)));
+      document.querySelectorAll('[data-device]').forEach(b => b.addEventListener('click', () => this.setDevice(b.dataset.device)));
+      const tagBtn = document.getElementById('insert-tag-btn');
+      if (tagBtn) tagBtn.addEventListener('click', () => this.insertMergeTag());
+
+      if (target.type === 'step') {
+        document.getElementById('step-save-btn').addEventListener('click', () => this.saveStep());
+        document.getElementById('step-send-test-btn').addEventListener('click', () => this.sendStepTest(target.id));
+      } else {
+        document.querySelectorAll('[data-activity-seg]').forEach(b => b.addEventListener('click', () => this.setActivitySegment(b.dataset.activitySeg)));
+        const ctaBtn = document.getElementById('insert-cta-btn');
+        if (ctaBtn) ctaBtn.addEventListener('click', () => this.insertCtaButton());
+        document.getElementById('send-test-btn').addEventListener('click', () => this.sendTestEmail());
+        document.getElementById('schedule-btn').addEventListener('click', () => this.openScheduleModal());
+        document.getElementById('send-now-btn').addEventListener('click', () => this.openSendConfirm());
+      }
     }
   }
 
@@ -809,6 +1292,317 @@ class Admin {
     return `<div class="data-table">${rows || `<div class="empty-note">No activity yet.</div>`}</div>`;
   }
 
+  // ---------- campaigns ----------
+  viewCampaigns() {
+    const v = this.state.campaignsView;
+    if (v === 'series') return this.viewCampaignSeries();
+    if (v === 'report') return this.viewCampaignReport();
+    if (v === 'compose') return this.viewCampaignCompose();
+    return this.viewCampaignsList();
+  }
+
+  viewCampaignsList() {
+    const s = this.state;
+    const filters = [['all', 'All'], ['automations', 'Automations'], ['broadcasts', 'Broadcasts']];
+    const tabsHtml = filters.map(([id, label]) => `<button class="tab-btn ${s.campaignsFilter === id ? 'active' : ''}" data-camp-filter="${id}">${label}</button>`).join('');
+    const rows = s.campaignsList.filter(c => {
+      if (s.campaignsFilter === 'automations') return c.kind === 'automation';
+      if (s.campaignsFilter === 'broadcasts') return c.kind === 'broadcast';
+      return true;
+    });
+    const rowsHtml = rows.map(c => this.campaignRowHtml(c)).join('');
+    return `
+      <div style="display:flex;align-items:center;margin-bottom:18px;gap:12px;flex-wrap:wrap;">
+        <div class="tabs" style="margin-bottom:0;">${tabsHtml}</div>
+        <button class="btn-primary" style="margin-left:auto;" id="new-campaign-btn">${icon('plus')}New campaign</button>
+      </div>
+      <div class="data-table" id="campaigns-table">
+        <div class="table-head"><div>Campaign</div><div class="col-audience">Audience</div><div>Status</div><div class="col-opens" style="text-align:right;">Opens</div><div class="col-clicks" style="text-align:right;">Clicks</div></div>
+        ${rowsHtml || `<div class="empty-note">No campaigns yet.</div>`}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:#656C84;">
+        <span style="color:#34E0A0;display:flex;">${icon('zap')}</span>
+        Click any row to open it — Auto rows open the sequence, sent broadcasts open the report.
+      </div>`;
+  }
+
+  campaignRowHtml(c) {
+    const isAuto = c.kind === 'automation';
+    const typeStyle = isAuto
+      ? { bg: 'rgba(52,224,160,0.12)', color: '#34E0A0', ic: 'zap' }
+      : c.status === 'sent' ? { bg: 'rgba(20,207,207,0.12)', color: '#14CFCF', ic: 'send' }
+      : c.status === 'scheduled' ? { bg: 'rgba(79,184,255,0.12)', color: '#4FB8FF', ic: 'clock' }
+      : { bg: 'rgba(136,143,168,0.12)', color: '#888FA8', ic: 'send' };
+    const statusStyle = CAMPAIGN_STATUS_STYLE[c.status] || CAMPAIGN_STATUS_STYLE.draft;
+    const audienceLabel = isAuto ? 'On signup' : `${ACTIVITY_LABELS[c.audienceActivity] || 'All members'} · ${c.reach.toLocaleString()}`;
+    const subLabel = isAuto
+      ? `Automated · ${c.steps.length} emails`
+      : c.status === 'sent' ? `Sent ${shortDate(c.sentAt)}`
+      : c.status === 'scheduled' ? `Sends ${shortDate(c.scheduledAt)}`
+      : `Draft · edited ${relTime(c.updatedAt)}`;
+    return `
+      <div class="table-row" data-camp-row="${c.id}" style="cursor:pointer;">
+        <div class="camp-name-cell">
+          <div class="camp-type-well" style="background:${typeStyle.bg};color:${typeStyle.color};">${icon(typeStyle.ic)}</div>
+          <div style="min-width:0;">
+            <div class="cell-name">${esc(c.name)}${isAuto ? '<span class="badge-auto">Auto</span>' : ''}</div>
+            <div class="camp-sub">${subLabel}</div>
+          </div>
+        </div>
+        <div class="cell-muted col-audience">${audienceLabel}</div>
+        <div><span class="camp-status-pill" style="background:${statusStyle.bg};color:${statusStyle.color};">${statusStyle.label}</span></div>
+        <div class="camp-mono-right col-opens" style="color:${c.openRate != null ? '#34E0A0' : '#4B5168'};">${pct(c.openRate)}</div>
+        <div class="camp-mono-right col-clicks" style="color:${c.clickRate != null ? '#34E0A0' : '#4B5168'};">${pct(c.clickRate)}</div>
+      </div>`;
+  }
+
+  viewCampaignSeries() {
+    const c = this.state.campaignDetail;
+    if (!c) return '';
+    const stepColors = ['#34E0A0', '#14CFCF', '#CB78FF'];
+    const stats = [
+      { value: c.entered30d, label: 'Entered / 30d', color: '#34E0A0' },
+      { value: pct(c.openRate), label: 'Avg open rate', color: '#14CFCF' },
+      { value: pct(c.clickRate), label: 'Avg click rate', color: '#CB78FF' },
+    ];
+    const statCards = stats.map(st => `
+      <div class="stat-card" style="flex:1;">
+        <div class="stat-value" style="color:${st.color};">${st.value}</div>
+        <div class="stat-label">${st.label}</div>
+      </div>`).join('');
+
+    const stepsHtml = c.steps.map((step, i) => {
+      const color = stepColors[i % stepColors.length];
+      const waitLabel = step.waitDays === 0 ? 'Instant' : `+${step.waitDays} day${step.waitDays === 1 ? '' : 's'}`;
+      return `
+        <div class="step-connector">
+          <span style="color:#656C84;display:flex;">${icon('clock')}</span>
+          <span class="camp-sub" style="margin:0;">${waitLabel}</span>
+          <div class="step-connector-track"></div>
+        </div>
+        <button class="step-card" data-step-id="${step.id}" style="border-top-color:${color};">
+          <div class="camp-sub" style="margin:0 0 6px;">Email ${i + 1}</div>
+          <div style="font-size:13.5px;font-weight:600;color:var(--text);line-height:1.35;">${esc(step.subject)}</div>
+          <div class="step-card-stats">
+            <div><div class="camp-sub" style="margin:0;">Open</div><div style="font-size:13px;font-weight:700;color:${color};">${pct(step.openRate)}</div></div>
+            <div><div class="camp-sub" style="margin:0;">Click</div><div style="font-size:13px;font-weight:700;color:${color};">${pct(step.clickRate)}</div></div>
+          </div>
+        </button>`;
+    }).join('');
+
+    return `
+      <div class="camp-header-row">
+        <button class="camp-back-btn" id="camp-back-btn">${icon('arrowLeft')}</button>
+        <div>
+          <div style="font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--text);">${esc(c.name)}</div>
+          <div class="camp-sub" style="margin-top:2px;">Automated · triggered on account creation</div>
+        </div>
+        <div class="camp-toggle-wrap">
+          <button class="camp-toggle ${c.active ? 'on' : ''}" id="automation-toggle"><span class="knob"></span></button>
+          <span class="camp-toggle-label">${c.active ? 'ON' : 'OFF'}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:14px;">${statCards}</div>
+      <div class="panel" style="margin-top:18px;padding:18px;">
+        <div class="panel-title" style="margin-bottom:4px;">Sequence</div>
+        <div class="flow-wrap" style="opacity:${c.active ? '1' : '0.4'};">
+          <div class="trigger-node">
+            <div style="color:#34E0A0;margin-bottom:6px;display:flex;justify-content:center;">${icon('userPlus')}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);">Signs up</div>
+            <div class="camp-sub" style="margin:2px 0 0;">Trigger</div>
+          </div>
+          ${stepsHtml}
+          <button class="add-step-btn" id="add-step-btn">${icon('plus')} Add step</button>
+        </div>
+        <div style="display:flex;justify-content:flex-end;padding:0 4px;">
+          <button class="panel-link" id="send-test-series-btn">Send myself a test →</button>
+        </div>
+      </div>`;
+  }
+
+  viewCampaignReport() {
+    const c = this.state.campaignDetail;
+    const r = this.state.campaignReport;
+    if (!c || !r) return '';
+    const stats = [
+      { ic: 'check', color: '#34E0A0', bg: 'rgba(52,224,160,0.12)', label: 'Delivered', value: r.delivered.toLocaleString(), sub: `${(100 - r.unsubscribeRate).toFixed(1)}% inbox rate` },
+      { ic: 'eye', color: '#14CFCF', bg: 'rgba(20,207,207,0.12)', label: 'Opens', value: pct(r.openRate), sub: `${r.opened.toLocaleString()} unique` },
+      { ic: 'link', color: '#CB78FF', bg: 'rgba(203,120,255,0.12)', label: 'Clicks', value: pct(r.clickRate), sub: `${r.clicked.toLocaleString()} unique` },
+      { ic: 'x', color: '#FF7A7A', bg: 'rgba(255,122,122,0.12)', label: 'Unsubscribed', value: `${r.unsubscribeRate}%`, sub: `${r.unsubscribed.toLocaleString()} members` },
+    ];
+    const statCards = stats.map(s => `
+      <div class="stat-card">
+        <div class="stat-top"><div class="stat-icon-wrap" style="background:${s.bg};color:${s.color};">${icon(s.ic)}</div></div>
+        <div class="stat-value" style="font-size:22px;color:${s.color};">${s.value}</div>
+        <div class="stat-label">${s.label}</div>
+        <div class="camp-sub" style="margin-top:4px;">${s.sub}</div>
+      </div>`).join('');
+
+    const funnelRows = [
+      { label: 'Delivered', count: r.delivered, pctVal: 100, color: '#888FA8' },
+      { label: 'Opened', count: r.opened, pctVal: r.openRate, color: '#14CFCF' },
+      { label: 'Clicked', count: r.clicked, pctVal: r.clickRate, color: '#34E0A0' },
+      { label: 'Converted', count: r.converted, pctVal: r.convertedRate, color: '#CB78FF' },
+    ].map(row => `
+      <div class="funnel-row">
+        <div class="funnel-top"><span style="color:var(--text);font-weight:600;">${row.label}</span><span class="cell-mono">${row.count.toLocaleString()} · ${row.pctVal}%</span></div>
+        <div class="funnel-track"><div class="funnel-fill" style="width:${row.pctVal}%;background:${row.color};"></div></div>
+      </div>`).join('');
+
+    const topLinksHtml = r.topLinks.length ? r.topLinks.map(l => `
+      <div class="toplink-row">
+        <span style="color:#656C84;display:flex;">${icon('link')}</span>
+        <span class="toplink-url">${esc(l.url)}</span>
+        <span class="cell-mono" style="color:#14CFCF;">${l.clicks.toLocaleString()}</span>
+      </div>`).join('') : `<div class="empty-note">No clicks yet.</div>`;
+
+    return `
+      <div class="camp-header-row">
+        <button class="camp-back-btn" id="camp-back-btn">${icon('arrowLeft')}</button>
+        <div style="min-width:0;">
+          <div style="font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.name)}</div>
+          <div class="camp-sub" style="margin-top:2px;">${shortDate(c.sentAt)} · ${ACTIVITY_LABELS[c.audienceActivity] || 'All members'}</div>
+        </div>
+        <button class="edit-btn" style="margin-left:auto;" id="duplicate-btn">${icon('copy')}Duplicate</button>
+      </div>
+      <div class="stat-grid">${statCards}</div>
+      <div class="split">
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Engagement funnel</span></div>
+          ${funnelRows}
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="panel-title">Top links clicked</span></div>
+          ${topLinksHtml}
+        </div>
+      </div>`;
+  }
+
+  emailPreviewHtml(subject, bodyHtml) {
+    const s = this.state;
+    return `
+      <div class="device-tabs">
+        <button class="device-tab ${s.campaignDevice === 'desktop' ? 'active' : ''}" data-device="desktop">${icon('desktop')} Desktop</button>
+        <button class="device-tab ${s.campaignDevice === 'mobile' ? 'active' : ''}" data-device="mobile">${icon('mobile')} Mobile</button>
+      </div>
+      <div class="email-preview-wrap">
+        <div class="email-preview ${s.campaignDevice === 'mobile' ? 'mobile' : ''}" id="email-preview-frame">
+          <div class="email-preview-header">
+            <span style="font-family:var(--font-display);font-weight:700;font-size:15px;color:#fff;">Rink<span style="color:#FFC83D;">Collective</span></span>
+          </div>
+          <div class="email-preview-body">
+            <h1 id="email-preview-headline">${esc(subject || 'Your subject line')}</h1>
+            <div id="email-preview-body-content">${bodyHtml || '<p style="color:#9AA0B4;">Start writing your email…</p>'}</div>
+          </div>
+          <div class="email-preview-footer">
+            Rink Collective &middot; Boston, MA<br>
+            You're receiving this because you have an account.
+            <a href="#" style="color:#656C84;text-decoration:underline;">Unsubscribe</a> &middot;
+            <a href="#" style="color:#656C84;text-decoration:underline;">Manage preferences</a>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  viewCampaignCompose() {
+    const target = this.state.composeTarget;
+    if (target && target.type === 'step') return this.viewStepCompose();
+    return this.viewBroadcastCompose();
+  }
+
+  viewStepCompose() {
+    const d = this.state.stepDraft;
+    if (!d) return '';
+    return `
+      <div class="camp-header-row">
+        <button class="camp-back-btn" id="camp-back-btn">${icon('arrowLeft')}</button>
+        <div>
+          <div style="font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--text);">Email ${d.order}</div>
+          <div class="camp-sub" style="margin-top:2px;">${d.waitDays === 0 ? 'Sends instantly on signup' : `Sends ${d.waitDays} day${d.waitDays === 1 ? '' : 's'} after signup`}</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:10px;">
+          <button class="edit-btn" id="step-send-test-btn">${icon('beaker')}Send test</button>
+          <button class="btn-primary" id="step-save-btn">${icon('check')}Save</button>
+        </div>
+      </div>
+      <div class="compose-grid">
+        <div class="compose-col-left">
+          <div class="compose-eyebrow first">Subject</div>
+          <input class="field-input" id="subject-input" value="${esc(d.subject)}">
+          <div class="compose-eyebrow">Body</div>
+          <div class="editor-toolbar">
+            <button class="toolbar-btn" data-tb="bold">B</button>
+            <button class="toolbar-btn" data-tb="italic" style="font-style:italic;">i</button>
+            <button class="toolbar-btn" data-tb="quote">"</button>
+            <button class="toolbar-btn" data-tb="list">≡</button>
+            <button class="toolbar-btn" data-tb="link">${icon('link')}</button>
+            <button class="toolbar-btn" id="insert-tag-btn">{name}</button>
+            <span class="toolbar-note">Brand header + footer auto-applied</span>
+          </div>
+          <div class="body-editable" id="body-editable" contenteditable="true">${d.bodyHtml}</div>
+        </div>
+        <div class="compose-col-right">
+          ${this.emailPreviewHtml(d.subject, d.bodyHtml)}
+        </div>
+      </div>`;
+  }
+
+  viewBroadcastCompose() {
+    const d = this.state.broadcastDraft;
+    if (!d) return '';
+    const activityOpts = ['active', 'inactive', 'all'];
+    const segHtml = activityOpts.map(a => `<button class="activity-seg-opt ${d.audienceActivity === a ? 'active' : ''}" data-activity-seg="${a}">${ACTIVITY_LABELS[a]}</button>`).join('');
+    const reach = this.state.campaignReach != null ? this.state.campaignReach : d.reach;
+    return `
+      <div class="camp-header-row">
+        <button class="camp-back-btn" id="camp-back-btn">${icon('arrowLeft')}</button>
+        <div>
+          <div style="font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--text);">${esc(d.name)}</div>
+          <div class="camp-sub" id="compose-saved-label" style="margin-top:2px;">Draft · saved just now</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:10px;">
+          <button class="edit-btn" id="send-test-btn">${icon('beaker')}Send test</button>
+          <button class="edit-btn" id="schedule-btn">${icon('clock')}Schedule</button>
+          <button class="btn-primary" id="send-now-btn">${icon('send')}Send to ${reach.toLocaleString()}</button>
+        </div>
+      </div>
+      <div class="compose-grid">
+        <div class="compose-col-left">
+          <div class="compose-eyebrow first">Audience</div>
+          <div class="audience-card">
+            <div class="audience-section">
+              <div class="audience-section-head">
+                <span style="color:#656C84;display:flex;">${icon('activity')}</span> Activity
+                <div class="activity-seg">${segHtml}</div>
+              </div>
+            </div>
+          </div>
+          <div class="reach-banner">
+            ${icon('users')} Reaches <strong id="reach-count" style="margin:0 4px;">${reach.toLocaleString()}</strong> members
+            <span id="reach-warn" style="color:#FFC83D;display:${reach === 0 ? 'inline' : 'none'};margin-left:4px;">· pick a broader segment</span>
+          </div>
+          <div class="compose-eyebrow">Subject</div>
+          <input class="field-input" id="subject-input" value="${esc(d.subject || '')}" placeholder="Your subject line">
+          <div class="compose-eyebrow">Body</div>
+          <div class="editor-toolbar">
+            <button class="toolbar-btn" data-tb="bold">B</button>
+            <button class="toolbar-btn" data-tb="italic" style="font-style:italic;">i</button>
+            <button class="toolbar-btn" data-tb="quote">"</button>
+            <button class="toolbar-btn" data-tb="list">≡</button>
+            <button class="toolbar-btn" data-tb="link">${icon('link')}</button>
+            <button class="toolbar-btn" id="insert-cta-btn" title="Insert button">▭</button>
+            <button class="toolbar-btn" id="insert-tag-btn">{name}</button>
+            <span class="toolbar-note">Brand header + footer auto-applied</span>
+          </div>
+          <div class="body-editable" id="body-editable" contenteditable="true">${d.bodyHtml || ''}</div>
+          <div class="compliance-note">${icon('info')} A one-click unsubscribe link is added to the footer automatically to stay CAN-SPAM compliant.</div>
+        </div>
+        <div class="compose-col-right">
+          ${this.emailPreviewHtml(d.subject, d.bodyHtml)}
+        </div>
+      </div>`;
+  }
+
   // ---------- rink editor drawer ----------
   renderEditor() {
     const s = this.state;
@@ -936,7 +1730,91 @@ class Admin {
       return;
     }
 
+    if (s.campaignModal === 'new') {
+      root.innerHTML = this.newCampaignModalHtml();
+      document.getElementById('new-camp-scrim').addEventListener('click', (e) => { if (e.target.id === 'new-camp-scrim') this.closeCampaignModal(); });
+      document.getElementById('new-camp-close-btn').addEventListener('click', () => this.closeCampaignModal());
+      document.getElementById('pick-broadcast-btn').addEventListener('click', () => this.pickBroadcast());
+      document.getElementById('pick-automation-btn').addEventListener('click', () => this.pickAutomation());
+      return;
+    }
+
+    if (s.campaignModal === 'send') {
+      root.innerHTML = this.sendConfirmModalHtml();
+      document.getElementById('send-confirm-scrim').addEventListener('click', (e) => { if (e.target.id === 'send-confirm-scrim') this.closeCampaignModal(); });
+      document.getElementById('send-confirm-cancel-btn').addEventListener('click', () => this.closeCampaignModal());
+      document.getElementById('send-confirm-btn').addEventListener('click', () => this.confirmSend());
+      return;
+    }
+
+    if (s.campaignModal === 'schedule') {
+      root.innerHTML = this.scheduleModalHtml();
+      document.getElementById('schedule-scrim').addEventListener('click', (e) => { if (e.target.id === 'schedule-scrim') this.closeCampaignModal(); });
+      document.getElementById('schedule-cancel-btn').addEventListener('click', () => this.closeCampaignModal());
+      document.getElementById('schedule-confirm-btn').addEventListener('click', () => this.confirmSchedule());
+      document.getElementById('schedule-at-input').addEventListener('input', (e) => { this.state.campaignScheduleAt = e.target.value; });
+      return;
+    }
+
     root.innerHTML = '';
+  }
+
+  newCampaignModalHtml() {
+    return `
+      <div class="modal-scrim" id="new-camp-scrim">
+        <div class="reject-modal" style="width:560px;">
+          <div style="display:flex;align-items:flex-start;">
+            <div>
+              <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);">New campaign</div>
+              <div style="font-size:12.5px;color:#888FA8;margin-top:3px;">Pick how this email should send.</div>
+            </div>
+            <button class="editor-close" style="margin-left:auto;" id="new-camp-close-btn">${icon('x')}</button>
+          </div>
+          <div class="pick-cards">
+            <button class="pick-card" id="pick-broadcast-btn">
+              <div class="pick-card-icon" style="background:rgba(20,207,207,0.12);color:#14CFCF;">${icon('send')}</div>
+              <div class="pick-card-title">Broadcast</div>
+              <div class="pick-card-desc">A one-time email to a filtered audience — feature releases, events, announcements.</div>
+            </button>
+            <button class="pick-card" id="pick-automation-btn">
+              <div class="pick-card-icon" style="background:rgba(52,224,160,0.12);color:#34E0A0;">${icon('zap')}</div>
+              <div class="pick-card-title">Automation</div>
+              <div class="pick-card-desc">A sequence that sends on a trigger — open the Welcome Series to edit it.</div>
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  sendConfirmModalHtml() {
+    const reach = this.state.campaignReach != null ? this.state.campaignReach : (this.state.broadcastDraft ? this.state.broadcastDraft.reach : 0);
+    return `
+      <div class="modal-scrim" id="send-confirm-scrim">
+        <div class="send-confirm-modal">
+          <div style="color:#14CFCF;display:flex;justify-content:center;margin-bottom:14px;font-size:28px;">${icon('send')}</div>
+          <div style="font-family:var(--font-display);font-size:17px;font-weight:700;color:var(--text);">Send this broadcast?</div>
+          <div style="font-size:13px;color:#888FA8;margin-top:8px;line-height:1.5;">It will go to <strong style="color:var(--text);">${reach.toLocaleString()}</strong> members immediately. This can't be undone.</div>
+          <div style="display:flex;gap:10px;margin-top:20px;">
+            <button class="btn-cancel" id="send-confirm-cancel-btn">Cancel</button>
+            <button class="btn-primary" style="flex:1.6;justify-content:center;" id="send-confirm-btn">Send now</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  scheduleModalHtml() {
+    return `
+      <div class="modal-scrim" id="schedule-scrim">
+        <div class="reject-modal">
+          <div style="font-family:var(--font-display);font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;">Schedule this broadcast</div>
+          <label class="field-label">Send date &amp; time</label>
+          <input class="field-input" type="datetime-local" id="schedule-at-input" value="${esc(this.state.campaignScheduleAt)}">
+          <div style="display:flex;gap:10px;margin-top:4px;">
+            <button class="btn-cancel" id="schedule-cancel-btn">Cancel</button>
+            <button class="btn-primary" style="flex:1.6;justify-content:center;" id="schedule-confirm-btn">Schedule</button>
+          </div>
+        </div>
+      </div>`;
   }
 
   updateRejectConfirmState() {

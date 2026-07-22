@@ -1,9 +1,14 @@
+import asyncio
+import base64
+import html
 import json
 import os
 import pathlib
+import re
 import secrets
 from datetime import date, datetime, timedelta, timezone
 from typing import Optional
+from urllib.parse import quote
 
 import bcrypt
 import httpx
@@ -31,6 +36,15 @@ GOOGLE_OAUTH_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
 GOOGLE_OAUTH_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET")
 
 ADMIN_EMAILS = {e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()}
+
+# Email Campaigns (Admin Console) — same graceful-degrade convention as
+# GOOGLE_PLACES_API_KEY: sending just no-ops (rows stay "queued") if unset,
+# nothing crashes at startup. SITE_BASE_URL builds absolute tracking/
+# unsubscribe links from the background worker, which (unlike a request
+# handler) has no request.base_url to derive them from.
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
+EMAIL_FROM_ADDRESS = os.environ.get("EMAIL_FROM_ADDRESS", "Rink Collective <hello@rinkcollective.com>")
+SITE_BASE_URL = os.environ.get("SITE_BASE_URL", "https://rinkcollective.com").rstrip("/")
 
 RINKS_FILE = pathlib.Path("rinks.json")
 EQUIPMENT_FILE = pathlib.Path("equipment.json")
@@ -203,6 +217,14 @@ class User(SQLModel, table=True):
     interests: Optional[list] = Field(default=None, sa_column=Column(JSON))
     onboardingCompletedAt: Optional[str] = None
 
+    # Email Campaigns (nullable, same ensure_new_columns() backfill-free
+    # convention as Rink.adminOnly). lastLoginAt powers the Active/Inactive
+    # audience segment (set at signup/login/Google-callback, falls back to
+    # createdAt for a "last seen" value if a user never logs in again);
+    # emailUnsubscribedAt is the one-click, all-campaigns unsubscribe.
+    lastLoginAt: Optional[str] = None
+    emailUnsubscribedAt: Optional[str] = None
+
 
 class RinkAdmin(SQLModel, table=True):
     # Grants a User "Rink Owner Console" access scoped to one rink. A rink
@@ -295,7 +317,7 @@ class Announcement(SQLModel, table=True):
 class AdminActivity(SQLModel, table=True):
     # Server-generated audit trail behind the Admin Console's Overview
     # "recent activity" card and the Activity Log section. kind drives icon
-    # + color in the frontend: "user" | "photo" | "reject" | "rink".
+    # + color in the frontend: "user" | "photo" | "reject" | "rink" | "campaign".
     id: Optional[int] = Field(default=None, primary_key=True)
     kind: str
     text: str
@@ -311,6 +333,85 @@ def log_activity(session: Session, kind: str, text: str, actor: Optional[User] =
         actorId=actor.id if actor else None,
         actorName=actor.displayName if actor else None,
     ))
+
+
+class EmailCampaign(SQLModel, table=True):
+    # A one-time "broadcast" (subject/bodyHtml/audienceActivity set directly)
+    # or the single "automation" container (just a named, toggleable shell —
+    # its real content lives in EmailAutomationStep rows below). Only one
+    # automation campaign ever exists (the Welcome Series, seeded once at
+    # startup by seed_welcome_series()) — there's no generic automation
+    # builder yet. Pure DB table, same category as EquipmentOffer/
+    # GuideProgress — no JSON file owns this.
+    id: Optional[int] = Field(default=None, primary_key=True)
+    kind: str  # "broadcast" | "automation"
+    name: str
+    status: str = "draft"  # "draft" | "scheduled" | "sent" | "active" | "paused"
+    subject: Optional[str] = None
+    bodyHtml: Optional[str] = None
+    # The one link counted as "Converted" in the report funnel — set from the
+    # compose screen's "Insert button" CTA, not a fabricated stat.
+    ctaUrl: Optional[str] = None
+    audienceActivity: Optional[str] = None  # "active" | "inactive" | "all" — broadcast only
+    scheduledAt: Optional[str] = None
+    sentAt: Optional[str] = None
+    createdAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    updatedAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    active: bool = True  # automation's on/off state ("dripOn" in the design)
+
+
+class EmailAutomationStep(SQLModel, table=True):
+    # One step of an automation's sequence (currently only the Welcome
+    # Series exists), in `order`. waitDays=0 means "send immediately on entry".
+    id: Optional[int] = Field(default=None, primary_key=True)
+    campaignId: int
+    order: int
+    waitDays: int = 0
+    subject: str
+    bodyHtml: str
+
+
+class EmailRecipient(SQLModel, table=True):
+    # One row per (recipient, send) — doubles as the send queue (the
+    # background worker drains status="queued" rows) and the tracking record
+    # behind the report/funnel views. stepId is set only for automation-step
+    # sends; a plain broadcast send leaves it null. isTest rows (from "Send
+    # myself a test") are excluded from all campaign performance stats.
+    id: Optional[int] = Field(default=None, primary_key=True)
+    campaignId: int
+    stepId: Optional[int] = None
+    userId: int
+    token: str = Field(index=True, unique=True)
+    isTest: bool = False
+    status: str = "queued"  # "queued" | "sent" | "failed"
+    queuedAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    sentAt: Optional[str] = None
+    openedAt: Optional[str] = None
+    clickedAt: Optional[str] = None
+    unsubscribedAt: Optional[str] = None
+    resendMessageId: Optional[str] = None
+
+
+class EmailClick(SQLModel, table=True):
+    # One row per link click on a sent email; "Top links clicked" in the
+    # report groups these by url.
+    id: Optional[int] = Field(default=None, primary_key=True)
+    recipientId: int
+    url: str
+    clickedAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+class EmailAutomationEntry(SQLModel, table=True):
+    # One row per (user, automation) — tracks progress through the sequence.
+    # Created at signup (and in the Google callback's new-account branch)
+    # when the automation is active; advanced by the background worker as
+    # each step's waitDays elapses.
+    id: Optional[int] = Field(default=None, primary_key=True)
+    campaignId: int
+    userId: int
+    enteredAt: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    nextStepOrder: int = 1
+    completedAt: Optional[str] = None
 
 
 def hash_password(password: str) -> str:
@@ -395,6 +496,11 @@ def ensure_new_columns():
         ("program", Program),
         ("programregistrant", ProgramRegistrant),
         ("announcement", Announcement),
+        ("emailcampaign", EmailCampaign),
+        ("emailautomationstep", EmailAutomationStep),
+        ("emailrecipient", EmailRecipient),
+        ("emailclick", EmailClick),
+        ("emailautomationentry", EmailAutomationEntry),
     ):
         if table_name not in existing_tables:
             continue
@@ -450,13 +556,394 @@ def sync_guides_from_file():
         session.commit()
 
 
+# ==================== Email Campaigns ====================
+# See CLAUDE.md's Email Campaigns section. No queue/worker service exists on
+# Railway (single web dyno) — email_worker_loop() below is a lightweight
+# in-process asyncio loop started from on_startup() instead of standing up
+# Celery/Redis, matching this codebase's existing minimalism.
+
+EMAIL_WORKER_INTERVAL_SECONDS = 15
+EMAIL_WORKER_BATCH_SIZE = 100
+AUDIENCE_ACTIVE_WINDOW_DAYS = 90
+
+
+def cta_button_html(label: str, url: str) -> str:
+    return (
+        f'<a href="{url}" style="display:inline-block;margin:18px 0;padding:12px 22px;'
+        f'background:#14CFCF;color:#06181A;font-weight:700;font-size:14px;border-radius:8px;'
+        f'text-decoration:none;font-family:Arial,Helvetica,sans-serif;">{html.escape(label)}</a>'
+    )
+
+
+def _welcome_series_defaults():
+    # Real, deliberately short copy (not lorem ipsum) — this is what a fresh
+    # signup actually receives. [first_name] is substituted at send time by
+    # render_email_html(); the CTA links point at real routes.
+    step1 = (
+        "<p>Hi [first_name],</p>"
+        "<p>Welcome to Rink Collective — the fastest way to find ice time, gear, and your people at rinks near you.</p>"
+        "<p>Start by finding your home rink and seeing what's happening on the ice this week.</p>"
+        + cta_button_html("Explore rinks near you", f"{SITE_BASE_URL}/rinks")
+        + "<p>See you on the ice,<br>The Rink Collective team</p>"
+    )
+    step2 = (
+        "<p>Hi [first_name],</p>"
+        "<p>Have you set your home rink yet? It powers your check-ins, schedule, and the rinks we recommend to you.</p>"
+        + cta_button_html("Find your home rink", f"{SITE_BASE_URL}/rinks")
+        + "<p>See you on the ice,<br>The Rink Collective team</p>"
+    )
+    step3 = (
+        "<p>Hi [first_name],</p>"
+        "<p>Rinks with real photos help other skaters know what to expect. Got a shot from your last session? Add it to your rink's gallery.</p>"
+        + cta_button_html("Add your first photo", f"{SITE_BASE_URL}/rinks")
+        + "<p>See you on the ice,<br>The Rink Collective team</p>"
+    )
+    return [
+        (1, 0, "Welcome to Rink Collective", step1),
+        (2, 2, "Find your home rink", step2),
+        (3, 5, "Add your first photo", step3),
+    ]
+
+
+def seed_welcome_series():
+    # One-time seed — this campaign is a pure DB row (like RinkAdmin/
+    # IceSession) with no JSON file behind it, so it's never resynced; once
+    # created, subsequent startups leave it (and any admin edits) alone.
+    with Session(engine) as session:
+        if session.exec(select(EmailCampaign).where(EmailCampaign.kind == "automation")).first():
+            return
+        campaign = EmailCampaign(kind="automation", name="New Signup Welcome Series", status="active", active=True)
+        session.add(campaign)
+        session.commit()
+        session.refresh(campaign)
+        for order, wait_days, subject, body in _welcome_series_defaults():
+            session.add(EmailAutomationStep(
+                campaignId=campaign.id, order=order, waitDays=wait_days, subject=subject, bodyHtml=body,
+            ))
+        session.commit()
+
+
+def enter_welcome_series(session: Session, user: User):
+    # Called from signup and the Google callback's new-account branch.
+    campaign = session.exec(select(EmailCampaign).where(EmailCampaign.kind == "automation")).first()
+    if campaign and campaign.active:
+        session.add(EmailAutomationEntry(campaignId=campaign.id, userId=user.id))
+
+
+def get_automation_campaign(session: Session) -> EmailCampaign:
+    # There's only ever one automation (the Welcome Series) — no generic
+    # automation builder yet, so admin endpoints look it up by kind rather
+    # than by id.
+    campaign = session.exec(select(EmailCampaign).where(EmailCampaign.kind == "automation")).first()
+    if campaign is None:
+        raise HTTPException(404, "Welcome Series not found")
+    return campaign
+
+
+def audience_filter_conditions(activity: str):
+    # Shared by audience_count()/audience_users()/the reach preview endpoint.
+    # "active" = last seen (lastLoginAt, falling back to createdAt for a user
+    # who never logged back in) within the last 90 days; "inactive" = older
+    # than that; "all" = everyone. Unsubscribed users are always excluded.
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=AUDIENCE_ACTIVE_WINDOW_DAYS)).isoformat()
+    last_seen = func.coalesce(User.lastLoginAt, User.createdAt)
+    conds = [User.emailUnsubscribedAt.is_(None)]
+    if activity == "active":
+        conds.append(last_seen >= cutoff)
+    elif activity == "inactive":
+        conds.append(last_seen < cutoff)
+    return conds
+
+
+def audience_count(session: Session, activity: str) -> int:
+    return session.exec(select(func.count(User.id)).where(*audience_filter_conditions(activity))).one()
+
+
+def audience_users(session: Session, activity: str) -> list:
+    return session.exec(select(User).where(*audience_filter_conditions(activity))).all()
+
+
+def queue_recipients_for_broadcast(session: Session, campaign: EmailCampaign):
+    for user in audience_users(session, campaign.audienceActivity or "all"):
+        session.add(EmailRecipient(campaignId=campaign.id, userId=user.id, token=secrets.token_urlsafe(20)))
+    session.commit()
+
+
+def campaign_send_stats(session: Session, campaign_id: int, step_id: Optional[int] = None) -> dict:
+    conds = [EmailRecipient.campaignId == campaign_id, EmailRecipient.isTest.is_(False)]
+    if step_id is not None:
+        conds.append(EmailRecipient.stepId == step_id)
+    sent = session.exec(select(func.count(EmailRecipient.id)).where(*conds, EmailRecipient.status == "sent")).one()
+    opened = session.exec(select(func.count(EmailRecipient.id)).where(*conds, EmailRecipient.openedAt.is_not(None))).one()
+    clicked = session.exec(select(func.count(EmailRecipient.id)).where(*conds, EmailRecipient.clickedAt.is_not(None))).one()
+    return {
+        "sent": sent,
+        "opened": opened,
+        "clicked": clicked,
+        "openRate": round(100 * opened / sent, 1) if sent else None,
+        "clickRate": round(100 * clicked / sent, 1) if sent else None,
+    }
+
+
+def serialize_step(step: EmailAutomationStep, session: Session) -> dict:
+    stats = campaign_send_stats(session, step.campaignId, step.id)
+    return {
+        "id": step.id, "order": step.order, "waitDays": step.waitDays,
+        "subject": step.subject, "bodyHtml": step.bodyHtml,
+        "sent": stats["sent"], "openRate": stats["openRate"], "clickRate": stats["clickRate"],
+    }
+
+
+def serialize_campaign(campaign: EmailCampaign, session: Session) -> dict:
+    # Frontend composes display labels (e.g. "Sent Jul 12") client-side from
+    # these raw fields, same convention as the rest of admin.html (relTime()
+    # etc.) rather than building formatted strings server-side.
+    base = {
+        "id": campaign.id, "kind": campaign.kind, "name": campaign.name,
+        "createdAt": campaign.createdAt, "updatedAt": campaign.updatedAt,
+        "scheduledAt": campaign.scheduledAt, "sentAt": campaign.sentAt,
+    }
+    if campaign.kind == "automation":
+        steps = session.exec(
+            select(EmailAutomationStep).where(EmailAutomationStep.campaignId == campaign.id).order_by(EmailAutomationStep.order)
+        ).all()
+        stats = campaign_send_stats(session, campaign.id)
+        thirty_days_ago = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+        entered_30d = session.exec(
+            select(func.count(EmailAutomationEntry.id)).where(
+                EmailAutomationEntry.campaignId == campaign.id, EmailAutomationEntry.enteredAt >= thirty_days_ago
+            )
+        ).one()
+        base.update({
+            "status": "active" if campaign.active else "paused",
+            "active": campaign.active,
+            "steps": [serialize_step(s, session) for s in steps],
+            "openRate": stats["openRate"], "clickRate": stats["clickRate"],
+            "entered30d": entered_30d,
+        })
+        return base
+    activity = campaign.audienceActivity or "all"
+    stats = campaign_send_stats(session, campaign.id) if campaign.status == "sent" else {"openRate": None, "clickRate": None}
+    base.update({
+        "status": campaign.status,
+        "subject": campaign.subject, "bodyHtml": campaign.bodyHtml, "ctaUrl": campaign.ctaUrl,
+        "audienceActivity": activity,
+        "reach": audience_count(session, activity),
+        "openRate": stats["openRate"], "clickRate": stats["clickRate"],
+    })
+    return base
+
+
+def campaign_report(campaign: EmailCampaign, session: Session) -> dict:
+    conds = [EmailRecipient.campaignId == campaign.id, EmailRecipient.isTest.is_(False)]
+    delivered = session.exec(select(func.count(EmailRecipient.id)).where(*conds, EmailRecipient.status == "sent")).one()
+    opened = session.exec(select(func.count(EmailRecipient.id)).where(*conds, EmailRecipient.openedAt.is_not(None))).one()
+    clicked = session.exec(select(func.count(EmailRecipient.id)).where(*conds, EmailRecipient.clickedAt.is_not(None))).one()
+    unsubscribed = session.exec(select(func.count(EmailRecipient.id)).where(*conds, EmailRecipient.unsubscribedAt.is_not(None))).one()
+    converted = 0
+    if campaign.ctaUrl:
+        converted = session.exec(
+            select(func.count(func.distinct(EmailClick.recipientId)))
+            .select_from(EmailClick).join(EmailRecipient, EmailClick.recipientId == EmailRecipient.id)
+            .where(*conds, EmailClick.url == campaign.ctaUrl)
+        ).one()
+    top_links = session.exec(
+        select(EmailClick.url, func.count(func.distinct(EmailClick.recipientId)))
+        .select_from(EmailClick).join(EmailRecipient, EmailClick.recipientId == EmailRecipient.id)
+        .where(*conds)
+        .group_by(EmailClick.url)
+        .order_by(func.count(func.distinct(EmailClick.recipientId)).desc())
+        .limit(3)
+    ).all()
+    pct = lambda n: round(100 * n / delivered, 1) if delivered else 0
+    return {
+        "delivered": delivered, "opened": opened, "clicked": clicked,
+        "unsubscribed": unsubscribed, "converted": converted,
+        "openRate": pct(opened), "clickRate": pct(clicked),
+        "unsubscribeRate": round(100 * unsubscribed / delivered, 2) if delivered else 0,
+        "convertedRate": pct(converted),
+        "topLinks": [{"url": row[0], "clicks": row[1]} for row in top_links],
+    }
+
+
+_LINK_HREF_RE = re.compile(r'href="([^"]+)"')
+
+
+def wrap_links_for_tracking(body_html: str, token: str) -> str:
+    def repl(m):
+        url = m.group(1)
+        if url.startswith("mailto:") or url.startswith("#") or "/api/email/" in url:
+            return m.group(0)
+        wrapped = f"{SITE_BASE_URL}/api/email/c/{token}?u={quote(url, safe='')}"
+        return f'href="{wrapped}"'
+    return _LINK_HREF_RE.sub(repl, body_html)
+
+
+def render_email_html(subject: str, body_html: str, recipient: User, token: str) -> str:
+    first_name = recipient.firstName or (recipient.displayName or "").split(" ")[0] or "there"
+    body = body_html.replace("[first_name]", html.escape(first_name))
+    body = wrap_links_for_tracking(body, token)
+    unsubscribe_url = f"{SITE_BASE_URL}/api/email/u/{token}"
+    pixel = f'<img src="{SITE_BASE_URL}/api/email/o/{token}" width="1" height="1" alt="" style="display:block;border:0;">'
+    return f"""<!doctype html>
+<html>
+<body style="margin:0;padding:0;background:#F1F3F8;font-family:Arial,Helvetica,sans-serif;">
+  <div style="max-width:600px;margin:0 auto;background:#FFFFFF;">
+    <div style="background:#0A0E1A;padding:22px 26px;">
+      <span style="font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:17px;color:#FFFFFF;">Rink<span style="color:#FFC83D;">Collective</span></span>
+    </div>
+    <div style="padding:30px 26px;color:#3A4155;font-size:14px;line-height:1.65;">
+      <h1 style="font-family:Arial,Helvetica,sans-serif;font-size:20px;font-weight:700;color:#0A0E1A;margin:0 0 14px;">{html.escape(subject)}</h1>
+      {body}
+    </div>
+    <div style="background:#F1F3F8;padding:20px 26px;color:#888;font-size:11px;line-height:1.6;">
+      Rink Collective &middot; Boston, MA<br>
+      You're receiving this because you have a Rink Collective account.
+      <a href="{unsubscribe_url}" style="color:#656C84;text-decoration:underline;">Unsubscribe</a> &middot;
+      <a href="{unsubscribe_url}" style="color:#656C84;text-decoration:underline;">Manage preferences</a>
+    </div>
+  </div>
+  {pixel}
+</body>
+</html>"""
+
+
+async def send_email_batch(messages: list) -> list:
+    # messages: [{"to", "subject", "html"}, ...], max EMAIL_WORKER_BATCH_SIZE.
+    # Returns a parallel list of Resend message ids, or None per message on
+    # failure (missing key, HTTP error, or a >=400 response) — the worker
+    # marks those rows "failed" rather than retrying indefinitely.
+    if not RESEND_API_KEY:
+        return [None] * len(messages)
+    payload = [
+        {"from": EMAIL_FROM_ADDRESS, "to": [m["to"]], "subject": m["subject"], "html": m["html"]}
+        for m in messages
+    ]
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                "https://api.resend.com/emails/batch",
+                headers={"Authorization": f"Bearer {RESEND_API_KEY}"},
+                json=payload,
+                timeout=30,
+            )
+        if resp.status_code >= 400:
+            return [None] * len(messages)
+        data = resp.json().get("data", [])
+        return [item.get("id") for item in data]
+    except httpx.HTTPError:
+        return [None] * len(messages)
+
+
+async def email_worker_tick():
+    with Session(engine) as session:
+        now = datetime.now(timezone.utc)
+        now_iso = now.isoformat()
+
+        # 1. Fire due scheduled broadcasts.
+        due_broadcasts = session.exec(
+            select(EmailCampaign).where(EmailCampaign.status == "scheduled", EmailCampaign.scheduledAt <= now_iso)
+        ).all()
+        for campaign in due_broadcasts:
+            queue_recipients_for_broadcast(session, campaign)
+            campaign.status = "sent"
+            campaign.sentAt = now_iso
+            session.add(campaign)
+        if due_broadcasts:
+            session.commit()
+
+        # 2. Advance automation entries whose next step is due.
+        entries = session.exec(select(EmailAutomationEntry).where(EmailAutomationEntry.completedAt.is_(None))).all()
+        for entry in entries:
+            campaign = session.get(EmailCampaign, entry.campaignId)
+            if not campaign or not campaign.active:
+                continue
+            steps = session.exec(
+                select(EmailAutomationStep).where(EmailAutomationStep.campaignId == entry.campaignId).order_by(EmailAutomationStep.order)
+            ).all()
+            step = next((s for s in steps if s.order == entry.nextStepOrder), None)
+            if step is None:
+                entry.completedAt = now_iso
+                session.add(entry)
+                continue
+            due_at = datetime.fromisoformat(entry.enteredAt) + timedelta(days=step.waitDays)
+            if now < due_at:
+                continue
+            already_sent = session.exec(
+                select(EmailRecipient).where(
+                    EmailRecipient.campaignId == entry.campaignId,
+                    EmailRecipient.stepId == step.id,
+                    EmailRecipient.userId == entry.userId,
+                )
+            ).first()
+            if not already_sent:
+                session.add(EmailRecipient(
+                    campaignId=entry.campaignId, stepId=step.id, userId=entry.userId,
+                    token=secrets.token_urlsafe(20),
+                ))
+            entry.nextStepOrder += 1
+            if entry.nextStepOrder > len(steps):
+                entry.completedAt = now_iso
+            session.add(entry)
+        session.commit()
+
+        # 3. Drain queued recipients (broadcast or automation-step sends).
+        queued = session.exec(
+            select(EmailRecipient).where(EmailRecipient.status == "queued").limit(EMAIL_WORKER_BATCH_SIZE)
+        ).all()
+        if not queued:
+            return
+
+        prepared = []
+        for r in queued:
+            user = session.get(User, r.userId)
+            if not user or user.emailUnsubscribedAt:
+                r.status = "failed"
+                session.add(r)
+                continue
+            if r.stepId:
+                step = session.get(EmailAutomationStep, r.stepId)
+                subject, body = step.subject, step.bodyHtml
+            else:
+                campaign = session.get(EmailCampaign, r.campaignId)
+                subject, body = campaign.subject, campaign.bodyHtml
+            prepared.append((r, user.email, subject, render_email_html(subject, body, user, r.token)))
+        session.commit()
+
+        if not prepared:
+            return
+        message_ids = await send_email_batch([
+            {"to": to, "subject": subject, "html": rendered} for (_, to, subject, rendered) in prepared
+        ])
+        sent_at = datetime.now(timezone.utc).isoformat()
+        for (r, _, _, _), message_id in zip(prepared, message_ids):
+            r.status = "sent" if message_id else "failed"
+            r.sentAt = sent_at
+            r.resendMessageId = message_id
+            session.add(r)
+        session.commit()
+
+
+async def email_worker_loop():
+    while True:
+        try:
+            await email_worker_tick()
+        except Exception as exc:
+            # No logging framework in this codebase yet — print() is the
+            # existing ad hoc convention for background-process visibility.
+            print(f"[email_worker] tick failed: {exc}")
+        await asyncio.sleep(EMAIL_WORKER_INTERVAL_SECONDS)
+
+
 @app.on_event("startup")
-def on_startup():
+async def on_startup():
     SQLModel.metadata.create_all(engine)
     ensure_new_columns()
     sync_rinks_from_file()
     sync_equipment_from_file()
     sync_guides_from_file()
+    seed_welcome_series()
+    asyncio.create_task(email_worker_loop())
 
 
 @app.get("/")
@@ -1498,6 +1985,243 @@ def admin_overview(request: Request):
         }
 
 
+@app.get("/api/admin/campaigns")
+def list_campaigns(request: Request):
+    with Session(engine) as session:
+        require_admin(request, session)
+        automation = session.exec(select(EmailCampaign).where(EmailCampaign.kind == "automation")).first()
+        broadcasts = session.exec(
+            select(EmailCampaign).where(EmailCampaign.kind == "broadcast").order_by(EmailCampaign.createdAt.desc())
+        ).all()
+        rows = ([automation] if automation else []) + broadcasts
+        return [serialize_campaign(c, session) for c in rows]
+
+
+@app.post("/api/admin/campaigns")
+async def create_campaign(request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        body = await request.json()
+        name = (body.get("name") or "").strip() or "Untitled broadcast"
+        campaign = EmailCampaign(kind="broadcast", name=name, status="draft", audienceActivity="all")
+        session.add(campaign)
+        session.commit()
+        session.refresh(campaign)
+        log_activity(session, "campaign", f'{admin.displayName} created a new broadcast draft: "{name}"', admin)
+        session.commit()
+        return serialize_campaign(campaign, session)
+
+
+@app.get("/api/admin/campaigns/audience-count")
+def campaign_audience_count(request: Request, activity: str = "all"):
+    with Session(engine) as session:
+        require_admin(request, session)
+        if activity not in ("active", "inactive", "all"):
+            raise HTTPException(400, "Invalid activity segment")
+        return {"reach": audience_count(session, activity)}
+
+
+@app.get("/api/admin/automations/welcome-series")
+def get_welcome_series(request: Request):
+    with Session(engine) as session:
+        require_admin(request, session)
+        return serialize_campaign(get_automation_campaign(session), session)
+
+
+@app.patch("/api/admin/automations/welcome-series")
+async def update_welcome_series(request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        campaign = get_automation_campaign(session)
+        body = await request.json()
+        if "active" in body:
+            campaign.active = bool(body["active"])
+            session.add(campaign)
+            session.commit()
+            log_activity(session, "campaign", f"{admin.displayName} {'resumed' if campaign.active else 'paused'} the Welcome Series", admin)
+            session.commit()
+        return serialize_campaign(campaign, session)
+
+
+@app.patch("/api/admin/automations/welcome-series/steps/{step_id}")
+async def update_welcome_series_step(step_id: int, request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        campaign = get_automation_campaign(session)
+        step = session.get(EmailAutomationStep, step_id)
+        if step is None or step.campaignId != campaign.id:
+            raise HTTPException(404, "Step not found")
+        body = await request.json()
+        for field in ("subject", "bodyHtml"):
+            if field in body:
+                setattr(step, field, body[field])
+        if "waitDays" in body:
+            wait_days = int(body["waitDays"])
+            if wait_days < 0:
+                raise HTTPException(400, "waitDays can't be negative")
+            step.waitDays = wait_days
+        session.add(step)
+        session.commit()
+        log_activity(session, "campaign", f"{admin.displayName} edited Welcome Series step {step.order}", admin)
+        session.commit()
+        return serialize_step(step, session)
+
+
+@app.post("/api/admin/automations/welcome-series/steps")
+async def add_welcome_series_step(request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        campaign = get_automation_campaign(session)
+        body = await request.json()
+        subject = (body.get("subject") or "").strip()
+        if not subject:
+            raise HTTPException(400, "subject is required")
+        wait_days = int(body.get("waitDays") or 0)
+        max_order = session.exec(
+            select(func.max(EmailAutomationStep.order)).where(EmailAutomationStep.campaignId == campaign.id)
+        ).one()
+        step = EmailAutomationStep(
+            campaignId=campaign.id, order=(max_order or 0) + 1, waitDays=wait_days,
+            subject=subject, bodyHtml=body.get("bodyHtml") or "<p>Hi [first_name],</p>",
+        )
+        session.add(step)
+        session.commit()
+        session.refresh(step)
+        log_activity(session, "campaign", f"{admin.displayName} added a step to the Welcome Series", admin)
+        session.commit()
+        return serialize_step(step, session)
+
+
+@app.post("/api/admin/automations/welcome-series/steps/{step_id}/send-test")
+async def send_step_test(step_id: int, request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        if not RESEND_API_KEY:
+            raise HTTPException(503, "Email sending isn't configured (RESEND_API_KEY missing)")
+        campaign = get_automation_campaign(session)
+        step = session.get(EmailAutomationStep, step_id)
+        if step is None or step.campaignId != campaign.id:
+            raise HTTPException(404, "Step not found")
+        session.add(EmailRecipient(
+            campaignId=campaign.id, stepId=step.id, userId=admin.id, token=secrets.token_urlsafe(20), isTest=True,
+        ))
+        session.commit()
+        return {"status": "queued", "to": admin.email}
+
+
+@app.get("/api/admin/campaigns/{campaign_id}")
+def get_campaign(campaign_id: int, request: Request):
+    with Session(engine) as session:
+        require_admin(request, session)
+        campaign = session.get(EmailCampaign, campaign_id)
+        if campaign is None:
+            raise HTTPException(404, "Campaign not found")
+        return serialize_campaign(campaign, session)
+
+
+@app.patch("/api/admin/campaigns/{campaign_id}")
+async def update_campaign(campaign_id: int, request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        campaign = session.get(EmailCampaign, campaign_id)
+        if campaign is None or campaign.kind != "broadcast":
+            raise HTTPException(404, "Campaign not found")
+        if campaign.status != "draft":
+            raise HTTPException(400, "Only draft broadcasts can be edited")
+        body = await request.json()
+        for field in ("name", "subject", "bodyHtml", "ctaUrl"):
+            if field in body:
+                setattr(campaign, field, body[field])
+        if "audienceActivity" in body:
+            if body["audienceActivity"] not in ("active", "inactive", "all"):
+                raise HTTPException(400, "Invalid activity segment")
+            campaign.audienceActivity = body["audienceActivity"]
+        campaign.updatedAt = datetime.now(timezone.utc).isoformat()
+        session.add(campaign)
+        session.commit()
+        session.refresh(campaign)
+        return serialize_campaign(campaign, session)
+
+
+@app.post("/api/admin/campaigns/{campaign_id}/send-test")
+async def send_campaign_test(campaign_id: int, request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        if not RESEND_API_KEY:
+            raise HTTPException(503, "Email sending isn't configured (RESEND_API_KEY missing)")
+        campaign = session.get(EmailCampaign, campaign_id)
+        if campaign is None or campaign.kind != "broadcast":
+            raise HTTPException(404, "Broadcast not found")
+        if not campaign.subject or not campaign.bodyHtml:
+            raise HTTPException(400, "Add a subject and body before sending a test")
+        session.add(EmailRecipient(
+            campaignId=campaign.id, userId=admin.id, token=secrets.token_urlsafe(20), isTest=True,
+        ))
+        session.commit()
+        return {"status": "queued", "to": admin.email}
+
+
+@app.post("/api/admin/campaigns/{campaign_id}/schedule")
+async def schedule_campaign(campaign_id: int, request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        if not RESEND_API_KEY:
+            raise HTTPException(503, "Email sending isn't configured (RESEND_API_KEY missing)")
+        campaign = session.get(EmailCampaign, campaign_id)
+        if campaign is None or campaign.kind != "broadcast":
+            raise HTTPException(404, "Broadcast not found")
+        if campaign.status != "draft":
+            raise HTTPException(400, "Only draft broadcasts can be scheduled")
+        if not campaign.subject or not campaign.bodyHtml:
+            raise HTTPException(400, "Add a subject and body before scheduling")
+        body = await request.json()
+        scheduled_at = body.get("scheduledAt")
+        if not scheduled_at:
+            raise HTTPException(400, "scheduledAt is required")
+        campaign.status = "scheduled"
+        campaign.scheduledAt = scheduled_at
+        session.add(campaign)
+        session.commit()
+        log_activity(session, "campaign", f'{admin.displayName} scheduled "{campaign.name}"', admin)
+        session.commit()
+        return serialize_campaign(campaign, session)
+
+
+@app.post("/api/admin/campaigns/{campaign_id}/send")
+async def send_campaign_now(campaign_id: int, request: Request):
+    with Session(engine) as session:
+        admin = require_admin(request, session)
+        if not RESEND_API_KEY:
+            raise HTTPException(503, "Email sending isn't configured (RESEND_API_KEY missing)")
+        campaign = session.get(EmailCampaign, campaign_id)
+        if campaign is None or campaign.kind != "broadcast":
+            raise HTTPException(404, "Broadcast not found")
+        if campaign.status not in ("draft", "scheduled"):
+            raise HTTPException(400, "This broadcast has already been sent")
+        if not campaign.subject or not campaign.bodyHtml:
+            raise HTTPException(400, "Add a subject and body before sending")
+        queue_recipients_for_broadcast(session, campaign)
+        campaign.status = "sent"
+        campaign.sentAt = datetime.now(timezone.utc).isoformat()
+        session.add(campaign)
+        session.commit()
+        log_activity(session, "campaign", f'{admin.displayName} sent "{campaign.name}"', admin)
+        session.commit()
+        return serialize_campaign(campaign, session)
+
+
+@app.get("/api/admin/campaigns/{campaign_id}/report")
+def get_campaign_report(campaign_id: int, request: Request):
+    with Session(engine) as session:
+        require_admin(request, session)
+        campaign = session.get(EmailCampaign, campaign_id)
+        if campaign is None or campaign.kind != "broadcast":
+            raise HTTPException(404, "Broadcast not found")
+        if campaign.status != "sent":
+            raise HTTPException(400, "This broadcast hasn't been sent yet")
+        return {"campaign": serialize_campaign(campaign, session), "report": campaign_report(campaign, session)}
+
+
 @app.get("/api/rinks/{rink_id}/photos")
 def rink_community_photos(rink_id: int):
     with Session(engine) as session:
@@ -1518,6 +2242,60 @@ def user_photo_image(photo_id: int):
             media_type=photo.contentType,
             headers={"Cache-Control": "public, max-age=3600"},
         )
+
+
+_TRANSPARENT_GIF = base64.b64decode("R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==")
+
+
+@app.get("/api/email/o/{token}")
+def track_email_open(token: str):
+    # 1x1 pixel embedded in every sent email — public, token-gated, no auth.
+    with Session(engine) as session:
+        recipient = session.exec(select(EmailRecipient).where(EmailRecipient.token == token)).first()
+        if recipient and not recipient.openedAt:
+            recipient.openedAt = datetime.now(timezone.utc).isoformat()
+            session.add(recipient)
+            session.commit()
+    return Response(content=_TRANSPARENT_GIF, media_type="image/gif", headers={"Cache-Control": "no-store"})
+
+
+@app.get("/api/email/c/{token}")
+def track_email_click(token: str, u: str = SITE_BASE_URL):
+    # Every real content link in a sent email is rewritten to this at render
+    # time (wrap_links_for_tracking()); logs the click, then redirects on.
+    with Session(engine) as session:
+        recipient = session.exec(select(EmailRecipient).where(EmailRecipient.token == token)).first()
+        if recipient:
+            session.add(EmailClick(recipientId=recipient.id, url=u))
+            if not recipient.clickedAt:
+                recipient.clickedAt = datetime.now(timezone.utc).isoformat()
+                session.add(recipient)
+            session.commit()
+    return RedirectResponse(u)
+
+
+@app.get("/api/email/u/{token}")
+def unsubscribe_email(token: str):
+    # One-click, all-campaigns unsubscribe (CAN-SPAM) — sets both the send
+    # record and the user's account-wide flag so future audience queries
+    # exclude them regardless of which campaign's link they clicked.
+    with Session(engine) as session:
+        recipient = session.exec(select(EmailRecipient).where(EmailRecipient.token == token)).first()
+        if recipient:
+            now_iso = datetime.now(timezone.utc).isoformat()
+            recipient.unsubscribedAt = now_iso
+            session.add(recipient)
+            user = session.get(User, recipient.userId)
+            if user and not user.emailUnsubscribedAt:
+                user.emailUnsubscribedAt = now_iso
+                session.add(user)
+            session.commit()
+    return Response(
+        content="""<!doctype html><html><body style="font-family:Arial,Helvetica,sans-serif;background:#0A0E1A;color:#F3F5FB;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;">
+<div style="text-align:center;max-width:360px;padding:0 20px;"><h1 style="font-size:20px;margin-bottom:10px;">You're unsubscribed</h1><p style="color:#888FA8;font-size:14px;line-height:1.5;">You won't receive any more emails from Rink Collective.</p></div>
+</body></html>""",
+        media_type="text/html",
+    )
 
 
 @app.post("/api/auth/signup")
@@ -1546,11 +2324,13 @@ async def signup(request: Request):
             email=email, passwordHash=hash_password(password), displayName=displayName,
             firstName=firstName, lastName=lastName or None, loginCount=1,
             consentAcceptedAt=datetime.now(timezone.utc).isoformat(),
+            lastLoginAt=datetime.now(timezone.utc).isoformat(),
         )
         session.add(user)
         session.commit()
         session.refresh(user)
         log_activity(session, "user", f"{user.displayName} joined")
+        enter_welcome_series(session, user)
         session.commit()
         request.session["user_id"] = user.id
         return user_public(user)
@@ -1566,6 +2346,7 @@ async def login(request: Request):
         if not user or not verify_password(password, user.passwordHash):
             raise HTTPException(401, "Invalid email or password")
         user.loginCount += 1
+        user.lastLoginAt = datetime.now(timezone.utc).isoformat()
         session.add(user)
         session.commit()
         request.session["user_id"] = user.id
@@ -1638,15 +2419,18 @@ async def google_callback(request: Request, code: Optional[str] = None, state: O
                 authProvider="google",
                 loginCount=1,
                 consentAcceptedAt=datetime.now(timezone.utc).isoformat(),
+                lastLoginAt=datetime.now(timezone.utc).isoformat(),
             )
             session.add(user)
         else:
             user.loginCount += 1
+            user.lastLoginAt = datetime.now(timezone.utc).isoformat()
             session.add(user)
         session.commit()
         session.refresh(user)
         if is_new:
             log_activity(session, "user", f"{user.displayName} joined")
+            enter_welcome_series(session, user)
             session.commit()
         request.session["user_id"] = user.id
 
